@@ -12,7 +12,7 @@
 
 ## 기능 요구 추적
 
-아래 단계는 명세 18절의 번호다. 현재 단계 1의 파일·검증·정확 조회와 단계 2의 migration 기반을 구현했다. FR 전체 기능의 완료 선언은 아니며 구체 범위는 IMPLEMENTATION_STATUS.md를 따른다.
+아래 단계는 명세 18절의 번호다. 현재 단계 1의 파일·검증·정확 조회, 단계 2의 migration, 단계 3의 Git 프로젝트·작업 격리·보존을 구현했다. FR 전체 기능의 완료 선언은 아니며 구체 범위는 IMPLEMENTATION_STATUS.md를 따른다.
 
 | ID | 구분 | 구현할 행동 | 주 단계 |
 |---|---|---|---|
@@ -85,7 +85,7 @@
 | 가져오기·외부 호출 | 기존 Markdown/text는 전용 브랜치에서 비파괴 import, 추출은 제안. 외부 operation/idempotency/job 상태를 보존하고 불명 호출은 자동 재전송하지 않는다. R-19/20 |
 | 실행기·스킬·MCP | provider capability별 지원 표시. 공통 domain service 사용. 버전/digest 고정 스킬, run overlay, 시크릿 분리. 직접 shell/API 부작용 전체를 관리 MCP와 같은 수준으로 보장하지 않는다. |
 
-R-01~R-24는 검토 메모의 설계 보완 식별자이며 이미 제품 테스트가 통과했다는 의미가 아니다. R-22는 범위가 제한되지 않은 세션의 지속 원칙이다. 이번 세션은 사용자 요청에 따라 환경·계획에서 멈춘다.
+R-01~R-24는 검토 메모의 설계 보완 식별자이며 이미 제품 테스트가 통과했다는 의미가 아니다. R-22는 범위가 제한되지 않은 세션의 지속 원칙이다. 현재는 사용자의 명시 요청에 따라 각 단계 완료 후 멈추며, 이번에는 단계 3까지만 진행한다.
 
 ## 결정한 기술 사항과 남은 판단
 
@@ -95,7 +95,8 @@ R-01~R-24는 검토 메모의 설계 보완 식별자이며 이미 제품 테스
 | 런타임·패키지 관리자 | 설치된 지원 LTS Node 24.21.0 / npm 11.19.0, exact lock | 업그레이드 시 환경 probe 재실행 |
 | 검증기·YAML | Ajv2020 / yaml AST 기반 안전 정책 | 단계 1: 전체 schema·금지 문법·제한 구현 |
 | SQLite | better-sqlite3 13.0.3, FTS5 사용 가능 확인 | 단계 4: worker 경계·한국어 실원고·증분 성능 |
-| writer | node:fs 임시 파일+sync+close+동일 디렉터리 rename 기본 | 단계 1/3: CAS·OS 잠금·journal·crash 검증 |
+| writer | node:fs 임시 파일+sync+close+rename, OS lease·expected hash·forward journal 복구 | 단계 3에서 프로세스 사망/부분 쓰기·외부 충돌 검증, 단계 9에서 전원/디스크·전체 장애 확대 |
+| Git 작업 | task/run별 worktree·초기 checkpoint·선택 snapshot, 로컬/remote-tracking 보존 구분 | 단계 3 완료. UI 검토·통합은 단계 5/9, 실제 provider 재개는 단계 7 |
 | UI·서버 | React/Vite + Fastify, SSE/HTTP, 기능 중심 UI | 단계 5에서 정확 버전 및 접근성/E2E 선택·고정 |
 | CLI | 두 실행기 설치·버전만 확인, 인증 unknown | 단계 6: protocol/capability·취소·실제 smoke, 필요 시 Claude SDK |
 | 타입 생성 | JSON Schema → json-schema-to-typescript 16.0.0, drift 검사 | 단계 1에서 선택·검증 완료 |

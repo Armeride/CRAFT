@@ -14,6 +14,7 @@
 | @types/node | 24.19.2 | Node 24 타입 |
 | Ajv / ajv-formats | 8.20.0 / 3.0.1 | Draft 2020-12 검증기 후보·날짜 형식 보조 |
 | yaml | 2.9.1 | AST·오류 위치·결정적 직렬화 기반 |
+| fs-native-extensions | 1.5.3 | Windows OS 파일 잠금·owner 사망 후 release 검증 |
 | better-sqlite3 | 13.0.3 | 로컬 native SQLite 드라이버 |
 | @types/better-sqlite3 | 9.6.0 | 드라이버 타입 |
 | json-schema-to-typescript | 16.0.0 | JSON Schema에서 v1 TypeScript 계약 생성 |
@@ -23,7 +24,7 @@
 
 pnpm/Bun은 현재 PATH에서 발견되지 않았다. 추가 설치는 필요하지 않다. 두 CLI의 인증·protocol/capability·실제 실행은 미확인이다. 설치된 alpha Codex를 제품 지원 완료로 취급하지 않는다.
 
-Ajv/ajv-formats/yaml은 파일 로더의 runtime dependencies로 옮겼다. SQLite는 환경 probe용 devDependency이며 제품 색인은 미구현이다. React/Vite/Fastify/MCP SDK/E2E 도구는 해당 기능 착수 시 고정한다. 현재 packages는 논리 모듈 경계이며 별도 npm 배포 패키지는 아니다.
+Ajv/ajv-formats/yaml과 fs-native-extensions는 runtime dependencies다. SQLite는 환경 probe용 devDependency이며 제품 색인은 미구현이다. React/Vite/Fastify/MCP SDK/E2E 도구는 해당 기능 착수 시 고정한다. 현재 packages는 논리 모듈 경계이며 별도 npm 배포 패키지는 아니다.
 
 ## 설치와 실행
 
@@ -41,14 +42,15 @@ node dist/tools/environment.js
 
 | 명령 | 실제 범위 |
 |---|---|
-| `npm run schema:types` | core 및 migration audit JSON Schema의 타입 재생성(migration 실행이 아님) |
+| `npm run schema:types` | core·migration audit·workspace runtime JSON Schema 타입 재생성(migration 실행이 아님) |
 | `npm run schema:check` | 생성 타입과 schema 일치 확인, 파일 쓰기 없음 |
 | `npm run typecheck` | packages/tools 및 Vitest 설정 strict 타입 검사 |
 | `npm run build` | 제품 기반 모듈과 도구를 dist에 컴파일 |
-| `npm test` | 4파일 101개 테스트: 단계 2의 24개 + 이전 77개 |
+| `npm test` | 5파일 123개 테스트: 단계 3의 22개 + 이전 101개 |
 | `npm run test:watch` | 테스트 감시 모드 |
 | `npm run check` | schema 타입 일치 → 타입 검사 → 빌드 → 전체 테스트 |
 | `npm run migration -- support` | 제품 registry의 지원표, fixture는 명시 --registry fixture |
+| `npm run workspace -- open ...` | 단계 3 로컬 등록·task/run·fake·복구·clone·import CLI, [계약](WORKSPACES.md) 참조 |
 
 현재 개발 서버 명령은 없다. 설치 직후 브라우저 앱을 실행할 수 있다고 안내하지 않는다.
 
@@ -59,7 +61,7 @@ node dist/tools/environment.js
 | 실제 probe | 확인한 결과 | 후속 검증 |
 |---|---|---|
 | runtime | 지정 Node 실행 | 업그레이드 시 exact pin 동시 갱신 |
-| Windows 파일 | 한글·공백 경로, UTF-8/emoji, wx 임시 파일·sync·close·rename 교체 | 전원 장애 내구성, 여러 파일 원자성, OS 앱 간 잠금·CAS·journal은 미확인 |
+| Windows 파일 | 한글·공백 경로, UTF-8/emoji, wx 임시 파일·sync·close·rename 교체 | 단계 3에서 native 잠금·hash·journal 복구 검증. 전원 장애 완전 내구성은 미확인 |
 | Ajv2020 | prefixItems의 2020-12 의미, 잘못된 입력 거부·자동 변환 없음 | 단계 1에서 v1 schema·date format·생성 타입 계약 검증 완료 |
 | YAML | 한국어·문자열 날짜 보존, 중복 key 위치, stringify round-trip | 단계 1에서 AST 금지 문법·크기/깊이·손실 수치·위치 정책 구현 완료 |
 | SQLite | 한글 경로 DB/WAL, FTS5 trigram, 실패 transaction rollback | 실원고·짧은 별칭·worker/증분/재구축 성능은 단계 4/9 |
@@ -69,7 +71,7 @@ node dist/tools/environment.js
 
 ## Git 및 실행 환경 제약
 
-앱 소스의 기본 브랜치는 master다. 단계 2 시작 시 단계 0·1 기준을 로컬 commit 3847002로 보존했다. 단계 2 결과도 로컬에 commit하며 remote/push는 없다. 테스트는 .tmp 아래 독립 Git repo/worktree를 만들고 전체 소유 경로를 확인해 정리한다. 실제 CLI smoke 결과 2개는 검토용으로 별도 .tmp 폴더에 보존한다. 앱 소스 branch와 사용자 프로젝트 branch는 별개다.
+앱 소스의 기본 브랜치는 master다. 단계 0·1 기준 3847002와 단계 2 결과 6a83094를 로컬에 보존했다. 단계 3도 후속 로컬 commit으로 보존하며 remote/push는 없다. 테스트는 .tmp 아래 독립 Git repo/worktree를 만들고 전체 소유 경로를 확인해 정리한다. 단계 2·3 실제 CLI smoke 결과는 별도 .tmp 폴더에 보존한다. 앱 소스 branch와 사용자 프로젝트 branch는 별개다.
 
 초기화 이후 자동화 샌드박스에서 `setup refresh had errors`가 발생했다. 읽기·설치·검증 명령은 일반 권한 실행으로 진행했다. 초기 `.git` 소유자는 CodexSandboxOffline, 일반 실행 계정은 Jun이므로 Git의 dubious ownership 검사가 발생한다. 이번에는 전역 safe.directory를 추가하지 않고 각 자동화 명령에 이 저장소만 지정했다.
 

@@ -5,6 +5,7 @@ import { isProjectPath } from '../../domain/src/path.js';
 import type { SourceFile } from '../../domain/src/model.js';
 import { captureFiles, fileFailure, fingerprint, hash, newId } from '../../project-fs/src/files.js';
 import { gitText, runGit } from './git.js';
+import { withKernelLock } from './locks.js';
 
 export interface RepositoryGuard {
   readonly root: string;
@@ -39,7 +40,9 @@ export async function assertSourceUnchanged(before: RepositoryGuard): Promise<vo
 
 export async function withRepositoryLock<T>(root: string, action: () => Promise<T>): Promise<T> {
   const common = await gitText(root, ['rev-parse', '--git-common-dir']);
-  const path = join(await realpath(isAbsolute(common) ? common : resolve(root, common)), 'craft-migration.lock');
+  const directory = await realpath(isAbsolute(common) ? common : resolve(root, common));
+  return withKernelLock(join(directory, 'craft', 'locks', 'metadata.lock'), `repository:${directory}`, async () => {
+  const path = join(directory, 'craft-migration.lock');
   const token = newId('lock');
   let handle;
   try { handle = await open(path, 'wx'); }
@@ -55,6 +58,7 @@ export async function withRepositoryLock<T>(root: string, action: () => Promise<
     if (value.token !== token) throw fileFailure('MIGRATION_LOCK_CHANGED', 'Lock owner changed; refusing to remove it', 'project.yaml');
     await unlink(path);
   }
+  });
 }
 
 export async function checkedManagedRoot(path: string, sourceRoot: string): Promise<string> {

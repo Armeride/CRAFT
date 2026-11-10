@@ -108,10 +108,10 @@ exit code: 완료/no-op 0, 결정 대기 3, 실패/재검토 필요 1. 성공한
 
 - source HEAD/index/working을 보존하고 실패 report·candidate·worktree를 남긴다. 다중 파일 교체를 filesystem 전체 원자 연산이라고 주장하지 않는다.
 - resume은 결정 대기 run만 지원한다. failed/review_required/프로세스 crash를 자동 재실행하지 않는다. 보존 자료를 확인하고 clean source에서 새 run을 만든다.
-- metadata lock은 exclusive create로 획득하고 timeout으로 빼앗지 않는다. stale lock의 owner/lease 복구는 단계 3 과제다.
+- 단계 3부터 공통 metadata OS lock 안에서 기존 exclusive-create migration sentinel을 유지한다. timeout/PID로 빼앗지 않는다. OS lock은 프로세스 사망 후 커널 release를 확인하지만 legacy sentinel은 자동 탈취하지 않는다. [잠금 계약](WORKSPACES.md)을 따른다.
 - 정리 API는 app 소유 경로·branch·completed journal·결과 commit/history·dirty/untracked/ignored 데이터를 확인한다. 미보존 상태는 거부하고 clean tree를 제거해도 branch를 남긴다. 기본 실행은 자동 정리하지 않는다.
 - Windows 네이티브·정규 파일에서 검증했다. symlink/submodule, 모든 attributes 조합, 다른 OS를 지원 완료로 표시하지 않는다. worktree는 OS sandbox가 아니다.
-- 일반 편집·다중 writer 잠금/journal, 프로젝트 등록, task/run 수명주기, 복구 UI는 단계 3 이후다. B/T/R의 cross-schema 정규화 통합은 단계 9다.
+- 일반 writer 잠금/journal, 프로젝트 등록과 task/run 수명주기는 단계 3의 [WORKSPACES.md](WORKSPACES.md)에 구현했다. migration failed/review_required의 자동 재실행 정책은 바꾸지 않았다. 복구 UI와 B/T/R의 cross-schema 정규화 통합은 후속 단계다.
 
 local Git runner는 shell을 쓰지 않고 hooks/fsmonitor/filter와 상속 Git scope 변수를 차단한다. worktree --no-checkout/read-tree 후 raw blob을 materialize하고 hash-object --no-filters/update-index/commit-tree로 바이트를 보존한다. 근거: [worktree](https://git-scm.com/docs/git-worktree), [read-tree](https://git-scm.com/docs/git-read-tree), [hash-object](https://git-scm.com/docs/git-hash-object), [update-index](https://git-scm.com/docs/git-update-index), [commit-tree](https://git-scm.com/docs/git-commit-tree).
 

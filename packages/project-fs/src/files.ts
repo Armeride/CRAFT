@@ -14,7 +14,8 @@ export const newId = (prefix: string): string => {
 const roots = new Set(['entities', 'baselines', 'reviews', 'narrative', 'tasks', 'skills', 'integrations', 'schemas', 'migrations', 'assets']);
 const rootFiles = new Set(['project.yaml', 'README.md', '.gitignore']);
 export const isCanonicalPath = (path: string): boolean => rootFiles.has(path) || roots.has(path.split('/')[0]!);
-const limits = { fileBytes: 32 * 1024 * 1024, totalBytes: 256 * 1024 * 1024, files: 100_000, depth: 64 };
+export const FILE_LIMITS = { fileBytes: 32 * 1024 * 1024, totalBytes: 256 * 1024 * 1024, files: 100_000, depth: 64 } as const;
+const limits = FILE_LIMITS;
 
 export function fileFailure(code: string, message: string, path: string): ValidationFailure {
   return new ValidationFailure([{ code, message, path, pointer: '', severity: 'error', line: 1, column: 1 }]);
