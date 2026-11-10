@@ -12,4 +12,4 @@
 
 구/신 schema 통합은 B/T/R을 같은 schema로 정규화해 비교한다. 불가능하면 원본과 결과를 보존하고 보류한다. 단순 Git merge 성공을 의미 보존으로 취급하지 않는다. 변환기·과거 fixture 유지 비용을 수용해 원본 손실을 방지한다.
 
-검증 상태: 단계 1의 v1 schema/생성 타입/semantic·dependency digest 및 미래 core 차단까지 구현했다. migration 엔진은 미구현이다. 단계 2에서 실패 불변/no-op/수동 결정/attestation을, 단계 9에서 정규화 통합을 검증한다. AT-14~18/39~41/46의 전체 통과는 후속 단계다.
+검증 상태: 단계 2에서 별도 registry·실패 보존/no-op/수동 결정/attestation·미래 core 차단을 구현·검증했다. 실제 제품 v2와 단계 9의 B/T/R 정규화 통합은 미구현이다. 구체 결정과 한계는 ADR-007 및 MIGRATIONS.md를 따른다.

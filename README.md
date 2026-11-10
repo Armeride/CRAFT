@@ -1,6 +1,6 @@
 # CRAFT
 
-소설과 게임 기획에 공통으로 사용하는 로컬 우선 웹 앱의 소스 저장소다. 현재 **단계 0(환경·계획)과 단계 1(파일 계약·검증·DB 없는 조회)**을 완료했다. 단계 2는 시작하지 않았으며 사용자 지시를 기다린다. 웹 UI·migration·색인·에이전트 연동은 아직 없다.
+소설과 게임 기획에 공통으로 사용하는 로컬 우선 웹 앱의 소스 저장소다. 현재 **단계 0~2(환경·파일 계약·격리된 migration 기반)**를 완료했다. 단계 3은 시작하지 않고 사용자 지시를 기다린다. 웹 UI·색인·에이전트 연동은 아직 없다. migration의 v2는 fixture 전용이며 제품 v1은 유지한다.
 
 구현 기준은 [PROJECT_SPEC.md v1.1](PROJECT_SPEC.md), 보완 배경은 [REVIEW_NOTES.md](REVIEW_NOTES.md)다. 원본 문서 세 개는 루트에 그대로 보존한다. 현재 진행 규칙은 **한 단계 완료 후 멈추고 대기**다. [START_HERE.md](START_HERE.md)의 일반적인 연속 구현 지시보다 현재 사용자 지시를 우선한다.
 
@@ -30,6 +30,15 @@ npm run project:get -- fixtures/game-design ent_stamina rev_stamina_b
 
 baseline은 rev_stamina_a를 유지하며 exact 조회로 미채택 rev_stamina_b도 읽는다. 검증은 파일·참조 정합성 검사이며 release 승인이나 정본 통합은 수행하지 않는다.
 
+## 단계 2 실행
+
+```powershell
+npm run migration -- support
+npm run migration -- support --registry fixture
+```
+
+별도 Git 프로젝트에서 plan/run/resume을 제공한다. source를 수정하지 않고 전용 worktree의 결과 branch에 commit하며 같은 target 재실행은 no-op이다. [실행·복구 절차](docs/MIGRATIONS.md)를 따른다. 실제 제품 v2 업그레이드 기능은 아니다.
+
 ## 개발 문서
 
 - [요구사항 분류와 불변 조건](docs/REQUIREMENTS.md)
@@ -37,6 +46,7 @@ baseline은 rev_stamina_a를 유지하며 exact 조회로 미채택 rev_stamina_
 - [환경 설치·검증·제약](docs/DEVELOPMENT.md)
 - [실제 완료 범위와 다음 작업](docs/IMPLEMENTATION_STATUS.md)
 - [단계 1 파일 형식과 API 계약](docs/FILE_FORMAT_V1.md)
+- [단계 2 마이그레이션 계약과 실행법](docs/MIGRATIONS.md)
 - [기술 결정 ADR](docs/adr/005-development-toolchain.md)
 
-packages/domain, packages/schema, packages/project-fs에 제품 기반 코드를 둔다. tools는 로컬 검증·진단·타입 생성 도구다. fixtures는 시험용 사용자 프로젝트다. 실제 사용자 프로젝트 정본 파일을 앱 저장소 루트에 만들지 않는다.
+packages/domain, schema, project-fs, git-workspace, migrations에 제품 기반 코드를 둔다. tools는 로컬 검증·진단·타입 생성 도구다. fixtures는 시험용 사용자 프로젝트다. 실제 사용자 프로젝트 정본 파일을 앱 저장소 루트에 만들지 않는다.

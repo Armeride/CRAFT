@@ -1,0 +1,53 @@
+body_path: content.md
+created_at: 2026-11-10T04:00:00Z
+created_by:
+  id: fixture-user
+  type: user
+entity_id: ent_knowledge
+extensions:
+  narrative:
+    attitude: knows
+    effective_at:
+      boundary: after
+      scene:
+        propagation: none
+        reference_id: ref_scene
+        relation: related_to
+        target:
+          entity_id: ent_scene
+          revision_id: rev_scene_a
+        update_policy: pinned
+    event_order: 1
+    evidence:
+      propagation: advisory
+      reference_id: ref_evidence
+      relation: evidence
+      target:
+        anchor_id: passage_discovery
+        entity_id: ent_scene
+        revision_id: rev_scene_a
+      update_policy: pinned
+    proposition:
+      propagation: none
+      reference_id: ref_proposition
+      relation: related_to
+      target:
+        entity_id: ent_passage
+        revision_id: rev_passage_a
+      update_policy: pinned
+    record_role: canon
+    subject:
+      propagation: none
+      reference_id: ref_subject
+      relation: related_to
+      target:
+        entity_id: ent_abcde
+        revision_id: rev_abcde_a
+      update_policy: pinned
+    world_tick: 20
+heading: 통로 인지
+lifecycle: proposed
+parents: []
+references: []
+revision_id: rev_knowledge_a
+scope: {}

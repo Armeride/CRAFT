@@ -1,0 +1,13 @@
+created_at: 2026-11-10T04:00:00Z
+dependency_manifest_digest: 4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945
+id: review_overview
+outcome: accepted
+reviewer:
+  id: fixture-user
+  type: user
+scope: {}
+semantic_model_version: 1
+subject:
+  entity_id: ent_overview
+  revision_id: rev_overview_a
+subject_semantic_digest: db7405a24a8f061badc20d44816fc814de87abbcdaaced0ffe71386a0e73d072

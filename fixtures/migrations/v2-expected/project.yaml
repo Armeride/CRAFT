@@ -1,0 +1,19 @@
+default_baseline_id: baseline_main
+extensions:
+  game_design:
+    required: true
+    schema_version: 1
+  narrative:
+    required: true
+    schema_version: 1
+language: ko
+name: minimal
+policies:
+  approval_blocks_on_dependency_states:
+    - discussing
+    - draft
+    - in_review
+  implicit_latest_reference: forbidden
+  missing_reference: error
+project_id: prj_minimal
+schema_version: 2

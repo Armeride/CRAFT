@@ -1,0 +1,18 @@
+acceptance:
+  - 고정 리비전을 참조한다.
+base:
+  baseline_fingerprint: 465f4a653dbb7e3aa7b09b8b0aa3b15caf91efddc61e05d83a01fb67e24a6ab4
+  baseline_id: baseline_main
+  commit: "1111111111111111111111111111111111111111"
+  schema_versions:
+    core: 1
+consumed_proposals: []
+goal: 개요 초안 작성
+id: task_outline
+integration_profile: project-default
+latest_checkpoint: cp_initial
+outputs:
+  - tasks/task_outline/working/outline.md
+skills: []
+status: paused
+title: 개요 작성

@@ -15,3 +15,5 @@ loader는 고정 바이트를 파싱하고 재수집 지문을 대조한다. AST
 semantic model 1의 포함 필드·기본값·배열 순서와 dependency digest는 [FILE_FORMAT_V1.md](../FILE_FORMAT_V1.md)에 고정했다. review 승계·migration 예외·실제 다중 파일 적용은 후속 기능이다. 단계를 우회하는 disk write API는 만들지 않았다.
 
 검증: schema 타입 일치, strict typecheck/build 및 77개 테스트 통과. DB 없는 소설·게임 fixture, 참조/anchor/DAG, 안전 YAML, 경로/junction, 확장 호환, SOURCE_CHANGED, 실제 Git 수동 변경과 원본/index 보존을 포함한다. AT-31/50 범위 통과이며 제품 전체 인수 완료는 아니다.
+
+후속 상태: 단계 2에서 별도 등록 migration engine·fixture registry·attestation을 추가했다. 이 문서의 일반 v1 변경 API는 유지하며 새 계약은 ADR-007과 MIGRATIONS.md를 따른다.

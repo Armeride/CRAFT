@@ -19,7 +19,8 @@
     "schema:check": "node tools/schema-types.mjs --check",
     "project:validate": "node dist/tools/project-cli.js validate",
     "project:get": "node dist/tools/project-cli.js get",
-    "project:baseline": "node dist/tools/project-cli.js baseline"
+    "project:baseline": "node dist/tools/project-cli.js baseline",
+    "migration": "node dist/tools/migration-cli.js"
   },
   "devDependencies": {
     "@types/better-sqlite3": "9.6.0",

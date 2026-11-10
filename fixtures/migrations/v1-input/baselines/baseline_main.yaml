@@ -1,0 +1,16 @@
+closure_policy: require_selected_dependencies
+id: baseline_main
+kind: working
+name: 작업 기준
+scope: {}
+selected:
+  ent_abcde: rev_abcde_a
+  ent_dodge: rev_dodge_b
+  ent_knowledge: rev_knowledge_a
+  ent_movement: rev_movement_a
+  ent_observation: rev_observation_a
+  ent_overview: rev_overview_a
+  ent_passage: rev_passage_a
+  ent_reveal: rev_reveal_a
+  ent_scene: rev_scene_a
+  ent_stamina: rev_stamina_a

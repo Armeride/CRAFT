@@ -27,14 +27,14 @@ export const commonKinds = new Set(['document', 'decision', 'world.fact', 'locat
 export class SchemaValidator {
   private readonly ajv = new Ajv2020({ strict: true, allErrors: true, allowUnionTypes: true, validateFormats: true, ownProperties: true });
 
-  constructor() {
+  constructor(bundle: object = schema, private readonly bundleId: string = coreSchemaId) {
     const addFormats = formats as unknown as (ajv: Ajv2020) => void;
     addFormats(this.ajv);
-    this.ajv.addSchema(schema);
+    this.ajv.addSchema(bundle);
   }
 
   validate(definition: string, value: unknown, path: string, basePointer = ''): Diagnostic[] {
-    const validate = this.ajv.getSchema(`${coreSchemaId}#/$defs/${definition}`);
+    const validate = this.ajv.getSchema(`${this.bundleId}#/$defs/${definition}`);
     if (!validate) throw new Error(`Unknown schema definition: ${definition}`);
     if (validate(value)) return [];
     return (validate.errors ?? []).map(error => {

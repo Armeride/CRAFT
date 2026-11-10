@@ -1,0 +1,1651 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:craft:fixture:schema:core:2",
+  "title": "FixtureOnlyCoreV2",
+  "anyOf": [
+    {
+      "$ref": "#/$defs/Project"
+    },
+    {
+      "$ref": "#/$defs/Entity"
+    },
+    {
+      "$ref": "#/$defs/Revision"
+    },
+    {
+      "$ref": "#/$defs/SnapshotTarget"
+    },
+    {
+      "$ref": "#/$defs/Reference"
+    },
+    {
+      "$ref": "#/$defs/Scope"
+    },
+    {
+      "$ref": "#/$defs/Baseline"
+    },
+    {
+      "$ref": "#/$defs/Review"
+    },
+    {
+      "$ref": "#/$defs/Task"
+    },
+    {
+      "$ref": "#/$defs/Checkpoint"
+    },
+    {
+      "$ref": "#/$defs/Proposal"
+    },
+    {
+      "$ref": "#/$defs/Sequence"
+    },
+    {
+      "$ref": "#/$defs/SkillManifest"
+    },
+    {
+      "$ref": "#/$defs/McpConfiguration"
+    },
+    {
+      "$ref": "#/$defs/SchemaLock"
+    },
+    {
+      "$ref": "#/$defs/MigrationHistory"
+    },
+    {
+      "$ref": "#/$defs/ContextManifest"
+    },
+    {
+      "$ref": "#/$defs/NarrativeCharacter"
+    },
+    {
+      "$ref": "#/$defs/NarrativeScene"
+    },
+    {
+      "$ref": "#/$defs/StateEvent"
+    },
+    {
+      "$ref": "#/$defs/KnowledgeEvent"
+    },
+    {
+      "$ref": "#/$defs/RevealEvent"
+    },
+    {
+      "$ref": "#/$defs/NarrativeFact"
+    },
+    {
+      "$ref": "#/$defs/GameDesign"
+    },
+    {
+      "$ref": "#/$defs/GameObservation"
+    }
+  ],
+  "$defs": {
+    "Id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*_[a-z0-9_-]+$",
+      "title": "Id"
+    },
+    "JsonValue": {
+      "anyOf": [
+        {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "null"
+          ]
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        }
+      ],
+      "title": "JsonValue"
+    },
+    "JsonObject": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/JsonValue"
+      },
+      "title": "JsonObject"
+    },
+    "SnapshotTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "entity_id",
+        "revision_id"
+      ],
+      "properties": {
+        "entity_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "anchor_id": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "title": "SnapshotTarget"
+    },
+    "Reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reference_id",
+        "target",
+        "relation",
+        "propagation",
+        "update_policy"
+      ],
+      "properties": {
+        "reference_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "target": {
+          "$ref": "#/$defs/SnapshotTarget"
+        },
+        "relation": {
+          "enum": [
+            "depends_on",
+            "evidence",
+            "cites",
+            "compares",
+            "replaces",
+            "related_to"
+          ]
+        },
+        "propagation": {
+          "enum": [
+            "blocking",
+            "advisory",
+            "none"
+          ]
+        },
+        "update_policy": {
+          "enum": [
+            "pinned",
+            "track_approved",
+            "track_all"
+          ]
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "title": "Reference"
+    },
+    "Scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [],
+      "properties": {
+        "continuity": {
+          "type": "string",
+          "minLength": 1,
+          "default": "main"
+        },
+        "platform": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true,
+          "minItems": 1
+        },
+        "mode": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true,
+          "minItems": 1
+        }
+      },
+      "title": "Scope"
+    },
+    "Actor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "id"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "user",
+            "agent",
+            "system"
+          ]
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "task_id": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "title": "Actor"
+    },
+    "Versions": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9_]*(?:\\.[a-z][a-z0-9_]*)*$"
+      },
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 1
+      },
+      "required": [
+        "core"
+      ],
+      "title": "Versions",
+      "properties": {
+        "core": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "ExtensionDeclaration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version"
+      ],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "required": {
+          "type": "boolean",
+          "default": true
+        }
+      },
+      "title": "ExtensionDeclaration"
+    },
+    "Project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project_id",
+        "schema_version",
+        "name",
+        "language",
+        "default_baseline_id",
+        "extensions",
+        "policies"
+      ],
+      "properties": {
+        "project_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "schema_version": {
+          "const": 2
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "language": {
+          "type": "string",
+          "minLength": 1
+        },
+        "default_baseline_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "extensions": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[a-z][a-z0-9_]*(?:\\.[a-z][a-z0-9_]*)*$"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/ExtensionDeclaration"
+          }
+        },
+        "policies": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "approval_blocks_on_dependency_states",
+            "missing_reference",
+            "implicit_latest_reference"
+          ],
+          "properties": {
+            "approval_blocks_on_dependency_states": {
+              "type": "array",
+              "items": {
+                "enum": [
+                  "discussing",
+                  "draft",
+                  "in_review"
+                ]
+              },
+              "uniqueItems": true
+            },
+            "missing_reference": {
+              "const": "error"
+            },
+            "implicit_latest_reference": {
+              "const": "forbidden"
+            }
+          }
+        }
+      },
+      "title": "Project"
+    },
+    "Entity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "kind": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*(?:\\.[a-z][a-z0-9_]*)*$"
+        }
+      },
+      "title": "Entity"
+    },
+    "Revision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "entity_id",
+        "revision_id",
+        "parents",
+        "heading",
+        "lifecycle",
+        "scope",
+        "body_path",
+        "references",
+        "extensions",
+        "created_at",
+        "created_by"
+      ],
+      "properties": {
+        "entity_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "parents": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          },
+          "uniqueItems": true
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "aliases": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true,
+          "default": []
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true,
+          "default": []
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "created_by": {
+          "$ref": "#/$defs/Actor"
+        },
+        "scope": {
+          "$ref": "#/$defs/Scope"
+        },
+        "body_path": {
+          "type": "string",
+          "pattern": "^(?!/)(?!.*\\\\)(?!.*:)(?!.*(?:^|/)\\.\\.?(?:/|$))[^\\u0000-\\u001f]+$"
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Reference"
+          }
+        },
+        "extensions": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[a-z][a-z0-9_]*(?:\\.[a-z][a-z0-9_]*)*$"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonObject"
+          }
+        },
+        "heading": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lifecycle": {
+          "enum": [
+            "discussion",
+            "proposed",
+            "reviewing",
+            "accepted",
+            "retired"
+          ]
+        }
+      },
+      "title": "Revision"
+    },
+    "Baseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "kind",
+        "scope",
+        "selected",
+        "closure_policy"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "enum": [
+            "working",
+            "release"
+          ]
+        },
+        "scope": {
+          "$ref": "#/$defs/Scope"
+        },
+        "selected": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[a-z][a-z0-9]*_[a-z0-9_-]+$"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/Id"
+          }
+        },
+        "closure_policy": {
+          "const": "require_selected_dependencies"
+        }
+      },
+      "title": "Baseline"
+    },
+    "Review": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "subject",
+        "semantic_model_version",
+        "subject_semantic_digest",
+        "dependency_manifest_digest",
+        "scope",
+        "outcome",
+        "reviewer",
+        "created_at"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "subject": {
+          "$ref": "#/$defs/SnapshotTarget"
+        },
+        "semantic_model_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "subject_semantic_digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "dependency_manifest_digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "scope": {
+          "$ref": "#/$defs/Scope"
+        },
+        "outcome": {
+          "enum": [
+            "accepted",
+            "rejected",
+            "changes_requested"
+          ]
+        },
+        "reviewer": {
+          "$ref": "#/$defs/Actor"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "title": "Review"
+    },
+    "SkillPin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version",
+        "digest"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "title": "SkillPin"
+    },
+    "Task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "status",
+        "goal",
+        "acceptance",
+        "base",
+        "latest_checkpoint",
+        "skills",
+        "integration_profile",
+        "outputs",
+        "consumed_proposals"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "planned",
+            "active",
+            "paused",
+            "ready_for_review",
+            "integrated",
+            "cancelled",
+            "failed"
+          ]
+        },
+        "goal": {
+          "type": "string",
+          "minLength": 1
+        },
+        "acceptance": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "base": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "commit",
+            "schema_versions",
+            "baseline_id",
+            "baseline_fingerprint"
+          ],
+          "properties": {
+            "commit": {
+              "type": "string",
+              "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$"
+            },
+            "schema_versions": {
+              "$ref": "#/$defs/Versions"
+            },
+            "baseline_id": {
+              "$ref": "#/$defs/Id"
+            },
+            "baseline_fingerprint": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        },
+        "latest_checkpoint": {
+          "$ref": "#/$defs/Id"
+        },
+        "skills": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SkillPin"
+          }
+        },
+        "integration_profile": {
+          "type": "string",
+          "minLength": 1
+        },
+        "outputs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(?!/)(?!.*\\\\)(?!.*:)(?!.*(?:^|/)\\.\\.?(?:/|$))[^\\u0000-\\u001f]+$"
+          }
+        },
+        "consumed_proposals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Id"
+          },
+          "uniqueItems": true
+        }
+      },
+      "title": "Task"
+    },
+    "Checkpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "task_id",
+        "created_at",
+        "summary",
+        "working_files",
+        "decisions",
+        "open_questions",
+        "next_actions",
+        "input_manifest_path"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "task_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "working_files": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(?!/)(?!.*\\\\)(?!.*:)(?!.*(?:^|/)\\.\\.?(?:/|$))[^\\u0000-\\u001f]+$"
+          }
+        },
+        "decisions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "open_questions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "next_actions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "input_manifest_path": {
+          "type": "string",
+          "pattern": "^(?!/)(?!.*\\\\)(?!.*:)(?!.*(?:^|/)\\.\\.?(?:/|$))[^\\u0000-\\u001f]+$"
+        },
+        "provider_hint": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "enum": [
+                "claude",
+                "codex",
+                "fake"
+              ]
+            },
+            "session_id": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "external_operations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "operation_id",
+              "state"
+            ],
+            "properties": {
+              "operation_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "idempotency_key": {
+                "type": "string",
+                "minLength": 1
+              },
+              "job_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "state": {
+                "enum": [
+                  "pending",
+                  "completed",
+                  "failed",
+                  "external_state_unknown"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "title": "Checkpoint"
+    },
+    "ProposalChange": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "action",
+            "entity_id",
+            "revision_id"
+          ],
+          "properties": {
+            "action": {
+              "const": "add_revision"
+            },
+            "entity_id": {
+              "$ref": "#/$defs/Id"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/Id"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "action",
+            "baseline_id",
+            "entity_id",
+            "revision_id"
+          ],
+          "properties": {
+            "action": {
+              "const": "select_revision"
+            },
+            "baseline_id": {
+              "$ref": "#/$defs/Id"
+            },
+            "entity_id": {
+              "$ref": "#/$defs/Id"
+            },
+            "revision_id": {
+              "$ref": "#/$defs/Id"
+            }
+          }
+        }
+      ],
+      "title": "ProposalChange"
+    },
+    "Proposal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "task_id",
+        "base_commit",
+        "expected_baseline_fingerprint",
+        "input_revisions",
+        "changes"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "task_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "base_commit": {
+          "type": "string",
+          "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$"
+        },
+        "expected_baseline_fingerprint": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "input_revisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SnapshotTarget"
+          }
+        },
+        "changes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ProposalChange"
+          },
+          "minItems": 1
+        }
+      },
+      "title": "Proposal"
+    },
+    "Sequence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "chapters"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "chapters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "label",
+              "scenes"
+            ],
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/Id"
+              },
+              "label": {
+                "type": "string",
+                "minLength": 1
+              },
+              "scenes": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Reference"
+                }
+              }
+            }
+          }
+        }
+      },
+      "title": "Sequence"
+    },
+    "SkillManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "version",
+        "entrypoint"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "entrypoint": {
+          "type": "string",
+          "pattern": "^(?!/)(?!.*\\\\)(?!.*:)(?!.*(?:^|/)\\.\\.?(?:/|$))[^\\u0000-\\u001f]+$"
+        }
+      },
+      "title": "SkillManifest"
+    },
+    "McpConfiguration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profiles"
+      ],
+      "properties": {
+        "profiles": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "internal_tools",
+              "external_connections"
+            ],
+            "properties": {
+              "internal_tools": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "uniqueItems": true
+              },
+              "external_connections": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "id",
+                    "credential_ref",
+                    "enabled"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "credential_ref": {
+                      "type": "string",
+                      "pattern": "^local:[a-zA-Z0-9_.-]+$"
+                    },
+                    "enabled": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "title": "McpConfiguration"
+    },
+    "SchemaLockEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_id",
+        "version",
+        "digest"
+      ],
+      "properties": {
+        "schema_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "path": {
+          "type": "string",
+          "pattern": "^(?!/)(?!.*\\\\)(?!.*:)(?!.*(?:^|/)\\.\\.?(?:/|$))[^\\u0000-\\u001f]+$"
+        },
+        "reference_paths": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "kinds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "plugin": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "version",
+            "digest"
+          ],
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "digest": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          }
+        }
+      },
+      "title": "SchemaLockEntry"
+    },
+    "SchemaLock": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "core",
+        "extensions"
+      ],
+      "properties": {
+        "core": {
+          "$ref": "#/$defs/SchemaLockEntry"
+        },
+        "extensions": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[a-z][a-z0-9_]*(?:\\.[a-z][a-z0-9_]*)*$"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/SchemaLockEntry"
+          }
+        }
+      },
+      "title": "SchemaLock"
+    },
+    "MigrationHistory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "tool_version",
+        "base_commit",
+        "from",
+        "to",
+        "steps",
+        "decisions",
+        "verification",
+        "created_at"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Id"
+        },
+        "tool_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "base_commit": {
+          "type": "string",
+          "pattern": "^(?:[a-f0-9]{40}|[a-f0-9]{64})$"
+        },
+        "from": {
+          "$ref": "#/$defs/Versions"
+        },
+        "to": {
+          "$ref": "#/$defs/Versions"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "implementation_digest"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "implementation_digest": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          }
+        },
+        "decisions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "key",
+              "value",
+              "rationale"
+            ],
+            "properties": {
+              "key": {
+                "type": "string",
+                "minLength": 1
+              },
+              "value": {
+                "$ref": "#/$defs/JsonValue"
+              },
+              "rationale": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        },
+        "verification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "schema_valid",
+            "references_valid",
+            "semantic_checks_passed"
+          ],
+          "properties": {
+            "schema_valid": {
+              "type": "boolean"
+            },
+            "references_valid": {
+              "type": "boolean"
+            },
+            "semantic_checks_passed": {
+              "type": "boolean"
+            }
+          }
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "title": "MigrationHistory"
+    },
+    "ContextInput": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target",
+        "source_path",
+        "source_digest"
+      ],
+      "properties": {
+        "target": {
+          "$ref": "#/$defs/SnapshotTarget"
+        },
+        "source_path": {
+          "type": "string",
+          "pattern": "^(?!/)(?!.*\\\\)(?!.*:)(?!.*(?:^|/)\\.\\.?(?:/|$))[^\\u0000-\\u001f]+$"
+        },
+        "source_digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "semantic_digest": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      },
+      "title": "ContextInput"
+    },
+    "ContextManifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "snapshot_token",
+        "view",
+        "baseline_id",
+        "baseline_fingerprint",
+        "schema_versions",
+        "builder_version",
+        "query",
+        "inputs",
+        "skills",
+        "omissions"
+      ],
+      "properties": {
+        "snapshot_token": {
+          "type": "string",
+          "minLength": 1
+        },
+        "view": {
+          "enum": [
+            "basis",
+            "working"
+          ]
+        },
+        "baseline_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "baseline_fingerprint": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "schema_versions": {
+          "$ref": "#/$defs/Versions"
+        },
+        "builder_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "query": {
+          "$ref": "#/$defs/JsonObject"
+        },
+        "inputs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ContextInput"
+          }
+        },
+        "skills": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/SkillPin"
+          }
+        },
+        "omissions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      },
+      "title": "ContextManifest"
+    },
+    "Quantity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "unit",
+        "value_type"
+      ],
+      "properties": {
+        "value": {
+          "type": "number"
+        },
+        "unit": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value_type": {
+          "enum": [
+            "integer",
+            "decimal"
+          ]
+        },
+        "minimum": {
+          "type": "number"
+        },
+        "maximum": {
+          "type": "number"
+        }
+      },
+      "title": "Quantity"
+    },
+    "EffectiveAt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scene",
+        "boundary"
+      ],
+      "properties": {
+        "scene": {
+          "$ref": "#/$defs/Reference"
+        },
+        "boundary": {
+          "enum": [
+            "before",
+            "after"
+          ]
+        }
+      },
+      "title": "EffectiveAt"
+    },
+    "NarrativeCharacter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile",
+        "initial_state"
+      ],
+      "properties": {
+        "profile": {
+          "$ref": "#/$defs/JsonObject"
+        },
+        "initial_state": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "world_tick",
+            "values"
+          ],
+          "properties": {
+            "world_tick": {
+              "type": "integer"
+            },
+            "values": {
+              "$ref": "#/$defs/JsonObject"
+            }
+          }
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Reference"
+          }
+        }
+      },
+      "title": "NarrativeCharacter"
+    },
+    "NarrativeScene": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [],
+      "properties": {
+        "start_tick": {
+          "type": "integer"
+        },
+        "end_tick": {
+          "type": "integer"
+        }
+      },
+      "title": "NarrativeScene"
+    },
+    "StateEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_role",
+        "subject",
+        "effective_at",
+        "evidence",
+        "field",
+        "value"
+      ],
+      "properties": {
+        "record_role": {
+          "enum": [
+            "canon",
+            "plan"
+          ]
+        },
+        "world_tick": {
+          "type": "integer"
+        },
+        "event_order": {
+          "type": "integer"
+        },
+        "subject": {
+          "$ref": "#/$defs/Reference"
+        },
+        "effective_at": {
+          "$ref": "#/$defs/EffectiveAt"
+        },
+        "evidence": {
+          "$ref": "#/$defs/Reference"
+        },
+        "field": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value": {
+          "$ref": "#/$defs/JsonValue"
+        },
+        "unit": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "title": "StateEvent"
+    },
+    "KnowledgeEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_role",
+        "subject",
+        "effective_at",
+        "evidence",
+        "proposition",
+        "attitude"
+      ],
+      "properties": {
+        "record_role": {
+          "enum": [
+            "canon",
+            "plan"
+          ]
+        },
+        "world_tick": {
+          "type": "integer"
+        },
+        "event_order": {
+          "type": "integer"
+        },
+        "subject": {
+          "$ref": "#/$defs/Reference"
+        },
+        "effective_at": {
+          "$ref": "#/$defs/EffectiveAt"
+        },
+        "evidence": {
+          "$ref": "#/$defs/Reference"
+        },
+        "proposition": {
+          "$ref": "#/$defs/Reference"
+        },
+        "attitude": {
+          "enum": [
+            "knows",
+            "believes",
+            "suspects",
+            "explicitly_unaware"
+          ]
+        }
+      },
+      "title": "KnowledgeEvent"
+    },
+    "RevealEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_role",
+        "target",
+        "sequence_id",
+        "scene",
+        "boundary",
+        "revealed_content"
+      ],
+      "properties": {
+        "record_role": {
+          "enum": [
+            "canon",
+            "plan"
+          ]
+        },
+        "target": {
+          "$ref": "#/$defs/Reference"
+        },
+        "sequence_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "scene": {
+          "$ref": "#/$defs/Reference"
+        },
+        "boundary": {
+          "enum": [
+            "before",
+            "after"
+          ]
+        },
+        "revealed_content": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "title": "RevealEvent"
+    },
+    "NarrativeFact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "record_role"
+      ],
+      "properties": {
+        "record_role": {
+          "enum": [
+            "canon",
+            "plan"
+          ]
+        },
+        "world_tick": {
+          "type": "integer"
+        }
+      },
+      "title": "NarrativeFact"
+    },
+    "GameDesign": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [],
+      "properties": {
+        "category": {
+          "type": "string",
+          "minLength": 1
+        },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/Quantity"
+          }
+        },
+        "invulnerability_seconds": {
+          "type": "number",
+          "minimum": 0
+        },
+        "stamina_cost": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "title": "GameDesign"
+    },
+    "GameObservation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "build_id",
+        "observed_at",
+        "conditions",
+        "measurements",
+        "rule",
+        "evidence"
+      ],
+      "properties": {
+        "build_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "observed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "conditions": {
+          "$ref": "#/$defs/JsonObject"
+        },
+        "measurements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "parameter",
+              "quantity"
+            ],
+            "properties": {
+              "parameter": {
+                "type": "string",
+                "minLength": 1
+              },
+              "quantity": {
+                "$ref": "#/$defs/Quantity"
+              }
+            }
+          },
+          "minItems": 1
+        },
+        "rule": {
+          "$ref": "#/$defs/Reference"
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Reference"
+          }
+        }
+      },
+      "title": "GameObservation"
+    }
+  }
+}

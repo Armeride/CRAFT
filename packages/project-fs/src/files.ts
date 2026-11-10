@@ -52,7 +52,7 @@ export async function readSource(root: string, path: string): Promise<SourceFile
   }
 }
 
-export async function captureFiles(root: string): Promise<ReadonlyMap<string, SourceFile>> {
+export async function captureFiles(root: string, canonicalOnly = true): Promise<ReadonlyMap<string, SourceFile>> {
   const absoluteRoot = await realpath(root);
   const result = new Map<string, SourceFile>();
   const portablePaths = new Set<string>();
@@ -62,7 +62,8 @@ export async function captureFiles(root: string): Promise<ReadonlyMap<string, So
     const entries = await readdir(directory, { withFileTypes: true });
     entries.sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
     for (const entry of entries) {
-      if (depth === 0 && !(roots.has(entry.name) || rootFiles.has(entry.name))) continue;
+      if (depth === 0 && entry.name.toLowerCase() === '.git') continue;
+      if (canonicalOnly && depth === 0 && !(roots.has(entry.name) || rootFiles.has(entry.name))) continue;
       const absolute = join(directory, entry.name);
       const path = relative(absoluteRoot, absolute).split(sep).join('/');
       if (!isProjectPath(path)) throw fileFailure('PATH_ESCAPE', 'Invalid portable path', path);

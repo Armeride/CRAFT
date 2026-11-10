@@ -41,13 +41,14 @@ node dist/tools/environment.js
 
 | 명령 | 실제 범위 |
 |---|---|
-| `npm run schema:types` | JSON Schema에서 generated.ts 재생성(migration이 아님) |
+| `npm run schema:types` | core 및 migration audit JSON Schema의 타입 재생성(migration 실행이 아님) |
 | `npm run schema:check` | 생성 타입과 schema 일치 확인, 파일 쓰기 없음 |
 | `npm run typecheck` | packages/tools 및 Vitest 설정 strict 타입 검사 |
 | `npm run build` | 제품 기반 모듈과 도구를 dist에 컴파일 |
-| `npm test` | 3파일 77개 테스트: 단계 1의 71개 + 환경 6개 |
+| `npm test` | 4파일 101개 테스트: 단계 2의 24개 + 이전 77개 |
 | `npm run test:watch` | 테스트 감시 모드 |
 | `npm run check` | schema 타입 일치 → 타입 검사 → 빌드 → 전체 테스트 |
+| `npm run migration -- support` | 제품 registry의 지원표, fixture는 명시 --registry fixture |
 
 현재 개발 서버 명령은 없다. 설치 직후 브라우저 앱을 실행할 수 있다고 안내하지 않는다.
 
@@ -68,7 +69,7 @@ node dist/tools/environment.js
 
 ## Git 및 실행 환경 제약
 
-`git init`으로 현재 폴더에 저장소를 만들었다. 앱 소스의 기본 브랜치는 설치 기본값 master이며 commit/remote/추가 worktree는 아직 없다. 테스트는 .tmp 아래 독립 Git 저장소를 초기화·commit해 불변성을 검사한 뒤 경로를 확인하고 정리한다. 앱 소스 브랜치 이름과 제품이 여는 사용자 저장소의 브랜치 선택은 별개다.
+앱 소스의 기본 브랜치는 master다. 단계 2 시작 시 단계 0·1 기준을 로컬 commit 3847002로 보존했다. 단계 2 결과도 로컬에 commit하며 remote/push는 없다. 테스트는 .tmp 아래 독립 Git repo/worktree를 만들고 전체 소유 경로를 확인해 정리한다. 실제 CLI smoke 결과 2개는 검토용으로 별도 .tmp 폴더에 보존한다. 앱 소스 branch와 사용자 프로젝트 branch는 별개다.
 
 초기화 이후 자동화 샌드박스에서 `setup refresh had errors`가 발생했다. 읽기·설치·검증 명령은 일반 권한 실행으로 진행했다. 초기 `.git` 소유자는 CodexSandboxOffline, 일반 실행 계정은 Jun이므로 Git의 dubious ownership 검사가 발생한다. 이번에는 전역 safe.directory를 추가하지 않고 각 자동화 명령에 이 저장소만 지정했다.
 

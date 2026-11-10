@@ -2,6 +2,8 @@
 
 기준은 PROJECT_SPEC.md v1.1이다. [schema.json](../packages/schema/core/v1/schema.json)이 디스크 계약 원본이고 [generated.ts](../packages/schema/src/generated.ts)는 자동 생성 타입이다. 이 문서는 단계 1의 구현 선택과 보장 범위를 기록한다.
 
+단계 2에서 별도 [migration 엔진과 fixture registry](MIGRATIONS.md)를 추가했다. 아래 제품 v1 계약과 일반 변경 API는 유지하며 실제 core v2는 출시하지 않는다. fixture의 변환·attestation을 일반 디스크 쓰기/통합 지원과 구분한다.
+
 ## 스키마·지원 범위
 
 `urn:craft:schema:core:1` 번들의 $defs에 Project/Entity/Revision/Reference/SnapshotTarget/Scope/Baseline/Review/Task/Checkpoint/Proposal/Sequence/SkillManifest/McpConfiguration/SchemaLock/MigrationHistory/ContextManifest와 소설·게임 계약을 둔다. 검증에는 해당 $defs를 선택한다. 번들 루트 anyOf 전체를 manifest 검증으로 쓰지 않는다.
@@ -53,9 +55,9 @@ baseline은 selected만 따른다. 적용 depends_on 불일치는 working 경고
 - semantic model 1: kind + revision 메타/본문. created_at/created_by/body_path 제외, ID/parents/title/label/status/scope/본문/확장/ref 포함. 본문 LF 정규화.
 - aliases/tags 생략은 [], continuity 생략은 main. parents/aliases/tags/platform/mode는 정렬 집합, core references는 ref ID순, 그 외 배열은 순서 보존. JSON key 정렬, 문자열 원문 유지.
 - dependency manifest: depends_on을 따라 도달한 고정 target와 semantic digest를 ID/revision순으로 정렬한 SHA-256. cycle도 유한 계산. 미지원 의미 모델은 계산 차단.
-- diff digest·migration attestation·review 유효성은 미구현이다. review 파일의 digest 존재만으로 사용자 승인을 검증했다고 표시하지 않는다.
+- 단계 2는 source/semantic/dependency와 review/context mapping의 migration attestation을 구현했다. 전체 통합 diff 승인 토큰·release review gate는 미구현이다. review 파일의 digest 존재만으로 사용자 승인을 검증했다고 표시하지 않는다.
 
-prepareChanges(snapshot, changeSet)는 expectedSnapshot/expectedDigest를 확인해 메모리 후보 전체를 검증한다. 디스크를 쓰지 않는다. 기존 revision/review/checkpoint 바이트 변경·삭제와 entity kind 변경을 차단한다. 새 revision을 추가해도 baseline은 자동 이동하지 않는다. migration 예외는 단계 2에서 검증된 증거와 함께 추가한다.
+prepareChanges(snapshot, changeSet)는 expectedSnapshot/expectedDigest를 확인해 메모리 후보 전체를 검증한다. 디스크를 쓰지 않는다. 기존 revision/review/checkpoint 바이트 변경·삭제와 entity kind 변경을 차단한다. 새 revision을 추가해도 baseline은 자동 이동하지 않는다. 단계 2의 형식 변환은 별도 등록 engine에서 검증하며 이 API에 우회 boolean이나 임의 attestation 승인 경로를 추가하지 않았다.
 
 loadCommittedProject/validateAgainstGit은 실제 Git tree/blob을 읽어 기준 commit과 수동 변경을 비교한다. index/working/ref/사용자 설정을 변경하지 않는다. worktree 생성·통합은 없다. 기준 commit이 없으면 schema만으로 과거 바이트의 불변성을 증명할 수 없다.
 

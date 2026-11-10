@@ -12,7 +12,7 @@
 
 ## 기능 요구 추적
 
-아래 단계는 명세 18절의 번호다. 현재 단계 1의 파일·검증·정확 조회 기반까지 구현했다. FR 전체 기능의 완료 선언은 아니며 구체 범위는 IMPLEMENTATION_STATUS.md를 따른다.
+아래 단계는 명세 18절의 번호다. 현재 단계 1의 파일·검증·정확 조회와 단계 2의 migration 기반을 구현했다. FR 전체 기능의 완료 선언은 아니며 구체 범위는 IMPLEMENTATION_STATUS.md를 따른다.
 
 | ID | 구분 | 구현할 행동 | 주 단계 |
 |---|---|---|---|
@@ -99,7 +99,7 @@ R-01~R-24는 검토 메모의 설계 보완 식별자이며 이미 제품 테스
 | UI·서버 | React/Vite + Fastify, SSE/HTTP, 기능 중심 UI | 단계 5에서 정확 버전 및 접근성/E2E 선택·고정 |
 | CLI | 두 실행기 설치·버전만 확인, 인증 unknown | 단계 6: protocol/capability·취소·실제 smoke, 필요 시 Claude SDK |
 | 타입 생성 | JSON Schema → json-schema-to-typescript 16.0.0, drift 검사 | 단계 1에서 선택·검증 완료 |
-| schema 지원 범위 | core/narrative/game_design v1 읽기·메모리 후보 검증, 미지원 확장 쓰기 차단 | migration 지원표·fixture 전용 v2는 단계 2 |
+| schema 지원 범위 | 제품 core/narrative/game_design v1, 별도 fixture registry의 core 1/2와 migration | 단계 2 지원표·결정/의미 검증 완료, 실제 제품 v2 미출시 |
 | 이름·대형 자산 | CRAFT 가칭, assets 기본 | 변경 필요 시 이름/LFS 정책 결정 |
 | 후속 범위 | 의미 검색·Bun·WSL·원격 runner·교차 repo 강한 참조 | 핵심 인수 기준 뒤 사용자 필요/실측에 따라 |
 

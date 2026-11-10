@@ -11,24 +11,27 @@ import { parseProject } from './project.js';
 const exec = promisify(execFile);
 
 /** Read-only Git adapter for immutable-record validation. No worktree/ref mutations. */
-export async function loadCommittedProject(root: string, ref: string): Promise<ProjectSnapshot> {
+export async function readCommittedFiles(root: string, ref: string, canonicalOnly = true): Promise<ReadonlyMap<string, SourceFile>> {
   const absolute = await realpath(root);
+  const env = { ...process.env };
+  for (const key of Object.keys(env)) if (key.toUpperCase().startsWith('GIT_')) delete env[key];
+  env['GIT_OPTIONAL_LOCKS'] = '0';
   const args = ['-C', absolute, '-c', `safe.directory=${absolute}`];
-  const resolved = await exec('git', [...args, 'rev-parse', '--verify', '--end-of-options', `${ref}^{commit}`], { encoding: 'utf8', windowsHide: true });
+  const resolved = await exec('git', [...args, 'rev-parse', '--verify', '--end-of-options', `${ref}^{commit}`], { encoding: 'utf8', windowsHide: true, env });
   const commit = resolved.stdout.trim();
   if (!/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(commit)) throw fileFailure('GIT_INVALID_COMMIT', 'Git did not resolve a commit', 'project.yaml');
-  const listing = await exec('git', [...args, 'ls-tree', '-r', '-z', '--full-tree', commit], { encoding: 'utf8', windowsHide: true, maxBuffer: 16 * 1024 * 1024 });
+  const listing = await exec('git', [...args, 'ls-tree', '-r', '-z', '--full-tree', commit], { encoding: 'utf8', windowsHide: true, maxBuffer: 16 * 1024 * 1024, env });
   const entries: { path: string; object: string }[] = [];
   for (const entry of listing.stdout.split('\0').filter(Boolean)) {
     const match = /^(\d+) (\w+) ([a-f0-9]+)\t([\s\S]+)$/.exec(entry);
     if (!match) throw fileFailure('GIT_INVALID_TREE', 'Invalid Git tree record', 'project.yaml');
     const [, mode, type, object, path] = match;
-    if (!isCanonicalPath(path!)) continue;
+    if (canonicalOnly && !isCanonicalPath(path!)) continue;
     if (!isProjectPath(path!) || !['100644', '100755'].includes(mode!) || type !== 'blob') throw fileFailure('PATH_SYMLINK', 'Canonical Git trees must contain regular project files', path!);
     entries.push({ path: path!, object: object! });
   }
   const output = await new Promise<Buffer>((resolve, reject) => {
-    const child = spawn('git', [...args, 'cat-file', '--batch'], { shell: false, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
+    const child = spawn('git', [...args, 'cat-file', '--batch'], { shell: false, windowsHide: true, env, stdio: ['pipe', 'pipe', 'pipe'] });
     const chunks: Buffer[] = [];
     let size = 0;
     let error = '';
@@ -66,7 +69,11 @@ export async function loadCommittedProject(root: string, ref: string): Promise<P
     files.set(entry.path, { path: entry.path, contentBase64: bytes.toString('base64'), digest: hash(bytes), ...(text !== undefined ? { text } : {}) });
     cursor = end + 1;
   }
-  return parseProject(files);
+  return files;
+}
+
+export async function loadCommittedProject(root: string, ref: string): Promise<ProjectSnapshot> {
+  return parseProject(await readCommittedFiles(root, ref));
 }
 
 export async function validateAgainstGit(root: string, ref: string): Promise<ProjectSnapshot> {

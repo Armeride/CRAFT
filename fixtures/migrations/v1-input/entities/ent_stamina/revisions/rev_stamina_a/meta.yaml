@@ -1,0 +1,20 @@
+body_path: content.md
+created_at: 2026-11-10T04:00:00Z
+created_by:
+  id: fixture-user
+  type: user
+entity_id: ent_stamina
+extensions:
+  game_design:
+    parameters:
+      capacity:
+        minimum: 0
+        unit: points
+        value: 100
+        value_type: integer
+parents: []
+references: []
+revision_id: rev_stamina_a
+scope: {}
+status: draft
+title: 스태미나

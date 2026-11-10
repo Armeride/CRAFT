@@ -1,0 +1,16 @@
+{
+  "core": {
+    "digest": "68e86d111539fd08b71e08e36f866ea2d0e7f32917dc5c93b7521594a2e24fa6",
+    "schema_id": "urn:craft:fixture:schema:core:2",
+    "version": 2
+  },
+  "extensions": {
+    "fixture.person": {
+      "digest": "2c80568ba461f902781686a1822d8aa478417b09b176508f077e7173add417db",
+      "path": "schemas/extensions/fixture.person/v2/schema.json",
+      "reference_paths": [],
+      "schema_id": "urn:craft:fixture:person:2",
+      "version": 2
+    }
+  }
+}

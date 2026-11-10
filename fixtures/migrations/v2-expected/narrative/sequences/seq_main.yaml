@@ -1,0 +1,12 @@
+chapters:
+  - id: chapter_one
+    label: 1화
+    scenes:
+      - propagation: blocking
+        reference_id: ref_scene_main
+        relation: depends_on
+        target:
+          entity_id: ent_scene
+          revision_id: rev_scene_a
+        update_policy: track_approved
+id: seq_main

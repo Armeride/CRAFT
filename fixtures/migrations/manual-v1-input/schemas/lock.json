@@ -1,0 +1,16 @@
+{
+  "core": {
+    "schema_id": "urn:craft:schema:core:1",
+    "version": 1,
+    "digest": "dbe63ac3dccb311f03bf24adb91238839cbfc33868f15816ef70c22ddfc72abf"
+  },
+  "extensions": {
+    "fixture.person": {
+      "schema_id": "urn:craft:fixture:person:1",
+      "version": 1,
+      "digest": "1ee60fca26d489de49928318c76499f71fe05e9c95528e248f3746e3b56753dd",
+      "path": "schemas/extensions/fixture.person/v1/schema.json",
+      "reference_paths": []
+    }
+  }
+}

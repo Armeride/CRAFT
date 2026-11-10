@@ -1,0 +1,45 @@
+body_path: content.md
+created_at: 2026-11-10T04:00:00Z
+created_by:
+  id: fixture-user
+  type: user
+entity_id: ent_dodge
+extensions:
+  game_design:
+    category: movement
+    parameters:
+      cost:
+        minimum: 0
+        unit: points
+        value: 15
+        value_type: integer
+      invulnerability:
+        minimum: 0
+        unit: seconds
+        value: 0.2
+        value_type: decimal
+heading: 회피
+lifecycle: proposed
+parents:
+  - rev_dodge_a
+references:
+  - propagation: blocking
+    reference_id: ref_stamina
+    relation: depends_on
+    target:
+      entity_id: ent_stamina
+      revision_id: rev_stamina_a
+    update_policy: track_approved
+  - propagation: none
+    reference_id: ref_history
+    relation: compares
+    target:
+      entity_id: ent_dodge
+      revision_id: rev_dodge_a
+    update_policy: pinned
+revision_id: rev_dodge_b
+scope:
+  mode:
+    - pve
+  platform:
+    - pc

@@ -1,0 +1,19 @@
+{
+  "core": {
+    "digest": "68e86d111539fd08b71e08e36f866ea2d0e7f32917dc5c93b7521594a2e24fa6",
+    "schema_id": "urn:craft:fixture:schema:core:2",
+    "version": 2
+  },
+  "extensions": {
+    "game_design": {
+      "digest": "dbe63ac3dccb311f03bf24adb91238839cbfc33868f15816ef70c22ddfc72abf",
+      "schema_id": "urn:craft:schema:extension:game_design:1",
+      "version": 1
+    },
+    "narrative": {
+      "digest": "dbe63ac3dccb311f03bf24adb91238839cbfc33868f15816ef70c22ddfc72abf",
+      "schema_id": "urn:craft:schema:extension:narrative:1",
+      "version": 1
+    }
+  }
+}
