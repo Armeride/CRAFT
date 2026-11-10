@@ -1,0 +1,22 @@
+body_path: content.md
+created_at: 2026-11-10T04:00:00Z
+created_by:
+  id: fixture-user
+  type: user
+entity_id: ent_abcde
+extensions:
+  narrative:
+    initial_state:
+      values:
+        clothing: 평상복
+        location: 왕도
+      world_tick: 0
+    links: []
+    profile:
+      birthplace: 북부
+parents: []
+references: []
+revision_id: rev_abcde_a
+scope: {}
+status: draft
+title: ABCDE

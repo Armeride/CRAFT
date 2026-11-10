@@ -1,0 +1,13 @@
+closure_policy: require_selected_dependencies
+id: baseline_main
+kind: working
+name: 작업 기준
+scope:
+  mode:
+    - pve
+  platform:
+    - pc
+selected:
+  ent_dodge: rev_dodge_b
+  ent_observation: rev_observation_a
+  ent_stamina: rev_stamina_a

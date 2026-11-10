@@ -1,0 +1,46 @@
+body_path: content.md
+created_at: 2026-11-10T04:00:00Z
+created_by:
+  id: fixture-user
+  type: user
+entity_id: ent_movement
+extensions:
+  narrative:
+    effective_at:
+      boundary: after
+      scene:
+        propagation: none
+        reference_id: ref_scene
+        relation: related_to
+        target:
+          entity_id: ent_scene
+          revision_id: rev_scene_a
+        update_policy: pinned
+    event_order: 2
+    evidence:
+      propagation: advisory
+      reference_id: ref_evidence
+      relation: evidence
+      target:
+        anchor_id: passage_discovery
+        entity_id: ent_scene
+        revision_id: rev_scene_a
+      update_policy: pinned
+    field: location
+    record_role: canon
+    subject:
+      propagation: none
+      reference_id: ref_subject
+      relation: related_to
+      target:
+        entity_id: ent_abcde
+        revision_id: rev_abcde_a
+      update_policy: pinned
+    value: 비밀 통로
+    world_tick: 20
+parents: []
+references: []
+revision_id: rev_movement_a
+scope: {}
+status: draft
+title: 통로로 이동

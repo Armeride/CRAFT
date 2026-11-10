@@ -1,0 +1,40 @@
+{
+  "name": "craft",
+  "version": "0.0.0",
+  "private": true,
+  "description": "CRAFT local-first novel and game planning workspace",
+  "type": "module",
+  "engines": {
+    "node": "24.21.0",
+    "npm": "11.19.0"
+  },
+  "packageManager": "npm@11.19.0",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.build.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "npm run schema:check && npm run typecheck && npm run build && npm test",
+    "schema:types": "node tools/schema-types.mjs",
+    "schema:check": "node tools/schema-types.mjs --check",
+    "project:validate": "node dist/tools/project-cli.js validate",
+    "project:get": "node dist/tools/project-cli.js get",
+    "project:baseline": "node dist/tools/project-cli.js baseline"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "9.6.0",
+    "@types/node": "24.19.2",
+    "better-sqlite3": "13.0.3",
+    "json-schema-to-typescript": "16.0.0",
+    "typescript": "7.0.2",
+    "vitest": "5.1.0"
+  },
+  "allowScripts": {
+    "better-sqlite3@13.0.3": true
+  },
+  "dependencies": {
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "yaml": "2.9.1"
+  }
+}

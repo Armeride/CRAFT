@@ -1,0 +1,16 @@
+body_path: content.md
+created_at: 2026-11-10T04:00:00Z
+created_by:
+  id: fixture-user
+  type: user
+entity_id: ent_overview
+extensions:
+  studio.example:
+    unknown_data:
+      original: 손실 없이 보존
+parents: []
+references: []
+revision_id: rev_overview_a
+scope: {}
+status: approved
+title: 기획 개요

@@ -1,0 +1,30 @@
+{
+  "Revision": [
+    "/references/*"
+  ],
+  "Sequence": [
+    "/chapters/*/scenes/*"
+  ],
+  "NarrativeCharacter": [
+    "/links/*"
+  ],
+  "StateEvent": [
+    "/subject",
+    "/effective_at/scene",
+    "/evidence"
+  ],
+  "KnowledgeEvent": [
+    "/subject",
+    "/proposition",
+    "/effective_at/scene",
+    "/evidence"
+  ],
+  "RevealEvent": [
+    "/target",
+    "/scene"
+  ],
+  "GameObservation": [
+    "/rule",
+    "/evidence/*"
+  ]
+}

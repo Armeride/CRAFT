@@ -1,0 +1,8 @@
+{
+  "core": {
+    "schema_id": "urn:craft:schema:core:1",
+    "version": 1,
+    "digest": "dbe63ac3dccb311f03bf24adb91238839cbfc33868f15816ef70c22ddfc72abf"
+  },
+  "extensions": {}
+}

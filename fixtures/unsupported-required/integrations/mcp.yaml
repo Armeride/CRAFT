@@ -1,0 +1,9 @@
+profiles:
+  project-default:
+    external_connections:
+      - credential_ref: local:fixture
+        enabled: false
+        id: fixture
+    internal_tools:
+      - entity.get
+      - project.validate
