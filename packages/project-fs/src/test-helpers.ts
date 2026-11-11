@@ -14,7 +14,7 @@ export async function removeFixture(root: string): Promise<void> {
   const target = await realpath(dirname(root));
   const base = await realpath(testRoot);
   if (!target.startsWith(base + sep) || !basename(target).startsWith('stage1 검증 ')) throw new Error('Unexpected cleanup target');
-  await rm(target, { recursive: true });
+  await rm(target, { recursive: true, maxRetries: 10, retryDelay: 100 });
 }
 export async function editYaml(path: string, update: (value: Record<string, any>) => void): Promise<void> {
   // This helper deliberately simulates an external editor; it bypasses product change guards.

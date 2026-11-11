@@ -15,7 +15,8 @@ import { sourceEpochAt } from '../../git-workspace/src/generation.js';
 import { renameWithRetry } from '../../git-workspace/src/fs.js';
 import { getRegistration } from '../../tasks/src/projects.js';
 import { TaskService } from '../../tasks/src/service.js';
-import { INDEX_FORMAT, sourceFingerprint } from './types.js';
+import { INDEX_FORMAT } from './types.js';
+import { sourceFingerprint } from './fingerprint.js';
 import type { CapturedSource, IndexFailure, IndexManifest, IndexStatus, QueryEnvelope, QueryOptions, ScopeIdentity, WorkerReply } from './types.js';
 
 export class IndexError extends Error { constructor(readonly code: string, message = code) { super(message); this.name = 'IndexError'; } }
@@ -159,7 +160,7 @@ export class ProjectIndex {
       throw error;
     } finally { this.rebuilding = false; }
   }
-  async query<T = unknown>(operation: 'exact' | 'selected' | 'search' | 'analyze' | 'reverse' | 'diff' | 'tasks' | 'state' | 'state-input', args: Record<string, unknown>, options: QueryOptions): Promise<QueryEnvelope<T>> {
+  async query<T = unknown>(operation: 'catalog' | 'exact' | 'selected' | 'search' | 'analyze' | 'reverse' | 'diff' | 'tasks' | 'state' | 'state-input', args: Record<string, unknown>, options: QueryOptions): Promise<QueryEnvelope<T>> {
     this.authorize(options.scopeToken);
     if (options.perspective !== undefined && options.perspective !== 'author') throw new IndexError('CONTEXT_FORBIDDEN');
     if (operation === 'analyze' && options.allowStale) throw new IndexError('INDEX_STALE');

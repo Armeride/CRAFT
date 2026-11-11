@@ -18,13 +18,18 @@
 | better-sqlite3 | 13.0.3 | 로컬 native SQLite 드라이버 |
 | @types/better-sqlite3 | 9.6.0 | 드라이버 타입 |
 | json-schema-to-typescript | 16.0.0 | JSON Schema에서 v1 TypeScript 계약 생성 |
+| React / React DOM | 19.3.1 / 19.3.1 | 첫 UI 초안 |
+| Vite | 8.3.8 | UI build |
+| Fastify / @fastify/static | 5.12.8 / 10.1.10 | loopback API·같은 origin 정적 UI |
+| i18next / react-i18next | 27.1.1 / 18.0.1 | ko/en catalog·언어 전환 |
+| Playwright / axe Playwright | 1.65.0 / 4.14.0 | 별도 Chrome E2E·자동 접근성 |
 | SQLite | 3.53.4 | 위 설치에서 실제 SQL 조회로 확인 |
 | Claude Code | 2.1.294 | `--version`만 실행 |
 | Codex CLI | 0.164.0-alpha.11.1 | `--version`만 실행 |
 
 pnpm/Bun은 현재 PATH에서 발견되지 않았다. 추가 설치는 필요하지 않다. 두 CLI의 인증·protocol/capability·실제 실행은 미확인이다. 설치된 alpha Codex를 제품 지원 완료로 취급하지 않는다.
 
-Ajv/ajv-formats/yaml과 fs-native-extensions는 runtime dependencies다. better-sqlite3도 단계 4의 runtime dependency이며 파싱·분석·동기 SQL은 별도 worker에서 실행한다. React/Vite/Fastify/MCP SDK/E2E 도구는 해당 기능 착수 시 고정한다. 현재 packages는 논리 모듈 경계이며 별도 npm 배포 패키지는 아니다.
+Ajv/ajv-formats/yaml과 fs-native-extensions는 runtime dependencies다. better-sqlite3도 단계 4의 runtime dependency이며 파싱·분석·동기 SQL은 별도 worker에서 실행한다. React/Vite/Fastify/i18n·E2E는 UI 초안에서 exact pin했다. MCP SDK는 해당 기능 착수 시 고정한다. 현재 packages는 논리 모듈 경계이며 별도 npm 배포 패키지는 아니다.
 
 ## 설치와 실행
 
@@ -46,13 +51,13 @@ node dist/tools/environment.js
 | `npm run schema:check` | 생성 타입과 schema 일치 확인, 파일 쓰기 없음 |
 | `npm run typecheck` | packages/tools 및 Vitest 설정 strict 타입 검사 |
 | `npm run build` | 제품 기반 모듈과 도구를 dist에 컴파일 |
-| `npm test` | 8파일 158개 테스트: 단계 4의 35개 + 이전 123개. worker/별도 프로세스 시험은 먼저 build 필요 |
+| `npm test` | 10파일 166개 Vitest 테스트: 기존 158개 + UI API 4개/catalog·locale 4개. worker/별도 프로세스 시험은 먼저 build 필요 |
 | `npm run test:watch` | 테스트 감시 모드 |
-| `npm run check` | schema 타입 일치 → 타입 검사 → 빌드 → 전체 테스트 |
+| `npm run check` | schema 타입 일치 → core/web 타입 검사 → 서버/worker·UI 빌드 → 전체 Vitest 테스트 |
 | `npm run migration -- support` | 제품 registry의 지원표, fixture는 명시 --registry fixture |
 | `npm run workspace -- open ...` | 단계 3 로컬 등록·task/run·fake·복구·clone·import CLI, [계약](WORKSPACES.md) 참조 |
 
-`npm run index -- support`와 색인 CLI는 [INDEXING.md](INDEXING.md)를 따른다. 현재 개발 서버 명령은 없다. 설치 직후 브라우저 앱을 실행할 수 있다고 안내하지 않는다.
+`npm run index -- support`와 색인 CLI는 [INDEXING.md](INDEXING.md)를 따른다. 첫 UI는 npm run ui:preview로 빌드·실행하며 주소는 http://127.0.0.1:4173이다. npm run test:ui는 설치된 Chrome과 별도 예시 서버로 4개 E2E를 실행한다. UI 변경은 npm run ui:build 후 새로고침으로 확인한다. [UI_PREVIEW.md](UI_PREVIEW.md)를 따른다.
 
 ## 단계 0 환경 probe 기록과 후속 검증
 

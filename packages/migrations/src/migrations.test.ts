@@ -243,7 +243,7 @@ describe('isolated migration worktrees and preservation', () => {
 
   it('refuses cleanup when a completed worktree has unpreserved local data', async () => {
     const fixture = await setup();
-    const result = await startMigration(await options(fixture)); expect(result.state).toBe('completed');
+    const result = await startMigration(await options(fixture)); expect(result.state, JSON.stringify(result.error)).toBe('completed');
     await writeFile(join(result.workspace!.path, 'local-draft.txt'), 'uncommitted result');
     await code(removePreservedMigration(fixture.managed, result.workspace!, result.commit!), 'WORKTREE_UNPRESERVED');
     expect(await readFile(join(result.workspace!.path, 'local-draft.txt'), 'utf8')).toBe('uncommitted result');

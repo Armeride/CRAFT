@@ -10,6 +10,7 @@ ProjectIndex.registered(appData, registrationId), .run(appData, runId, working|b
 
 | operation | 현재 결과 |
 |---|---|
+| catalog | 같은 generation의 프로젝트·baseline·요소/리비전 목록. 단계 5 UI가 사용하는 서비스 operation이며 index CLI에는 별도 명령을 추가하지 않음 |
 | exact / selected | exact 고정 revision / baseline이 선택한 revision의 원문·metadata |
 | search | 제목·별칭·ID/전문 검색, 제한된 요약/snippet, history/files는 명시 선택 |
 | reverse | exact target의 직접·간접 역참조와 경로, 활성 closure 기본/history 선택 |

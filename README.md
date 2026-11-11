@@ -1,10 +1,10 @@
 # CRAFT
 
-소설과 게임 기획에 공통으로 사용하는 로컬 우선 웹 앱의 소스 저장소다. 현재 **단계 0~4(환경·파일 계약·migration·Git 작업 격리·재구축 색인/진단/검색)**를 완료했다. 단계 5는 사용자 지시를 기다린다. 웹 UI·실제 에이전트 연동은 아직 없다. migration의 v2는 fixture 전용이며 제품 v1은 유지한다.
+소설과 게임 기획에 공통으로 사용하는 로컬 우선 웹 앱의 소스 저장소다. 현재 **단계 0~4(환경·파일 계약·migration·Git 작업 격리·재구축 색인/진단/검색)**를 완료했다. 단계 5는 **UI 초안 01을 구현하고 사용자 검토를 기다리는 중**이다. 실제 에이전트 연동은 아직 없다. migration의 v2는 fixture 전용이며 제품 v1은 유지한다.
 
 현재 목표 기준은 [PROJECT_SPEC.md v1.2](PROJECT_SPEC.md), 보완 배경은 [REVIEW_NOTES.md](REVIEW_NOTES.md)다. 설계 문서 세 개는 루트에서 관리한다. 현재 진행 규칙은 **한 단계 완료 후 멈추고 대기**다.
 
-2026-11-11 기획 추가: 모든 앱 UI의 한국어·영어 i18n과 일반 요소의 시간·trigger·조건부 상태 정의/조회/비교를 FR-021/022로 추가했다. 게임은 기획 가정 평가 범위다. 단계 4에서 번역 가능한 진단과 state_model@1 계약·참조·입력 digest를 구현했다. ko/en UI는 단계 5, 상태 평가·시점/actor 비교는 단계 8에 남아 있다. 단계별 반영은 [계획](docs/IMPLEMENTATION_PLAN.md)과 [ADR-009](docs/adr/009-ui-locales-and-state-planning.md)를 따른다. 문서 v1.2는 공개 제품 schema v1을 변경하거나 제품 v2를 출시한 것이 아니다.
+2026-11-11 기획 추가: 모든 앱 UI의 한국어·영어 i18n과 일반 요소의 시간·trigger·조건부 상태 정의/조회/비교를 FR-021/022로 추가했다. 게임은 기획 가정 평가 범위다. 단계 4에서 번역 가능한 진단과 state_model@1 계약·참조·입력 digest를 구현했다. 단계 5의 첫 ko/en UI와 별도 작업 초안 저장을 연결했다. 전체 검토/통합 UI는 진행 중이며 상태 평가·시점/actor 비교는 단계 8에 남아 있다. 단계별 반영은 [계획](docs/IMPLEMENTATION_PLAN.md)과 [ADR-009](docs/adr/009-ui-locales-and-state-planning.md)를 따른다. 문서 v1.2는 공개 제품 schema v1을 변경하거나 제품 v2를 출시한 것이 아니다.
 
 ## 개발 환경
 
@@ -16,7 +16,15 @@ npm run check
 node dist/tools/environment.js
 ```
 
-개별 명령은 `npm run schema:check`, `npm run typecheck`, `npm run build`, `npm test`, `npm run test:watch`다. 빌드는 packages와 tools를 dist에 컴파일한다. 앱 실행·개발 서버·E2E 명령은 해당 기능을 추가할 때 제공한다.
+개별 명령은 `npm run schema:check`, `npm run typecheck`, `npm run build`, `npm test`, `npm run test:watch`다. build는 packages·tools·로컬 서버를 dist에 컴파일하고 ui:build는 브라우저 UI를 빌드한다. UI는 npm run ui:preview, 브라우저 E2E는 npm run test:ui로 실행한다.
+
+## UI 초안 확인
+
+~~~powershell
+npm run ui:preview
+~~~
+
+**http://127.0.0.1:4173**에서 예시 프로젝트를 확인한다. 탐색·검색·참조/리비전/diff·진단·ko/en 전환·별도 작업 초안 저장을 연결했다. [실행·검토 흐름·현재 제한](docs/UI_PREVIEW.md)을 따른다. UI 초안 확인 → 사용자 추가 요구 → 수정 방식으로 진행하며 단계 5 전체 완료는 아니다.
 
 ## 단계 1 실행
 
@@ -63,6 +71,7 @@ npm run index -- search --app-data D:/craft-local --registration <등록-ID> --t
 
 ## 개발 문서
 
+- [UI 초안 실행·검토](docs/UI_PREVIEW.md)
 - [요구사항 분류와 불변 조건](docs/REQUIREMENTS.md)
 - [구현 단계·목표·완료 기준·AT 추적표](docs/IMPLEMENTATION_PLAN.md)
 - [환경 설치·검증·제약](docs/DEVELOPMENT.md)
@@ -74,4 +83,4 @@ npm run index -- search --app-data D:/craft-local --registration <등록-ID> --t
 - [상태 모델 v1·호환성·입력 근거](docs/STATE_MODEL_V1.md)
 - [기술 결정 ADR](docs/adr/005-development-toolchain.md)
 
-packages/domain, schema, project-fs, git-workspace, migrations, tasks, workspace-runtime, state-model, indexer에 제품 기반 코드를 둔다. tools는 로컬 실행·검증·타입 생성 도구다. fixtures는 시험용 사용자 프로젝트다. 실제 사용자 프로젝트 정본 파일을 앱 저장소 루트에 만들지 않는다.
+packages/domain, schema, project-fs, git-workspace, migrations, tasks, workspace-runtime, state-model, indexer에 제품 기반 코드를 둔다. apps/web와 apps/server는 UI·로컬 API다. tools는 로컬 실행·검증·타입 생성 도구다. fixtures는 시험용 사용자 프로젝트다. 실제 사용자 프로젝트 정본 파일을 앱 저장소 루트에 만들지 않는다.

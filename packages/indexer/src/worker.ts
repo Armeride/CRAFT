@@ -14,7 +14,8 @@ import { parseProject } from '../../project-fs/src/project.js';
 import { stateInputManifest } from '../../project-fs/src/state-input.js';
 import type { JsonValue } from '../../schema/src/generated.js';
 import { stateRecords } from '../../state-model/src/model.js';
-import { INDEX_FORMAT, sourceFingerprint } from './types.js';
+import { INDEX_FORMAT } from './types.js';
+import { sourceFingerprint } from './fingerprint.js';
 import type { CapturedSource, IndexFailure, IndexManifest, WorkerReply, WorkerRequest } from './types.js';
 
 const configuration = workerData as { path: string; scopeKey: string; projectId: string };
@@ -177,10 +178,11 @@ function queryInsideTransaction(payload: { operation: string; args: Record<strin
   const string = (name: string) => { const value = args[name]; if (typeof value !== 'string' || !value || value.length > 256) throw new Error('QUERY_ARGUMENT_INVALID'); return value; };
   const item = (entity: string, revision: string) => {
     const record = exactRevision(snapshot, entity, revision);
-    return { entityId: entity, revisionId: revision, kind: snapshot.entities.get(entity)!.value.kind, meta: record.meta, body: record.body, sourcePath: record.path, sourceDigest: snapshot.files.get(record.path)!.digest, bodyDigest: snapshot.files.get(record.bodyPath)!.digest, selected: baseline.value.selected[entity] === revision, writable: record.writable };
+    return { entityId: entity, revisionId: revision, kind: snapshot.entities.get(entity)!.value.kind, meta: record.meta, references: record.references.map(ref => ref.value), body: record.body, sourcePath: record.path, sourceDigest: snapshot.files.get(record.path)!.digest, bodyDigest: snapshot.files.get(record.bodyPath)!.digest, selected: baseline.value.selected[entity] === revision, writable: record.writable };
   };
   let data: unknown;
   switch (payload.operation) {
+    case 'catalog': data = { project: snapshot.project, baselines: [...snapshot.baselines.values()].map(value => value.value), entities: [...snapshot.entities.values()].map(entity => ({ entityId: entity.value.id, kind: entity.value.kind, selectedRevision: baseline.value.selected[entity.value.id] ?? null, revisions: [...entity.revisions.values()].map(record => ({ revisionId: record.meta.revision_id, title: record.meta.title, status: record.meta.status, tags: record.meta.tags ?? [], scope: record.meta.scope, parents: record.meta.parents, references: record.references.length, createdAt: record.meta.created_at })) })) }; break;
     case 'exact': data = item(string('entityId'), string('revisionId')); break;
     case 'selected': { const entity = string('entityId'), revision = baseline.value.selected[entity]; if (!revision) throw new Error('ENTITY_NOT_SELECTED'); const scope = resolveScope(snapshot, baselineId, payload.scope); const record = exactRevision(snapshot, entity, revision); if (!applies(record.meta.scope, scope)) throw new ValidationFailure([issue('SCOPE_MISMATCH', record.path)]); data = item(entity, revision); break; }
     case 'search': {

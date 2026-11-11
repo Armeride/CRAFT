@@ -1,15 +1,33 @@
 # 구현 상태
 
-갱신: 2026-11-11, Asia/Seoul. **단계 0~4 완료**, 단계 5~9 미착수, 단계 10 선택 확장이다. 사용자의 지시대로 단계 4를 완료하고 멈춘다. 단계 5는 다음 지시를 기다린다.
+갱신: 2026-11-11, Asia/Seoul. **단계 0~4 완료, 단계 5 진행 중(UI 초안 01 사용자 검토 대기)**. 단계 6~9는 미착수, 10은 선택 확장이다. 사용자가 UI 초안 확인 → 추가 요구 → 수정 방식을 요청했다. 첫 검토 지점에서 멈추며 단계 5 전체 완료로 처리하거나 단계 6에 착수하지 않는다.
 
 ## 기준과 범위 구분
 
 - 목표: PROJECT_SPEC.md v1.2 전체, REVIEW_NOTES.md. [확정 요구·설계 기준·미결정](REQUIREMENTS.md)을 구분한다. FR 22개·AT 60개는 제품 전체 기준이며 아래 테스트 수와 다르다.
-- 앱 소스: master. 단계 0·1은 3847002, 2는 6a83094, 3은 906e996, 추가 기획은 2220dc5이며 단계 4를 후속 로컬 commit으로 보존한다. 앱 remote/push 없음.
+- 앱 소스: master. 단계 0·1은 3847002, 2는 6a83094, 3은 906e996, 추가 기획은 2220dc5이며 단계 4는 1fe44d2이며 UI 초안 01을 후속 로컬 commit으로 보존한다. 앱 remote/push 없음.
 - 실행 기준: Windows x64, Node 24.21.0/npm 11.19.0과 exact lockfile. 전역 설정·소유권·인증을 변경하지 않는다.
-- FR-021: 진단 code/messageKey/params와 fallback 문구를 분리했다. ko/en UI catalog·언어 전환은 단계 5이며 아직 UI가 없다.
+- FR-021: 진단 code/messageKey/params와 fallback 문구를 분리했다. 단계 5 초안 01에서 ko/en catalog·언어 전환/선호·폼 상태 보존을 연결했다. 전체 화면 인수는 진행 중이다.
 - FR-022: state_model@1 파일·호환성·참조·입력 digest/색인까지 구현했다. 평가기·상태 결과·시점/actor 전후 비교는 단계 8이다. 현재 state/state-input은 evaluatorAvailable:false다.
 - 공개 core/narrative/game_design v1·core 생성 타입·기존 fixture/semantic model 1은 유지했다. 새 상태 확장과 fixture만 별도로 추가했다. 문서 v1.2는 제품 core v2가 아니다.
+
+## 단계 5 — UI 초안 01 검토 지점
+
+사용자는 단계를 진행하되 UI부터 초안을 제시하고 직접 확인/추가 요구를 전달하는 방식을 요청했다. 현재 초안 범위에서 멈추고 피드백을 기다린다. 실행/검토는 [UI_PREVIEW.md](UI_PREVIEW.md), 결정은 [ADR-012](adr/012-web-draft-and-local-session.md)를 따른다.
+
+- apps/web: 밝은 문서 영역·왼쪽 탐색/목록·오른쪽 참조/영향, 실제 요소/검색·리비전/diff·진단, ko/en 전환, 별도 working 초안 편집/명시 저장·최근 run 복원. 390px/1440px와 키보드 탭·native modal을 확인했다.
+- apps/server: Fastify loopback 정적 UI/API, Host/Origin/Sec-Fetch-Site·HttpOnly/SameSite session/CSRF, 서버 project scope와 표준 오류, 기존 ProjectIndex/TaskService 연결. 초기 작업/체크포인트와 lease/journal/expectedDigest를 재사용한다.
+- indexer: 같은 generation의 project/baseline/요소 catalog와 exact의 모든 선언된 확장 참조를 추가했다. Node hash 구현과 브라우저가 공유하는 타입을 분리했다. 공개 디스크 schema/semantic model은 유지한다.
+- tools/ui-preview.ts: 별도 예시 Git 프로젝트·미채택 검토안 생성, --home/--port, 원본 fixture 보존·재실행 시 기존 자료 유지. default .tmp/ui-preview, http://127.0.0.1:4173.
+- React/React DOM 19.3.1, Vite 8.3.8, Fastify 5.12.8/static 10.1.10, i18next 27.1.1/react-i18next 18.0.1과 Playwright 1.65.0/axe 4.14.0 exact pin. 설치 시 npm audit 보고 147 packages/취약점 0건. 런타임 Node/npm pin은 유지했다.
+
+검증: npm run check의 4개 생성 타입·core/web typecheck·서버/worker/Vite build·**10파일 166개 Vitest**, npm run test:ui의 **4개 Chrome E2E**를 실행했다. UI API 4개와 locale/catalog 4개를 기존 158개에 추가했다. 세션/Origin/Host·다른 project 거부, 원본 guard 보존·초안 저장/충돌/복원·stale snapshot 차단을 확인했다. E2E는 검색/리비전/diff·ko/en·목표/미저장 초안 유지·저장 후 재로드·390px/키보드와 보이는 ko/en 화면/모달의 WCAG A/AA axe 자동 검사를 포함한다. 최종 전체 166개 Vitest와 4개 E2E가 모두 통과했다(각 약 169.5초/21.9초). schema/core/web typecheck·서버/worker/Vite build도 통과했다.
+
+첫 전체 회귀에서 기존 stage1 test의 정리 단계가 Windows EBUSY로 실패했다(제품 assert 165개 통과). 소유 경로 검증을 유지한 채 recursive rm에 다른 helper와 같은 제한 재시도(maxRetries 10/retryDelay 100ms)를 추가해 재검증했다. 또 다른 병렬 실행에서 기존 migration 준비가 failed로 반환되었으나 원본 오류가 당시 assert에 표시되지 않았다. 오류를 assertion에 포함했고 해당 단독 시나리오와 migration 전체 24개는 통과했다. native Git/파일 I/O의 파일별 동시 실행을 maxWorkers 2로 제한한 뒤 최종 전체 166개가 통과했다. migration의 간헐 실패 원인을 단정하지 않으며 단계 9에서 Windows 부하/장애 검증을 확대한다. 제품 검증을 생략하거나 테스트를 건너뛰지 않았다.
+
+CUA 브라우저 연결은 sandbox setup/kernel 환경 오류로 초기화되지 않았다. 설치된 Chrome의 격리된 headless context로 실제 렌더링/스크린샷/E2E를 확인했고 외부 배포는 하지 않았다. .tmp/ui-preview/draft-01-ko.png, draft-01-en.png, draft-01-mobile.png는 로컬 검토용이다. 사용자 브라우저의 기존 profile은 사용하지 않았다. preview는 사용자 확인을 위해 실행 중으로 유지한다.
+
+남은 단계 5: 사용자 UI 피드백, 새 revision/review/baseline 편집·autosave/여러 작업 복원, proposal 영속 idempotency·사용자 diff/HEAD 승인·정본 통합, clone/import/migration/scope 화면, SSE cursor/reconnect·watcher 힌트·전체 인수. AT-51~53의 첫 UI 기반을 검증했으며 전체 앱 인수 완료가 아니다. 상태 평가/시점·actor 비교는 단계 8이다.
 
 ## 단계 4 완료 범위
 
@@ -128,7 +146,7 @@ npm run workspace -- start --app-data <관리-경로> --registration <등록-ID>
 
 ## 현재 한계와 미결정
 
-- 단계 5의 웹 UI/REST/SSE·ko/en catalog·수동 검토/통합, 실제 Codex/Claude·MCP/스킬·provider 교체는 아직 없다. i18n 구현체는 UI 착수 시 선택·고정한다.
+- 단계 5 초안의 UI/REST/ko/en·명시 working 저장은 있다. SSE·전체 수동 검토/통합과 실제 Codex/Claude·MCP/스킬·provider 교체는 아직 없다. i18n 구현체는 ADR-012로 고정했다.
 - 상태 파일/입력·참조는 검증하지만 trigger 실행·시점/actor 상태 비교·canon/plan·confirmed/working·POV 결과 필터는 단계 8이다. author만 지원하고 character/reader 요청은 거부한다.
 - 현재 diff는 metadata/ref 비교와 본문 단일 hunk다. 사용자 diff 승인 token·proposal 중복 방지·target 재검증은 단계 5, B/T/R 의미 통합·전체 장애/규모 시험은 9다.
 - 그래프 전체 재분석과 요청마다 원본 hash 확인은 정확성을 위한 현재 비용이다. watcher 힌트/갱신 UI는 5, 영향 부분 최적화와 큰 자료 성능은 9에서 판단한다.
@@ -138,15 +156,17 @@ npm run workspace -- start --app-data <관리-경로> --registration <등록-ID>
 - native 모듈은 해당 OS/ABI에서 재설치한다. remotePreserved는 local remote-tracking ref 관측이며 실시간 서버 보장이 아니다. local-only 결과는 새 clone에 없다.
 - 환경 sandbox setup refresh 제약 때문에 자동화 명령은 일반 권한 실행 경로를 사용했다. safe.directory는 D:/git/CRAFT 한 명령 범위로만 설정했으며 전역 Git/CLI 설정·인증·소유권은 바꾸지 않았다.
 
-## 다음 작업 — 사용자 지시 후 단계 5만
+## 다음 작업 — UI 피드백 후 단계 5 계속
 
-1. 공식 근거/설치 버전을 확인해 React/Vite·Fastify·ko/en i18n·E2E 도구를 고정한다.
-2. loopback/session/Origin 검증과 REST/SSE를 기존 task/index application service에 연결한다. author 범위·scope/snapshot/freshness 계약을 유지한다.
+1. UI 초안 01에 대한 사용자 피드백을 먼저 반영한다. 스택/i18n/E2E 버전은 ADR-012로 고정했으므로 초기화/중복 구현하지 않는다.
+2. 구현한 loopback/session/Origin·REST 경계를 유지하며 SSE cursor/reconnect·watcher 힌트를 기존 task/index application service에 연결한다. author 범위·scope/snapshot/freshness 계약을 유지한다.
 3. 프로젝트/요소/검색/진단·working autosave·새 revision/review/baseline 선택의 수동 흐름을 만든다. 상태 파일 편집은 새 revision 규칙을 지킨다.
 4. proposal idempotency·diff/HEAD 검토 token·별도 integration 검증을 연결하고 모델 없는 실제 UI 흐름을 검증한다.
 5. 모든 앱 소유 문구·접근성/오류/형식화를 ko/en catalog로 제공하고 locale 전환 중 원문·초안·정본 digest 보존을 확인한다.
-6. 단계 5 검증/인계 후 다시 멈춘다. 지금은 착수하지 않는다.
+6. 초안 확인 → 추가 요구 → 수정 방식을 유지한다. 현재는 첫 UI 검토 대기다. 단계 5 전체 검증/인계 뒤에도 멈추며 단계 6에 자동 착수하지 않는다.
 
 ## 보존 상태
 
-단계 4 소스·새 schema/fixture·CLI·테스트·문서를 로컬 Git에 commit한다. 앱 저장소 자체에는 추가 worktree/remote가 없고 push하지 않는다. 단계 2 .tmp/stage2 CLI smoke 0CVDZz/, 단계 3 .tmp/stage3 CLI smoke zptFkI/와 최종 단계 4 .tmp/stage4 CLI smoke OrhOfS/를 검토용으로 유지한다. 모두 fixture 복사본이며 Git 제외 로컬 자료이고 원격 백업은 아니다. node_modules/dist/.tmp는 생성물이다. 일회 테스트 디렉터리는 소유 절대 경로·worktree 포함 범위를 확인해 정리한다.
+단계 4 소스는 1fe44d2에 보존했다. 이번 UI 초안 소스·CLI·테스트·문서는 후속 로컬 Git commit으로 보존한다. 앱 저장소 자체에는 추가 worktree/remote가 없고 push하지 않는다. 단계 2 .tmp/stage2 CLI smoke 0CVDZz/, 단계 3 .tmp/stage3 CLI smoke zptFkI/와 최종 단계 4 .tmp/stage4 CLI smoke OrhOfS/를 검토용으로 유지한다. 모두 fixture 복사본이며 Git 제외 로컬 자료이고 원격 백업은 아니다. node_modules/dist/.tmp는 생성물이다. 일회 테스트 디렉터리는 소유 절대 경로·worktree 포함 범위를 확인해 정리한다.
+
+UI 초안 보존: .tmp/ui-preview의 예시/앱 데이터와 .tmp/ui-e2e의 검증 예시는 Git 제외 로컬 자료다. 사용자가 저장한 초안이 생길 수 있으므로 전체 .tmp 자동 삭제를 하지 않는다. 화면 확인을 위한 preview 서버를 유지하며 종료해도 파일은 남는다.
