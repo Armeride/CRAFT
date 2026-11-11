@@ -1,6 +1,8 @@
 # v1 파일 계약과 단계 1 API
 
-기준은 PROJECT_SPEC.md v1.1이다. [schema.json](../packages/schema/core/v1/schema.json)이 디스크 계약 원본이고 [generated.ts](../packages/schema/src/generated.ts)는 자동 생성 타입이다. 이 문서는 단계 1의 구현 선택과 보장 범위를 기록한다.
+단계 1 구현 당시 기준은 PROJECT_SPEC.md v1.1이다. [schema.json](../packages/schema/core/v1/schema.json)이 디스크 계약 원본이고 [generated.ts](../packages/schema/src/generated.ts)는 자동 생성 타입이다. 이 문서는 단계 1의 구현 선택과 보장 범위를 기록한다.
+
+2026-11-11의 목표 명세 v1.2는 UI i18n과 일반 요소의 조건부 상태 요구를 추가했다. 이 문서의 공개 v1 계약은 유지한다. 현재 v1이 일반 초기 상태·조건/trigger/효과·actor 가정 평가를 모두 표현한다고 해석하지 않는다. 새 파일/버전·기존 narrative 상태의 단일 출처 매핑은 단계 4 승인 후 선행 계약 작업에서 결정하며, [ADR-009](adr/009-ui-locales-and-state-planning.md)를 따른다. UI locale은 Project.language와 독립이고 정본에 UI 번역 문자열을 저장하지 않는다.
 
 단계 2에서 별도 [migration 엔진과 fixture registry](MIGRATIONS.md)를 추가했다. 아래 제품 v1 계약과 일반 변경 API는 유지하며 실제 core v2는 출시하지 않는다. fixture의 변환·attestation을 일반 디스크 쓰기/통합 지원과 구분한다.
 

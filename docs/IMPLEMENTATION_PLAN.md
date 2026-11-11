@@ -1,12 +1,14 @@
 # 구현 단계와 각 단계별 목표
 
-기준: [명세 v1.1 18~19절](../PROJECT_SPEC.md). 단계 0~3 완료, 단계 4~9 미착수다. 사용자의 후속 지시에 따라 **한 단계 완료 후 작업을 멈추고 대기**한다. 다음 단계에 자동 착수하지 않는다. 기간 추정은 확정하지 않는다.
+기준: [명세 v1.2 18~19절](../PROJECT_SPEC.md), 2026-11-11 추가 요구 반영. 단계 0~3은 기존 범위에서 완료했고 단계 4~9는 미착수다. FR-021/022는 계획에 반영했으며 구현 완료가 아니다. 사용자의 후속 지시에 따라 **한 단계 완료 후 작업을 멈추고 대기**한다. 다음 단계에 자동 착수하지 않는다. 기간 추정은 확정하지 않는다.
 
 ## 순서와 통과 원칙
 
 의존 순서는 **0 → 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9**다. 10은 선택 확장이다. 단계 2는 최소 Git/worktree 어댑터를 선행 구현하고 단계 3에서 수명주기를 완성한다. 소설·게임 스키마는 단계 1부터 포함하며 조회 계산·UI 완성은 단계 8이다. 앞 단계의 검증 실패를 남겨 둔 채 다음 단계로 넘어가지 않는다.
 
 제품 구조는 명세 17절을 따르되 빈 패키지를 미리 늘리지 않는다. 먼저 domain/schema/project-fs/migrations/git 경계를 만들고, 실제 기능이 생길 때 indexer/context/agent/apps를 추가한다. domain은 Node·Bun·SQLite·공급자 API에 직접 의존하지 않는다. UI/REST/MCP는 같은 application service를 호출한다.
+
+v1.2 추가 요구의 배치는 [ADR-009](adr/009-ui-locales-and-state-planning.md)를 따른다. 단계 0~3을 다시 완료 처리하거나 공개 v1 schema를 재정의하지 않는다. 단계 4 승인 후 첫 하위 작업으로 상태 모델의 호환성 계약을 구현하고 나머지 색인 작업을 진행한다. 이 문서 개정만으로 단계 4를 시작한 것은 아니다.
 
 ## 단계 0 — 환경과 기술 기준
 
@@ -58,22 +60,29 @@
 
 **목표:** 파일에서만 파생된 정확한 조회·진단·검색 제공.
 
+- 선행 하위 목표: FR-022의 일반 요소 초기 상태·trigger/condition/effects·actor/가정 파일 계약과 버전 전략·기존 narrative v1 읽기 매핑을 ADR로 고정한다. 지원표·대표 fixture·schema 타입·참조 경로·semantic digest를 검증한다. 필요한 형식 변경은 명시 확장/버전과 migration으로 수행하고 입력을 추정 생성하지 않는다.
 - SQLite 전체/증분 generation, 파일 집합 고정, 실패 시 이전 정상 색인 보존 및 stale 명시. basis/working snapshot과 scope 권한 토큰 분리.
 - 직접·간접 역참조, SCC 유한 전파·원인 경로·직접 status 보존, update_policy/parents/scope에 맞는 새 버전 경고, 자동 pin 교체 금지.
 - baseline 적용 의존 폐쇄성, 인용/evidence의 과거 exact 허용, deprecated 채택·분기·release cycle 검사, review와 semantic/dependency 입력 유효성.
 - ID/별칭 NFC exact, FTS5 한국어 실제 원고·짧은 이름 경로, diff API 기반. SQLite 동기 작업의 worker 분리 필요성 측정.
+- 동적 상태의 정의·조건/효과 참조·보존 가정을 파일에서 색인하고 입력 변경 영향과 future 평가 캐시의 snapshot/actor/가정 분리 계약을 마련한다. 전체 trigger 평가기·상태 시뮬레이션은 단계 8이다.
+- FR-021 준비: 진단 code/구조화 params/details를 UI 문구와 분리하고 번역된 문자열을 정본·의미 digest로 사용하지 않는다.
 - 통과 기준: DB 삭제 전후 지식·참조·진단·작업 결과 동일, clone/worktree 검색 비혼합, SOURCE_CHANGED/INDEX_STALE 정확 표시, 1~2글자 별칭 조회, review 없는 approved의 release 차단.
-- 추적: FR-004~007/016/019, AT-01/07~11/24/26/32~33/37/42~44/48.
+- 추가 통과 기준: 공개 v1 무변경·명시 지원표·단일 상태 출처 매핑, 새 조건 참조의 추출/역참조/재구축·입력 digest 검증. AT-60의 계약 기반과 AT-58의 색인 기반을 검증하고 아직 조건을 평가하지는 않는다.
+- 추적: FR-004~007/016/019, FR-021/022 기반, AT-01/07~11/24/26/32~33/37/42~44/48/58/60.
 
 ## 단계 5 — 모델 없이 끝나는 웹 수동 흐름
 
 **목표:** 사용자가 웹에서 초안을 만들고 실제 diff를 검토해 통합.
 
 - React/Vite, Fastify REST·SSE, loopback·session/Origin 검증, 표준 오류, SSE cursor/reconnect.
+- ko/en 모든 앱 UI catalog·언어 선택·선호 보존·형식화·접근성·오류 번역을 처음부터 연결한다. 라이브러리는 착수 시 공식 근거/버전 검증 후 고정한다. 누락 key/변수·긴 번역·미저장 입력 중 locale 전환 gate를 적용한다.
 - 프로젝트 열기/개요/요소·리비전·검색·참조·진단 화면, 명시 import, task working autosave와 충돌, 새 revision·review·baseline 선택.
+- 새 상태 정의·조건/효과·가정 파일도 검증/working/새 revision 편집 경로를 따른다. 상태 평가·비교 UI 전체는 단계 8에서 완성한다.
 - proposal idempotency, 검토 토큰(source/target/diff/review), 통합 전 expected fingerprint와 head 재검증, 별도 integration worktree. migration plan/report 화면.
 - 통과 기준: 모델 없이 규칙 초안→상태 전파→사용자 review→통합, 새로고침 후 초안 복구, 참조 변경 후 본문 검토 유지, target 변경·중복 proposal 처리. Playwright 등 E2E 도구를 이때 버전 고정.
-- 추적: FR-003/012/018/020, AT-12~13/21~22/25/28/44~47.
+- 추가 통과 기준: 모든 앱 문구의 ko/en·접근성 설명·오류·형식 표시를 확인하고 locale 전환이 원문·초안·선택·정본 digest를 변경하지 않는다.
+- 추적: FR-003/012/018/020/021, FR-022 편집 기반, AT-12~13/21~22/25/28/44~47/51~53.
 
 ## 단계 6 — 에이전트와 내부 MCP
 
@@ -82,6 +91,7 @@
 - agent-core fake/capability/events, Codex App Server, Claude structured CLI(필요하면 공식 SDK). 설치·버전·인증 상태를 분리.
 - installed protocol schema/help·공식 문서 확인, 민감 정보 제거 raw event fixture. native executable/Windows shim 인수·interrupt→유예→프로세스 트리 종료 실험.
 - MCP의 search/entity/reverse/context/checkpoint/propose/validate가 같은 서비스 호출. 서버 측 run scope 바인딩, cwd/index/MCP 일치, 추가 조회 snapshot 기록.
+- 실행기·승인·진행·오류 UI의 앱 소유 문구도 ko/en으로 제공한다. 에이전트/외부 로그 원문과 앱의 번역 가능한 설명을 분리한다.
 - 통과 기준: UI 지시→전용 worktree→내부 MCP→proposal→검증→사용자 검토, 두 공급자별 명시 동의 smoke. 인증 실패/미설치/잘못된 이벤트/취소·강제 종료 처리. 종료 0이어도 invalid 결과 반영 금지.
 - 추적: FR-011/012/014/015/020, AT-11/20/25/28/37/44. 모델 없는 반복 검증은 fake 사용.
 
@@ -90,6 +100,7 @@
 **목표:** 앱·공급자 세션을 잃거나 공급자를 바꿔도 작업 의미 복원.
 
 - checkpoint/context manifest/재문맥화, 기본 스킬 5종(project-resume/design-document/scene-writing/change-impact/consistency-review), 출처·version/digest·provider overlay.
+- 상태 자료를 문맥에 포함하면 시점·actor·가정/입력 사건·평가기 정책 버전과 digest를 함께 보존한다. 재개·스킬·MCP UI도 ko/en gate를 유지한다.
 - 외부 MCP profile/allowlist/credential reference, 정책 선택 후 활성화, 로컬 fixture MCP로 side effect/idempotency/job 상태 시험.
 - 앱 재시작·브라우저 재접속·provider 교체. pending 승인 자동 재사용 금지, 외부 결과 불명은 external_state_unknown.
 - 통과 기준: DB/공급자 세션/운영 로그 삭제 후 목표·초안·결정·다음 행동 복원, Claude↔Codex 재개, proposal·관리 MCP 부작용 중복 방지. 직접 shell/API의 보장 한계 명시.
@@ -102,9 +113,13 @@
 - narrative sequence/scene boundary/world_tick/event_order, profile/initial_state, 선택 canon 사건 재생, confirmed/working과 provisional.
 - truth/knows/believes/suspects/explicitly_unaware/unrecorded, author/character/reader 필터를 제목·snippet·근거·연결/MCP까지 적용. 미래 초기값 유출 금지.
 - 게임 baseline/scope·단위·범위·구조/본문/ref diff·결정/evidence·build observation 분리, 모호한 후보·시점에 추정값 금지.
+- 일반 요소의 초기 상태·trigger/condition/effects·발생 기록·actor 바인딩·가정 평가를 구현한다. true/false/unknown, 명시 순서·반복·연쇄 한도, 정본/계획/가정 구분과 근거 추적을 제공한다. scope는 실행 조건을 대체하지 않는다.
+- 1장/5장 국경·소유권과 플레이어/NPC의 레벨·퀘스트·플래그 조건을 전후 비교하는 query·UI·fixture를 완성한다. 정의 수정은 새 revision, 조회는 파생 계산이며 원본을 자동 변경하지 않는다.
 - 두 도메인 UI·예시 프로젝트·typed query와 자연어/명령 편의 표현. 강한 POV 비밀 격리 프로필은 원본 읽기 제한을 별도 검증하고 일반 모드 한계 표시.
+- 모든 새 화면·상태/시점/조건 편집·비교 결과의 앱 문구에 ko/en을 적용한다.
 - 통과 기준: 미래 작성 뒤 과거 상태 불변, 회상 world/reader 순서 독립, 계획은 사건 아님, draft는 provisional, 동률 충돌·불완전 timeline·근거 변경 진단, PvP 후속이 PvE에 오전파하지 않음.
-- 추적: FR-001/007~009/020, AT-03~06/23/29/34~36/48.
+- 추가 통과 기준: 동일 입력의 재현·미기록 unknown·중복/충돌·유한 연쇄·다른 actor/가정/worktree 격리·미래 유출 방지, 실제 게임 실행/실시간 연동 없는 가정 평가를 검증한다.
+- 추적: FR-001/007~009/020~022, AT-03~06/23/29/34~36/48/51~60.
 
 ## 단계 9 — 전체 통합·장애·성능·배포 기준
 
@@ -114,7 +129,7 @@
 - semantic model/digest mapping과 review 승계/재검토, head/diff 변경 재승인, 무충돌 Git의 의미 충돌.
 - 취소/crash/디스크 쓰기 오류/MCP 연결 단절/외부 결과 불명 주입, immutable 수동 편집 탐지, 잠금 owner 사망/부분 journal 복구.
 - 1,000요소/10,000리비전 fixture, 잠정 성능 실측·미달 사유·개선. 설치/업데이트/schema 지원표/백업/복구 절차.
-- 통과 기준: **AT-01~50 전체 실제 통과**, 두 실제 공급자 지원 범위와 smoke 결과 명시, 명세 23절 8개 완료 조건 충족. 새 clone에는 push된 refs만 있다는 한계 명시. 기본 자동 push 없음.
+- 통과 기준: **AT-01~60 전체 실제 통과**, 두 실제 공급자 지원 범위와 smoke 결과 명시, 명세 23절 10개 완료 조건 충족. ko/en 전체 UI와 동적 상태/가정 재현·호환성 회귀를 포함한다. 새 clone에는 push된 refs만 있다는 한계 명시. 기본 자동 push 없음.
 - 추적: FR 전체 회귀, 특히 FR-005/017/018. AT-12~22/28/39~46/49 및 전체 회귀.
 
 ## 단계 10 — 선택 확장
@@ -124,6 +139,8 @@
 ## 인수 시험 실행 책임표
 
 번호 누락을 막기 위한 주 완료 단계다. 모든 AT는 단계 9에서 다시 실행한다. **현재 구현 범위에서 AT-14/15/16/18/19/30/31/39/40/50의 10개 시나리오를 검증**했다. AT-11/20/27/28/38/47은 단계 3의 파일·fake·application command 경계를 검증했고 색인/MCP/실제 provider/UI와 결합한 전체 인수는 후속 단계다. fixture registry의 검증을 제품 전체 인수 완료로 취급하지 않는다. 환경 probe 6개는 AT가 아니다.
+
+AT-51~60은 2026-11-11 추가한 미구현 인수 기준이며 이전의 123개 테스트 통과 기록에 포함되지 않는다.
 
 | AT | 주 완료 단계 | 검증 목표 |
 |---|---|---|
@@ -177,5 +194,15 @@
 | AT-48 | 8 | scope 모호성·임의 선택 금지 |
 | AT-49 | 7 | 외부 결과 불명·재전송 금지 |
 | AT-50 | 1 | 안전 YAML 오류와 위치 |
+| AT-51 | 5, 6~8 회귀 | 모든 앱 UI의 한국어·영어·접근성·오류 표시 |
+| AT-52 | 5, 8 회귀 | locale 전환 중 입력/정본/digest·상태 의미 보존 |
+| AT-53 | 5, 6~8 회귀 | catalog key/변수·복수형·긴 문구/레이아웃 검증 |
+| AT-54 | 8 | 1장/5장 국경·소유권 상태와 근거 비교 |
+| AT-55 | 8 | 플레이어/NPC actor별 trigger·조건 경계값 |
+| AT-56 | 8 | 누락 입력·초기값의 unknown 처리 |
+| AT-57 | 8 | 순서 충돌·중복 occurrence·유한 연쇄 |
+| AT-58 | 8, 색인 기반 4 | 상태 입력·근거 재현/변경 영향·가정 캐시 격리 |
+| AT-59 | 8 | 정본/계획/가정·confirmed/working·POV 분리 |
+| AT-60 | 4, 전체 회귀 9 | 새 상태 모델 도입의 공개 v1·명시 버전 호환성 |
 
 각 단계 완료 시 `IMPLEMENTATION_STATUS.md`에 구현 위치/요구 ID, 실제 명령·결과, 실패·한계, 다음 행동, 미보존 파일·브랜치 상태를 남긴다. 기능 지원 표현은 실제 검증 범위까지만 사용한다.

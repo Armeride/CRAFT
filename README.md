@@ -2,7 +2,9 @@
 
 소설과 게임 기획에 공통으로 사용하는 로컬 우선 웹 앱의 소스 저장소다. 현재 **단계 0~3(환경·파일 계약·migration·Git 작업 격리와 보존)**를 완료했다. 단계 4는 사용자 지시를 기다린다. 웹 UI·색인·실제 에이전트 연동은 아직 없다. migration의 v2는 fixture 전용이며 제품 v1은 유지한다.
 
-구현 기준은 [PROJECT_SPEC.md v1.1](PROJECT_SPEC.md), 보완 배경은 [REVIEW_NOTES.md](REVIEW_NOTES.md)다. 원본 문서 세 개는 루트에 그대로 보존한다. 현재 진행 규칙은 **한 단계 완료 후 멈추고 대기**다. [START_HERE.md](START_HERE.md)의 일반적인 연속 구현 지시보다 현재 사용자 지시를 우선한다.
+현재 목표 기준은 [PROJECT_SPEC.md v1.2](PROJECT_SPEC.md), 보완 배경은 [REVIEW_NOTES.md](REVIEW_NOTES.md)다. 설계 문서 세 개는 루트에서 관리한다. 현재 진행 규칙은 **한 단계 완료 후 멈추고 대기**다.
+
+2026-11-11 기획 추가: 모든 앱 UI의 한국어·영어 i18n과 일반 요소의 시간·trigger·조건부 상태 정의/조회/비교를 FR-021/022로 추가했다. 게임은 기획 가정 평가 범위다. **이 기능들은 아직 미구현**이며 단계 4도 시작하지 않았다. 단계별 반영은 [계획](docs/IMPLEMENTATION_PLAN.md)과 [ADR-009](docs/adr/009-ui-locales-and-state-planning.md)를 따른다. 문서 v1.2는 공개 제품 schema v1을 변경하거나 제품 v2를 출시한 것이 아니다.
 
 ## 개발 환경
 

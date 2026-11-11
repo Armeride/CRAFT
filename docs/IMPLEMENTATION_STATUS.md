@@ -1,15 +1,28 @@
 # 구현 상태
 
-갱신: 2026-11-10, Asia/Seoul.
+갱신: 2026-11-11, Asia/Seoul. 단계 3 결과는 2026-11-10의 검증 기록이고 이번 변경은 추가 기획 문서 개정이다.
 
 ## 현재 단계와 진행 규칙
 
 - **단계 0~3 완료**, 단계 4~9 미착수, 단계 10 선택 확장.
 - 사용자 지시: 순서대로 한 단계씩 진행하고 완료 후 반드시 멈춰 대기한다.
-- 이번 요청인 단계 3을 완료했다. 단계 4에 자동 착수하지 않는다.
-- 기준은 PROJECT_SPEC.md v1.1 전체와 REVIEW_NOTES.md다. 확정 요구·설계 기준·미결정 구분은 [REQUIREMENTS.md](REQUIREMENTS.md)를 유지한다.
-- 원본 문서 3개와 제품 core v1 schema/생성 타입, 기존 fixture는 변경하지 않았다.
-- 앱 소스 Git: master. 단계 0·1 기준 3847002, 단계 2 결과 6a83094의 후속 로컬 commit에 이번 소스·문서를 보존한다. 앱 remote/push 없음.
+- 단계 3은 완료했다. 현재 요청은 추가 기획 반영이며 단계 4에 자동 착수하지 않는다.
+- 현재 목표 기준은 PROJECT_SPEC.md v1.2와 REVIEW_NOTES.md다. 단계 0~3은 v1.1에서 구현했다. 확정 요구·설계 기준·미결정 구분은 [REQUIREMENTS.md](REQUIREMENTS.md)를 유지한다.
+- 사용자 추가 요구에 따라 명세·검토 메모·인계/계획 문서를 개정했다. 제품 core/extension v1 schema·생성 타입·기존 fixture와 제품 코드는 이번에 변경하지 않았다.
+- 앱 소스 Git: master. 단계 0·1 기준 3847002, 단계 2 결과 6a83094, 단계 3 결과 906e996을 로컬에 보존했다. 이번 기획은 후속 문서 commit으로 보존한다. 앱 remote/push 없음.
+
+## 2026-11-11 기획 추가 — 구현 전
+
+| 요구 | 사용자 확정 | 계획 반영 |
+|---|---|---|
+| FR-021 | 모든 앱 UI i18n, 초기 한국어·영어 | 단계 4 code/params 진단 기반, 단계 5 전체 UI catalog/언어 선택/접근성/형식화, 후속 화면에도 동일 gate |
+| FR-022 | 일반 요소의 시간·trigger·조건부 상태, 기획 규칙과 가정 입력의 조회·비교 | 단계 4 선행 versioned 파일/호환 계약·참조/색인, 단계 5 편집 기반, 단계 8 평가·시점/actor/가정 비교, 단계 9 회귀 |
+
+현재 FR은 22개, AT는 60개다. **AT-51~60은 미구현 인수 기준**이며 아래 단계 3의 123개 통과 테스트에 포함되지 않는다. 문서 revision/status와 세계/게임 상태를 구분하고, 가정 결과를 정본 발생 사실로 자동 저장하지 않는다. 실제 게임 실행/실시간 연동·원고/외부 로그 원문 자동 번역은 이번 범위가 아니다.
+
+공개 v1을 재정의하지 않는다. 상태 namespace/조건 AST/효과·반복 한도·기존 narrative 상태의 단일 출처 매핑은 단계 4 승인 후 첫 하위 작업에서 ADR/fixture/지원표로 결정한다. i18n 구현체는 단계 5에서 선택한다. [ADR-009](adr/009-ui-locales-and-state-planning.md)와 [개정 계획](IMPLEMENTATION_PLAN.md)을 따른다. 이번에는 문서 정합성·추적·링크와 기존 계약 무변경을 확인하며 제품 기능을 추가하지 않는다.
+
+이번 문서 검증 결과: FR-001~022와 AT-01~60의 연속/대응, R-01~26 추적, 기존 AT-01~50/불변 조건 9개/YAML·JSON 예시 13개 보존, 로컬 링크·앵커 65개를 확인했다. `npm run schema:check`도 통과했다. 제품 코드·의존성·스키마·fixture diff가 없으므로 123개 제품 테스트를 재실행한 것으로 기록하지 않는다.
 
 ## 단계 3 완료 범위
 
@@ -27,7 +40,7 @@
 
 단계 1의 DB 없는 exact/baseline/안전 YAML/불변성, 단계 2의 production·fixture registry와 migration 계약은 유지했다. migration 어댑터도 공통 metadata OS lock에 참여하며 legacy sentinel 정책은 보존한다.
 
-## 실제 검증
+## 단계 3 실제 검증 — 2026-11-10
 
 - npm ci: lockfile 재설치 성공, 67 packages 설치·68 packages audit, 보고된 취약점 0건.
 - npm run check: core/audit/runtime 타입 drift 검사, strict 타입 검사, build, **5파일 123개 테스트**. 이전 101개 + 단계 3의 22개다.
@@ -44,7 +57,7 @@
 - 한국어·공백 경로의 저장소 이동 후 linked .git repair와 같은 project_id 재연결을 확인했다. 이동 fixture는 환경의 directory rename EPERM 때문에 소유 경로 내 복사→이전 경로 제거로 구성했다.
 - dirty active target과 별도 integration worktree가 섞이지 않음을 확인했다. merge/target 갱신은 수행하지 않았다.
 - manifest 없는 repository를 열기만 할 때 원본을 변경하지 않고, 명시 import만 새 branch에서 수행했다. 원문의 BOM/CRLF와 source hash, draft 상태·출처, 기존 baseline/revision/review 유지와 unborn 무변경을 확인했다.
-- 원본 3개 SHA-256, 제품 core v1 및 기존 fixture 무변경, FR 20개·AT 50개 추적과 문서 링크를 대조했다.
+- 단계 3 당시 원본 3개 SHA-256, 제품 core v1 및 기존 fixture 무변경, 당시 FR 20개·AT 50개 추적과 문서 링크를 대조했다. 이번 v1.2 기획 개정 전 기록이다.
 
 현재 범위의 AT-14/15/16/18/19/30/31/39/40/50 시나리오를 검증했다. AT-11/20/27/28/38/47은 파일·fake·application command 기반이 있으며 전체 색인/MCP/provider/UI 인수는 해당 후속 단계에 남긴다. 모든 AT가 끝났다는 선언은 아니다.
 
@@ -82,13 +95,14 @@ npm run workspace -- start --app-data <관리-경로> --registration <등록-ID>
 
 ## 다음 작업: 사용자 지시 후 단계 4만
 
-1. 파일에서 재구축 가능한 SQLite 색인과 generation/snapshot 경계를 만든다.
-2. 전체/증분 갱신·외부 변경·INDEX_STALE/SOURCE_CHANGED 및 실패 시 이전 정상 색인을 보존한다.
-3. 역참조/SCC 상태 전파·원인 경로·갱신 경고와 baseline 의존 폐쇄성 검사를 구현한다.
-4. NFC exact/짧은 한국어 별칭·FTS5 실원고 검색·diff API를 검증한다.
-5. DB 삭제 전후 결과 동일·clone/worktree 비혼합 gate를 통과한 뒤 다시 멈춘다.
+1. FR-022의 상태 모델 파일/버전·v1 호환/단일 출처 매핑·typed reference·semantic digest 계약과 대표 fixture를 먼저 고정한다. 전체 평가기는 단계 8이다.
+2. 파일에서 재구축 가능한 SQLite 색인과 generation/snapshot 경계를 만들고 새로운 상태/조건 참조도 포함한다. 진단 code/params를 UI 번역과 분리한다.
+3. 전체/증분 갱신·외부 변경·INDEX_STALE/SOURCE_CHANGED 및 실패 시 이전 정상 색인을 보존한다.
+4. 역참조/SCC 상태 전파·원인 경로·갱신 경고와 baseline 의존 폐쇄성 검사를 구현한다.
+5. NFC exact/짧은 한국어 별칭·FTS5 실원고 검색·diff API를 검증한다.
+6. DB 삭제 전후 결과 동일·clone/worktree 비혼합·새 상태 계약 호환 gate를 통과한 뒤 다시 멈춘다.
 
-이번 작업은 여기서 멈춘다. 단계 4를 먼저 시작하지 않는다.
+이번 기획 개정은 여기서 멈춘다. 단계 4를 먼저 시작하지 않는다.
 
 ## 보존 상태
 

@@ -1,6 +1,6 @@
 # 요구사항 해석과 구현 경계
 
-기준: 2026-11-10, Asia/Seoul. [PROJECT_SPEC.md v1.1](../PROJECT_SPEC.md) 전체 0~23절, [REVIEW_NOTES.md](../REVIEW_NOTES.md) 전체, [START_HERE.md](../START_HERE.md)를 읽고 정리했다. 이 문서는 명세를 대체하지 않는다. 요구사항이 바뀌면 명세와 관련 ADR도 함께 갱신한다.
+기준: 2026-11-11, Asia/Seoul. [PROJECT_SPEC.md v1.2](../PROJECT_SPEC.md) 전체 0~23절, [REVIEW_NOTES.md](../REVIEW_NOTES.md) 전체, [START_HERE.md](../START_HERE.md)를 읽고 정리했다. 이 문서는 명세를 대체하지 않는다. 요구사항이 바뀌면 명세와 관련 ADR도 함께 갱신한다.
 
 ## 분류 원칙
 
@@ -36,6 +36,10 @@
 | FR-018 | 설계 기준 | 변경안 검증·충돌 표시·검토 통합 | 5, 9 |
 | FR-019 | 설계 기준 | baseline·고정 문맥·입력 근거 추적 | 4, 7 |
 | FR-020 | 설계 기준 | 자연어·구조 조회가 같은 서비스 호출 | 5, 6, 8 |
+| FR-021 | 확정 | 모든 앱 UI i18n·초기 한국어/영어·언어 선택 | 4 기반, 5~9 |
+| FR-022 | 확정 | 일반 요소의 시간·trigger·조건부 상태 정의와 시점/가정 조회·비교·근거 | 4 계약/색인, 5 편집, 8 완성, 9 |
+
+2026-11-11 사용자가 초기 UI 언어를 한국어·영어로, 게임 범위를 기획 규칙 작성과 가정 입력에 따른 상태 조회·비교로 확정했다. FR-021/022는 아직 구현하지 않았다. 문서의 v1.2는 제품 디스크 schema v2 출시가 아니다.
 
 ## 반드시 유지할 불변 조건
 
@@ -52,6 +56,8 @@
 | 7 | 미확정 초안이 확정 지식으로 자동 승격되지 않는다 | 유효 사용자 review·confirmed/working·release gate, 단계 4/5/8 |
 | 8 | 복구 불가능한 임시 상태가 있으면 worktree를 자동 제거하지 않는다 | 보존 commit·untracked 확인·정리 gate, 단계 3/9 |
 | 9 | 사람이 직접 고친 파일도 앱과 같은 검증을 통과한다 | 외부 편집 digest·Git 비교·통합 검증, 단계 1/3/9 |
+
+동적 세계/게임 상태와 문서 status/revision·참조 blocker는 서로 다른 축이다. 상태 조회·시뮬레이션과 locale 전환은 정본을 덮어쓰거나 새 승인/발생 사실을 만들지 않는다. 정의 수정은 기존 불변성·새 revision/검토 규칙을 따른다.
 
 ## 비기능 요구와 운영 경계
 
@@ -83,9 +89,11 @@
 | digest·역사 | source/semantic/dependency/diff digest 구분. review 원본은 재작성하지 않고 attestation mapping. semantic model 동등성 미증명은 재검토. task의 과거 기준 schema는 역사로 유지. R-11/12 |
 | 확장·입력 | unknown required 확장 쓰기 차단. optional도 손실 위험 요소는 쓰기 차단. JSON-compatible YAML만 허용, 중복 key/tag/merge/alias/anchor 및 비유한 값 거부, 크기·깊이 제한. R-16/21 |
 | 가져오기·외부 호출 | 기존 Markdown/text는 전용 브랜치에서 비파괴 import, 추출은 제안. 외부 operation/idempotency/job 상태를 보존하고 불명 호출은 자동 재전송하지 않는다. R-19/20 |
+| UI 국제화 | 앱 소유 문구·접근성·오류·형식화·내보내기 표제를 ko/en catalog로 제공. UI locale과 프로젝트 원문/식별자·digest 분리. R-25 |
+| 동적 상태 | 모든 상태 보유 요소에 초기 상태·trigger/조건/효과·발생/가정·actor·시점/근거를 구분. missing은 unknown, 모호성·중복/연쇄는 명시 정책. scope/문서 status와 혼합 금지. R-26 |
 | 실행기·스킬·MCP | provider capability별 지원 표시. 공통 domain service 사용. 버전/digest 고정 스킬, run overlay, 시크릿 분리. 직접 shell/API 부작용 전체를 관리 MCP와 같은 수준으로 보장하지 않는다. |
 
-R-01~R-24는 검토 메모의 설계 보완 식별자이며 이미 제품 테스트가 통과했다는 의미가 아니다. R-22는 범위가 제한되지 않은 세션의 지속 원칙이다. 현재는 사용자의 명시 요청에 따라 각 단계 완료 후 멈추며, 이번에는 단계 3까지만 진행한다.
+R-01~R-24는 기존 검토 식별자, R-25/26은 추가 사용자 요구의 설계 반영 식별자이며 제품 테스트 통과를 뜻하지 않는다. R-22는 범위가 제한되지 않은 세션의 지속 원칙이다. 현재는 사용자의 명시 요청에 따라 각 단계 완료 후 멈춘다. 단계 3 이후 이번 요청은 기획 문서 개정이며 단계 4 구현은 시작하지 않는다.
 
 ## 결정한 기술 사항과 남은 판단
 
@@ -98,6 +106,8 @@ R-01~R-24는 검토 메모의 설계 보완 식별자이며 이미 제품 테스
 | writer | node:fs 임시 파일+sync+close+rename, OS lease·expected hash·forward journal 복구 | 단계 3에서 프로세스 사망/부분 쓰기·외부 충돌 검증, 단계 9에서 전원/디스크·전체 장애 확대 |
 | Git 작업 | task/run별 worktree·초기 checkpoint·선택 snapshot, 로컬/remote-tracking 보존 구분 | 단계 3 완료. UI 검토·통합은 단계 5/9, 실제 provider 재개는 단계 7 |
 | UI·서버 | React/Vite + Fastify, SSE/HTTP, 기능 중심 UI | 단계 5에서 정확 버전 및 접근성/E2E 선택·고정 |
+| UI 언어 | 확정: 초기 ko/en, 모든 앱 문구와 접근성·오류·형식화, locale 전환 시 초안/정본 유지 | i18n 라이브러리/리소스는 단계 5에서 ADR·버전 고정 |
+| 동적 상태 | 확정: 일반 요소의 시간·조건·trigger 상태와 가정 비교. 설계: 공통 의미 모델·3값 조건·근거·비정본 평가 | 단계 4 승인 후 namespace/AST/효과/반복 한도·버전 호환 계약부터 고정. 전체 평가기 8 |
 | CLI | 두 실행기 설치·버전만 확인, 인증 unknown | 단계 6: protocol/capability·취소·실제 smoke, 필요 시 Claude SDK |
 | 타입 생성 | JSON Schema → json-schema-to-typescript 16.0.0, drift 검사 | 단계 1에서 선택·검증 완료 |
 | schema 지원 범위 | 제품 core/narrative/game_design v1, 별도 fixture registry의 core 1/2와 migration | 단계 2 지원표·결정/의미 검증 완료, 실제 제품 v2 미출시 |
@@ -106,6 +116,10 @@ R-01~R-24는 검토 메모의 설계 보완 식별자이며 이미 제품 테스
 
 실제 의존/인용 의미, 초기 상태·시점·canon 여부, 서로 다른 변경안 채택, migration 새 필드의 의미, dirty 포함 선택은 원자료가 불명확할 때만 사용자 판단이 필요하다. 현재 환경·계획을 막는 질문은 없다. 자동 승인·자동 통합·원격 push 확대는 기본값으로 부여하지 않는다.
 
+상태 모델의 namespace·조건/효과 AST·연쇄 한도·기존 narrative 초기값의 단일 출처 매핑은 아직 기술 미결정이다. 사용자 요구를 다시 묻는 대신 단계 4의 의존 구현 전에 호환성 ADR/fixture로 결정한다. 자연어 조건의 업무 의미·입력 초기값이 없으면 임의 확정하지 않는다. [ADR-009](adr/009-ui-locales-and-state-planning.md)를 따른다.
+
 ## 초기 범위에서 제외
 
 자체 모델 학습, CLI 인증 대체/구독의 임의 API 전용, 완전 자동 의미·지식 검증, 초기 벡터/그래프 DB·Redis·Kubernetes, 실시간 공동 편집, 자동 push·무검토 merge, 모든 과거 schema 역변환은 초기 범위가 아니다. 제외 항목과 미구현 필수 요구를 혼동하지 않는다.
+
+실제 게임 엔진 실행·플레이 세션 제어·실시간 연동, 프로젝트 원고/사용자 내용/에이전트·외부 로그 원문 자동 번역은 이번 추가 요구의 범위가 아니다.
