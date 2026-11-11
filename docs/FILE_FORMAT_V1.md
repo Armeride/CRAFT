@@ -2,9 +2,11 @@
 
 단계 1 구현 당시 기준은 PROJECT_SPEC.md v1.1이다. [schema.json](../packages/schema/core/v1/schema.json)이 디스크 계약 원본이고 [generated.ts](../packages/schema/src/generated.ts)는 자동 생성 타입이다. 이 문서는 단계 1의 구현 선택과 보장 범위를 기록한다.
 
-2026-11-11의 목표 명세 v1.2는 UI i18n과 일반 요소의 조건부 상태 요구를 추가했다. 이 문서의 공개 v1 계약은 유지한다. 현재 v1이 일반 초기 상태·조건/trigger/효과·actor 가정 평가를 모두 표현한다고 해석하지 않는다. 새 파일/버전·기존 narrative 상태의 단일 출처 매핑은 단계 4 승인 후 선행 계약 작업에서 결정하며, [ADR-009](adr/009-ui-locales-and-state-planning.md)를 따른다. UI locale은 Project.language와 독립이고 정본에 UI 번역 문자열을 저장하지 않는다.
+2026-11-11의 목표 명세 v1.2는 UI i18n과 일반 요소의 조건부 상태 요구를 추가했다. 이 문서의 공개 v1 계약은 유지한다. 현재 v1이 일반 초기 상태·조건/trigger/효과·actor 가정 평가를 모두 표현한다고 해석하지 않는다. 단계 4에서 별도 [state_model@1 계약/지원표](STATE_MODEL_V1.md)와 내장 reader pin·기존 narrative 초기 상태의 단일 출처 adapter를 추가했다. 공개 v1을 수정하지 않으며 전체 평가기는 단계 8이다. [ADR-010](adr/010-versioned-state-model.md)을 따른다. UI locale은 Project.language와 독립이고 정본에 UI 번역 문자열을 저장하지 않는다.
 
 단계 2에서 별도 [migration 엔진과 fixture registry](MIGRATIONS.md)를 추가했다. 아래 제품 v1 계약과 일반 변경 API는 유지하며 실제 core v2는 출시하지 않는다. fixture의 변환·attestation을 일반 디스크 쓰기/통합 지원과 구분한다.
+
+아래 표의 디스크 적용 미구현 표시는 단계 1 당시 기록이다. 현재 일반 writer/작업 복구는 [WORKSPACES.md](WORKSPACES.md), 재구축 SQLite/조회는 [INDEXING.md](INDEXING.md), 상태 확장 지원은 [STATE_MODEL_V1.md](STATE_MODEL_V1.md)를 따른다.
 
 ## 스키마·지원 범위
 
@@ -42,7 +44,7 @@ YAML 1.2 AST에서 중복 key, 명시 tag, alias/anchor/merge, 비문자열 key,
 
 한 handle의 바이트와 파일 identity·mtime/ctime을 확인하고, 캡처한 바이트만 파싱한다. 원문은 메모리의 base64/텍스트/지문에 고정된다. canonical 파일 집합을 재수집해 달라지면 SOURCE_CHANGED다. OS 보안 sandbox나 악성 writer에 대한 완전 격리라고 주장하지 않는다.
 
-serializeYaml(value, original)은 무변경이면 주석·개행을 포함한 원문을 반환한다. 변경 값은 정렬 key/UTF-8/LF로 직렬화한다. 읽기만으로 기본값이나 파일을 저장하지 않는다. 실제 다중 파일 쓰기·OS 잠금·journal은 아직 없다.
+serializeYaml(value, original)은 무변경이면 주석·개행을 포함한 원문을 반환한다. 변경 값은 정렬 key/UTF-8/LF로 직렬화한다. 읽기만으로 기본값이나 파일을 저장하지 않는다. 단계 3에서 다중 파일 쓰기·OS 잠금·journal을 추가했으며 [WORKSPACES.md](WORKSPACES.md)를 따른다.
 
 ## 참조·지문·불변성
 
@@ -57,7 +59,7 @@ baseline은 selected만 따른다. 적용 depends_on 불일치는 working 경고
 - semantic model 1: kind + revision 메타/본문. created_at/created_by/body_path 제외, ID/parents/title/label/status/scope/본문/확장/ref 포함. 본문 LF 정규화.
 - aliases/tags 생략은 [], continuity 생략은 main. parents/aliases/tags/platform/mode는 정렬 집합, core references는 ref ID순, 그 외 배열은 순서 보존. JSON key 정렬, 문자열 원문 유지.
 - dependency manifest: depends_on을 따라 도달한 고정 target와 semantic digest를 ID/revision순으로 정렬한 SHA-256. cycle도 유한 계산. 미지원 의미 모델은 계산 차단.
-- 단계 2는 source/semantic/dependency와 review/context mapping의 migration attestation을 구현했다. 전체 통합 diff 승인 토큰·release review gate는 미구현이다. review 파일의 digest 존재만으로 사용자 승인을 검증했다고 표시하지 않는다.
+- 단계 2는 source/semantic/dependency와 review/context mapping의 migration attestation을 구현했다. 단계 4는 user review·고정 입력 digest의 release 준비도를 검사한다. 전체 통합 diff 승인 토큰은 단계 5다. review 파일의 digest 존재만으로 통합 권한을 부여하지 않는다.
 
 prepareChanges(snapshot, changeSet)는 expectedSnapshot/expectedDigest를 확인해 메모리 후보 전체를 검증한다. 디스크를 쓰지 않는다. 기존 revision/review/checkpoint 바이트 변경·삭제와 entity kind 변경을 차단한다. 새 revision을 추가해도 baseline은 자동 이동하지 않는다. 단계 2의 형식 변환은 별도 등록 engine에서 검증하며 이 API에 우회 boolean이나 임의 attestation 승인 경로를 추가하지 않았다.
 

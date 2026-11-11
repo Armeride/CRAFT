@@ -5,6 +5,7 @@ const contracts = [
   ['packages/schema/core/v1/schema.json', 'packages/schema/src/generated.ts', 'core/v1/schema.json'],
   ['packages/migrations/schemas/audit-v1.schema.json', 'packages/migrations/src/generated-audit.ts', 'migrations/schemas/audit-v1.schema.json'],
   ['packages/workspace-runtime/schemas/runtime-v1.schema.json', 'packages/workspace-runtime/src/generated.ts', 'workspace-runtime/schemas/runtime-v1.schema.json'],
+  ['packages/schema/extensions/state_model/v1/schema.json', 'packages/state-model/src/generated.ts', 'schema/extensions/state_model/v1/schema.json'],
 ];
 for (const [source, target, label] of contracts) {
  const output = await compileFromFile(source, {

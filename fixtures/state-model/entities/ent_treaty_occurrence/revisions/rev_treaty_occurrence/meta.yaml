@@ -1,0 +1,39 @@
+body_path: content.md
+created_at: 2026-11-11T00:00:00Z
+created_by:
+  id: fixture-author
+  type: user
+entity_id: ent_treaty_occurrence
+extensions:
+  state_model:
+    bindings: {}
+    event_order: 1
+    evidence: evidence
+    inputs: {}
+    links:
+      evidence:
+        propagation: advisory
+        reference_id: ref_treaty
+        relation: evidence
+        target:
+          entity_id: ent_treaty
+          revision_id: rev_treaty
+        update_policy: pinned
+      rule:
+        propagation: blocking
+        reference_id: ref_border_change
+        relation: depends_on
+        target:
+          entity_id: ent_border_change
+          revision_id: rev_border_change
+        update_policy: pinned
+    record_role: canon
+    record_type: occurrence
+    transition: rule
+    world_tick: 30
+parents: []
+references: []
+revision_id: rev_treaty_occurrence
+scope: {}
+status: draft
+title: 조약 발생 기록

@@ -1,0 +1,29 @@
+{
+  "core": {
+    "digest": "dbe63ac3dccb311f03bf24adb91238839cbfc33868f15816ef70c22ddfc72abf",
+    "schema_id": "urn:craft:schema:core:1",
+    "version": 1
+  },
+  "extensions": {
+    "state_model": {
+      "digest": "8409f572183212dfc3a910cd14216754024fd99af9db971c0b1fc6fee8b3ccd8",
+      "kinds": [
+        "state_model.definition",
+        "state_model.transition",
+        "state_model.occurrence",
+        "state_model.scenario"
+      ],
+      "path": "schemas/extensions/state_model/v1/schema.json",
+      "plugin": {
+        "digest": "f09e24bc3cd975cabd5e86112d48f60adf7f4e65c997081b3adf67b4e0708a8c",
+        "id": "craft.state-model",
+        "version": "1.0.0"
+      },
+      "reference_paths": [
+        "/links/*"
+      ],
+      "schema_id": "urn:craft:state-model:1",
+      "version": 1
+    }
+  }
+}

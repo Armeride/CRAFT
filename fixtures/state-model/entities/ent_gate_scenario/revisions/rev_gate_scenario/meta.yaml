@@ -1,0 +1,75 @@
+body_path: content.md
+created_at: 2026-11-11T00:00:00Z
+created_by:
+  id: fixture-author
+  type: user
+entity_id: ent_gate_scenario
+extensions:
+  state_model:
+    actors:
+      door:
+        prototype: gate
+        values: {}
+      npc:
+        prototype: actor
+        values:
+          level: 9
+          quest_completed: false
+      player:
+        prototype: actor
+        values:
+          level: 10
+          quest_completed: true
+    assumptions:
+      - 정본 플레이 기록이 아닌 기획 가정이다.
+    baseline_id: baseline_main
+    input_fields: {}
+    inputs: {}
+    links:
+      actor:
+        propagation: blocking
+        reference_id: ref_actor
+        relation: depends_on
+        target:
+          entity_id: ent_actor
+          revision_id: rev_actor
+        update_policy: pinned
+      gate:
+        propagation: blocking
+        reference_id: ref_gate
+        relation: depends_on
+        target:
+          entity_id: ent_gate
+          revision_id: rev_gate
+        update_policy: pinned
+      rule:
+        propagation: blocking
+        reference_id: ref_gate_rule
+        relation: depends_on
+        target:
+          entity_id: ent_gate_rule
+          revision_id: rev_gate_rule
+        update_policy: pinned
+    occurrences:
+      - bindings:
+          actor: player
+          target: door
+        event_order: 1
+        id: enter_player
+        name: interact
+        world_tick: 10
+      - bindings:
+          actor: npc
+          target: door
+        event_order: 2
+        id: enter_npc
+        name: interact
+        world_tick: 10
+    record_type: scenario
+    world_tick: 10
+parents: []
+references: []
+revision_id: rev_gate_scenario
+scope: {}
+status: draft
+title: 플레이어와 NPC의 가정 입력

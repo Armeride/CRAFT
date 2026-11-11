@@ -3,7 +3,7 @@ import { lstat, mkdir, open, readFile, realpath } from 'node:fs/promises';
 import { hostname } from 'node:os';
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileFailure, hash, newId } from '../../project-fs/src/files.js';
-import { gitText } from './git.js';
+import { gitText, runGit } from './git.js';
 import { ValidationFailure } from '../../domain/src/model.js';
 import { renameWithRetry } from './fs.js';
 
@@ -75,8 +75,9 @@ export async function withKernelLock<T>(path: string, scope: string, action: (le
 
 export async function gitLocations(root: string): Promise<{ root: string; commonDir: string; gitDir: string }> {
   const absolute = await realpath(root);
-  const common = await gitText(absolute, ['rev-parse', '--git-common-dir']);
-  return { root: absolute, commonDir: await realpath(isAbsolute(common) ? common : resolve(absolute, common)), gitDir: await realpath(await gitText(absolute, ['rev-parse', '--absolute-git-dir'])) };
+  const values = (await runGit(absolute, ['rev-parse', '--path-format=absolute', '--show-toplevel', '--git-common-dir', '--absolute-git-dir'])).stdout.toString('utf8').trim().split(/\r?\n/);
+  if (values.length !== 3 || await realpath(values[0]!) !== absolute) throw fileFailure('GIT_ROOT_REQUIRED', 'Select the exact worktree root', 'project.yaml');
+  return { root: absolute, commonDir: await realpath(values[1]!), gitDir: await realpath(values[2]!) };
 }
 export async function worktreeScope(root: string): Promise<string> {
   const locations = await gitLocations(root);
@@ -85,7 +86,7 @@ export async function worktreeScope(root: string): Promise<string> {
 export async function withWorktreeLock<T>(root: string, action: (lease: Lease) => Promise<T>): Promise<T> {
   const locations = await gitLocations(root);
   const identity = relative(locations.commonDir, locations.gitDir) || '.';
-  return withKernelLock(join(locations.commonDir, 'craft', 'locks', `worktree-${hash(identity)}.lock`), await worktreeScope(root), action);
+  return withKernelLock(join(locations.commonDir, 'craft', 'locks', `worktree-${hash(identity)}.lock`), `worktree:${locations.commonDir}:${identity}`, action);
 }
 export async function withMetadataLock<T>(root: string, action: () => Promise<T>): Promise<T> {
   const locations = await gitLocations(root);

@@ -142,3 +142,9 @@ v1.1에서는 각 항목의 기본 행동과 실패 시 보류 조건을 명시�
 이미 공개한 core/narrative/game_design v1 schema·기존 fixture·의미 digest 계약은 이번 문서 개정으로 변경하지 않는다. 문서 v1.2와 제품 schema 버전을 구분한다. 기존 인물 초기 상태와 새 일반 상태를 중복 정본으로 만들지 않고, 단일 출처/명시 매핑을 먼저 설계한다. 정의 변경은 새 revision이고 시간 진행·가정 계산·UI 언어 변경은 원본을 덮어쓰는 동작이 아니다.
 
 현재 FR은 22개, AT는 60개다. AT-51~60은 새 인수 요구이며 제품 테스트 통과 기록이 아니다. 기존 123개 테스트는 단계 3까지의 검증으로 남긴다. 이번 변경의 확인 범위는 문서·추적·링크·기존 계약 무변경이다. [ADR-009](docs/adr/009-ui-locales-and-state-planning.md)에 배치 이유를 남긴다.
+
+## 7. 단계 4 구현 후속 — 2026-11-11
+
+6절은 기획 변경 당시 기록이다. 후속 단계 4 지시에 따라 상태 namespace/AST/효과·반복 한도·legacy 단일 출처 매핑을 [ADR-010](docs/adr/010-versioned-state-model.md)으로 결정했다. 일반 custom schema만으로는 옛 앱의 의미 검증을 강제할 수 없어 기존 plugin lock에 내장 reader pin을 추가했으며 실제 옛 reader의 쓰기 차단을 검증했다. 공개 core/narrative/game_design v1·기존 fixture는 유지했다.
+
+worker SQLite/증분·복원·scope·SCC·검토/갱신 경고·NFC/FTS5·입력 digest와 구조화 진단은 [ADR-011](docs/adr/011-worker-index-and-generations.md), [실제 상태](docs/IMPLEMENTATION_STATUS.md)를 따른다. 8파일 158개 테스트와 CLI 검증을 통과했다. 그래프 전체 재분석/요청 시 hash refresh는 현 구현 선택이다. UI catalog/독립 watcher는 5, 상태 평가·시점/actor 비교는 8, 목표 규모 성능은 9에 남아 있다. 이번 단계 완료 후 멈추고 다음 지시를 기다린다.

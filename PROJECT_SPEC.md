@@ -4,7 +4,7 @@
 - 작성일: 2026-11-10, Asia/Seoul
 - 재검토: 2026-11-10. 요구사항 누락·설계 충돌·구현 판단 경계를 재점검했다. 변경 이유는 `REVIEW_NOTES.md`에 기록한다.
 - 추가 개정: 2026-11-11. 사용자 요청과 후속 답변에 따라 UI 전체 한국어·영어 i18n, 일반 요소의 시간·트리거·조건부 상태 변화를 추가했다.
-- 상태: 제품 설계 기준. 단계 0~3의 실제 구현·검증은 `docs/IMPLEMENTATION_STATUS.md`를 따른다. 이번 추가 요구는 아직 구현하지 않았으며 단계 4는 별도 지시 전 시작하지 않는다.
+- 상태: 제품 설계 기준. 단계 0~4의 실제 구현·검증은 `docs/IMPLEMENTATION_STATUS.md`를 따른다. 추가 요구는 진단·상태 계약/색인 기반까지 구현했으며 UI/전체 평가기는 후속 단계다. 한 단계 완료 후 대기한다.
 - 제품명: CRAFT(Context, References, Agents, Files, Tasks)
 - 대상 독자: 이 대화 없이 새 Codex 세션에서 개발을 시작하는 구현자.
 - 짝 문서: `START_HERE.md` — 새 세션 시작 지시문과 구현 순서.
@@ -713,7 +713,7 @@ v1 시간 모델은 작품 내 명시적 정렬 키 `world_tick`(정수)와 `eve
 
 **게임 적용:** 사용자가 고른 기획 기준에서 플레이어 또는 특정 NPC의 레벨·소지품·플래그·퀘스트 등의 가정과 입력 사건을 주면 전후 상태를 계산·비교한다. 예를 들어 '입장 사건 + actor 레벨 10 이상 + 퀘스트 완료'일 때 대상 문을 연다고 정의하고, 레벨 9/10·완료/미완료/미기록을 각각 비교한다. 서로 다른 NPC instance의 상태를 공유하지 않는다. 결과는 **기획 가정 평가**로 표시하고 실제 플레이에서 문이 열렸다는 관찰이나 정본 세계 사실로 자동 저장하지 않는다. 실제 빌드 observation과도 별개다. 가정을 보존하려면 사용자 명시 저장으로 시나리오/작업 자료를 Git에 기록한다.
 
-**호환성과 미결정:** 현재 공개 core/narrative/game_design v1이 일반 요소 초기 상태와 조건부 전이를 모두 지원한다고 주장하지 않는다. 단계 4의 첫 하위 작업에서 새 versioned extension/필요시 migration·기존 narrative 사건의 단일 초기값/사건 출처 매핑을 결정하고 지원표·fixture·참조 추출·semantic digest를 고정한다. 기존 v1 schema/fixture를 같은 번호로 바꾸거나 초기값·조건을 추정 생성하지 않는다. 구체 namespace·조건 AST·효과 연산·반복/연쇄 한도의 직렬화는 기술 선택으로 남기되 의존 구현 전에 ADR로 확정한다. 전체 평가기·시점 비교·도메인 UI 완성은 단계 8이다.
+**호환성 구현:** 공개 core/narrative/game_design v1은 그대로 유지하고 단계 4에서 state_model@1을 추가했다. 내장 reader pin과 유한 AST/효과·반복 한도, narrative 초기값의 단일 출처 adapter, 참조·semantic digest·지원표·fixture는 [ADR-010](docs/adr/010-versioned-state-model.md)과 [상태 계약](docs/STATE_MODEL_V1.md)을 따른다. 옛 앱은 새 필수 확장의 쓰기를 차단한다. 기존 v1 schema/fixture를 같은 번호로 바꾸거나 초기값·조건을 추정 생성하지 않는다. 현재는 검증·색인·입력 근거만 지원하며 전체 평가기·시점 비교·도메인 UI 완성은 단계 8이다.
 
 ## 9. 검색·문맥 구성·재개
 
@@ -1033,7 +1033,7 @@ cache key는 로컬 repository registration, worktree identity, core/extension s
 | baseline_selections | 채택 리비전 |
 | diagnostics | 기계 검사 결과와 원인 경로 |
 | narrative_events | 상태·인식·공개 이벤트 |
-| state_definitions/transitions/inputs | 지원 schema에서 읽은 일반 요소 초기 상태·조건·효과·참조·저장한 가정. 세부 테이블은 단계 4에서 결정 |
+| state_definitions/transitions/inputs | 지원 schema의 초기 상태·조건·효과·참조·가정. 단계 4는 state_records에 저장하며 전체 평가 결과는 단계 8 |
 | tasks/checkpoints | 파일에서 읽은 재개 상태 |
 | document_fts | 본문·제목 검색 |
 
@@ -1051,9 +1051,13 @@ cache key는 로컬 repository registration, worktree identity, core/extension s
 
 원본이 invalid면 원본 오류를 먼저 표시한다. 구 index를 제공해야 한다면 반드시 stale임을 표시하고 변경 반영·확정 조회에는 사용하지 않는다. 정확 조회는 필요시 파일을 직접 읽을 수 있지만 같은 검증·권한 규칙을 적용한다.
 
+단계 4 구현 선택: 메모리에서 검증된 후보를 준비하고 기존 DB의 단일 transaction으로 새 generation을 게시한다. 오류는 rollback하며 이전 정상 generation을 보존한다. Windows DB 파일 교체 대신 이 방식을 사용한 근거와 전후 원본 검사는 [ADR-011](docs/adr/011-worker-index-and-generations.md)을 따른다.
+
 ### 13.4 증분 갱신
 
 파일 watcher + 파일 지문으로 변경을 감지하고 바뀐 노드 및 역참조 폐쇄를 재계산한다. baseline·스키마·scope 정책 변경은 영향 범위가 크므로 전체 재구축을 허용한다. 삭제·rename도 처리하고 주기적으로 원본과 대조한다. 앱 관리 쓰기는 즉시 generation을 갱신해 watcher 전달 지연을 보완한다.
+
+단계 4는 source epoch·요청 시 hash 대조/자동 refresh와 파일·revision·FTS 행의 증분 갱신을 구현했다. 그래프·진단은 정확성을 우선해 전체 재분석한다. background watcher는 단계 5의 UI 갱신 힌트, 영향 closure 최적화/목표 규모 성능 검증은 단계 9에 남긴다.
 
 ## 14. 스키마 버전과 마이그레이션
 
@@ -1627,7 +1631,7 @@ workbench-app/
 | UI 디자인 | 기능 중심 기본 UI, 별도 디자인 요청 전 대규모 시각 작업 불필요 |
 | 초기 UI 언어·게임 범위 | 사용자 확정: 한국어·영어, 기획 규칙 작성과 가정 조회·비교. 실제 게임 실행/실시간 연동 제외 |
 | i18n 구현체 | 모든 UI catalog/형식화 계약은 확정, 라이브러리·리소스 배치는 단계 5에서 검증·고정 |
-| 상태 모델 파일 계약 | 공통 상태 의미 모델 + versioned 확장/명시 호환 경로. namespace·조건 AST·효과·연쇄 한도는 단계 4 선행 계약 작업에서 ADR로 결정 |
+| 상태 모델 파일 계약 | state_model@1 + 내장 reader pin·유한 AST/효과·한도·legacy adapter(ADR-010), 전체 평가기 8 |
 
 ### 20.1 구현자가 바로 사용할 결정표
 

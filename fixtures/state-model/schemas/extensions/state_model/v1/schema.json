@@ -1,0 +1,889 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:craft:state-model:1",
+  "title": "StateModelV1",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/Definition"
+    },
+    {
+      "$ref": "#/$defs/Transition"
+    },
+    {
+      "$ref": "#/$defs/Occurrence"
+    },
+    {
+      "$ref": "#/$defs/Scenario"
+    }
+  ],
+  "$defs": {
+    "Id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*_[a-z0-9_-]+$",
+      "title": "Id"
+    },
+    "SnapshotTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "entity_id",
+        "revision_id"
+      ],
+      "properties": {
+        "entity_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "revision_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "anchor_id": {
+          "$ref": "#/$defs/Id"
+        }
+      },
+      "title": "SnapshotTarget"
+    },
+    "Reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reference_id",
+        "target",
+        "relation",
+        "propagation",
+        "update_policy"
+      ],
+      "properties": {
+        "reference_id": {
+          "$ref": "#/$defs/Id"
+        },
+        "target": {
+          "$ref": "#/$defs/SnapshotTarget"
+        },
+        "relation": {
+          "enum": [
+            "depends_on",
+            "evidence",
+            "cites",
+            "compares",
+            "replaces",
+            "related_to"
+          ]
+        },
+        "propagation": {
+          "enum": [
+            "blocking",
+            "advisory",
+            "none"
+          ]
+        },
+        "update_policy": {
+          "enum": [
+            "pinned",
+            "track_approved",
+            "track_all"
+          ]
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "title": "Reference"
+    },
+    "JsonValue": {
+      "anyOf": [
+        {
+          "type": [
+            "string",
+            "number",
+            "boolean",
+            "null"
+          ]
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        }
+      ],
+      "title": "JsonValue"
+    },
+    "JsonObject": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/JsonValue"
+      },
+      "title": "JsonObject"
+    },
+    "Field": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum": [
+            "string",
+            "boolean",
+            "number",
+            "integer",
+            "array",
+            "object",
+            "reference",
+            "reference_set"
+          ]
+        },
+        "unit": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "minimum": {
+          "type": "number"
+        },
+        "maximum": {
+          "type": "number"
+        },
+        "enum": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "minItems": 1,
+          "maxItems": 128
+        }
+      },
+      "required": [
+        "type"
+      ]
+    },
+    "Operand": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "literal"
+            },
+            "value": {
+              "$ref": "#/$defs/JsonValue"
+            },
+            "unit": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 256
+            }
+          },
+          "required": [
+            "type",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "state"
+            },
+            "link": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "maxLength": 64
+            },
+            "field": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "maxLength": 64
+            },
+            "binding": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "maxLength": 64
+            }
+          },
+          "required": [
+            "type",
+            "link",
+            "field"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "const": "input"
+            },
+            "key": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "maxLength": 64
+            }
+          },
+          "required": [
+            "type",
+            "key"
+          ]
+        }
+      ]
+    },
+    "Condition": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "maxLength": 64
+            },
+            "op": {
+              "const": "constant"
+            },
+            "value": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "id",
+            "op",
+            "value"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "maxLength": 64
+            },
+            "op": {
+              "enum": [
+                "all",
+                "any"
+              ]
+            },
+            "children": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$",
+                "maxLength": 64
+              },
+              "minItems": 1,
+              "maxItems": 128
+            }
+          },
+          "required": [
+            "id",
+            "op",
+            "children"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "maxLength": 64
+            },
+            "op": {
+              "const": "not"
+            },
+            "child": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "maxLength": 64
+            }
+          },
+          "required": [
+            "id",
+            "op",
+            "child"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_]*$",
+              "maxLength": 64
+            },
+            "op": {
+              "const": "compare"
+            },
+            "operator": {
+              "enum": [
+                "eq",
+                "ne",
+                "lt",
+                "lte",
+                "gt",
+                "gte",
+                "in"
+              ]
+            },
+            "left": {
+              "$ref": "#/$defs/Operand"
+            },
+            "right": {
+              "$ref": "#/$defs/Operand"
+            }
+          },
+          "required": [
+            "id",
+            "op",
+            "operator",
+            "left",
+            "right"
+          ]
+        }
+      ]
+    },
+    "Effect": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "op": {
+          "enum": [
+            "set",
+            "increment",
+            "decrement",
+            "unset",
+            "add_to_set",
+            "remove_from_set"
+          ]
+        },
+        "link": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "maxLength": 64
+        },
+        "field": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "maxLength": 64
+        },
+        "binding": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "maxLength": 64
+        },
+        "value": {
+          "$ref": "#/$defs/JsonValue"
+        },
+        "unit": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        }
+      },
+      "required": [
+        "op",
+        "link",
+        "field"
+      ]
+    },
+    "Definition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "record_type": {
+          "const": "definition"
+        },
+        "links": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "maxLength": 64
+          },
+          "maxProperties": 256,
+          "additionalProperties": {
+            "$ref": "#/$defs/Reference"
+          }
+        },
+        "fields": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "maxLength": 64
+          },
+          "maxProperties": 256,
+          "additionalProperties": {
+            "$ref": "#/$defs/Field"
+          }
+        },
+        "initial": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "source": {
+                  "const": "declared"
+                },
+                "world_tick": {
+                  "type": "integer"
+                },
+                "values": {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string",
+                    "pattern": "^[a-z][a-z0-9_]*$",
+                    "maxLength": 64
+                  },
+                  "maxProperties": 256,
+                  "additionalProperties": {
+                    "$ref": "#/$defs/JsonValue"
+                  }
+                }
+              },
+              "required": [
+                "source",
+                "world_tick",
+                "values"
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "source": {
+                  "const": "narrative_v1"
+                }
+              },
+              "required": [
+                "source"
+              ]
+            }
+          ]
+        }
+      },
+      "required": [
+        "record_type",
+        "links",
+        "fields",
+        "initial"
+      ]
+    },
+    "Transition": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "record_type": {
+          "const": "transition"
+        },
+        "links": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "maxLength": 64
+          },
+          "maxProperties": 256,
+          "additionalProperties": {
+            "$ref": "#/$defs/Reference"
+          }
+        },
+        "bindings": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "maxLength": 64
+          },
+          "maxProperties": 256,
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "maxLength": 64
+          }
+        },
+        "input_fields": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "maxLength": 64
+          },
+          "maxProperties": 256,
+          "additionalProperties": {
+            "$ref": "#/$defs/Field"
+          }
+        },
+        "trigger": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "time"
+                },
+                "world_tick": {
+                  "type": "integer"
+                },
+                "event_order": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "type",
+                "world_tick",
+                "event_order"
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "event"
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 256
+                }
+              },
+              "required": [
+                "type",
+                "name"
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "type": {
+                  "const": "condition_entered"
+                },
+                "node": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_]*$",
+                  "maxLength": 64
+                }
+              },
+              "required": [
+                "type",
+                "node"
+              ]
+            }
+          ]
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Condition"
+          },
+          "minItems": 0,
+          "maxItems": 128
+        },
+        "condition": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "maxLength": 64
+        },
+        "effects": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Effect"
+          },
+          "minItems": 1,
+          "maxItems": 128
+        },
+        "repeat": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "mode": {
+              "enum": [
+                "once_per_occurrence",
+                "on_entry"
+              ]
+            },
+            "max_per_occurrence": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 64
+            },
+            "max_chain_steps": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 256
+            }
+          },
+          "required": [
+            "mode",
+            "max_per_occurrence",
+            "max_chain_steps"
+          ]
+        }
+      },
+      "required": [
+        "record_type",
+        "links",
+        "bindings",
+        "input_fields",
+        "trigger",
+        "nodes",
+        "effects",
+        "repeat"
+      ]
+    },
+    "Occurrence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "record_type": {
+          "const": "occurrence"
+        },
+        "links": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "maxLength": 64
+          },
+          "maxProperties": 256,
+          "additionalProperties": {
+            "$ref": "#/$defs/Reference"
+          }
+        },
+        "record_role": {
+          "enum": [
+            "canon",
+            "plan"
+          ]
+        },
+        "transition": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "maxLength": 64
+        },
+        "evidence": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "maxLength": 64
+        },
+        "world_tick": {
+          "type": "integer"
+        },
+        "event_order": {
+          "type": "integer"
+        },
+        "bindings": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "maxLength": 64
+          },
+          "maxProperties": 256,
+          "additionalProperties": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "maxLength": 64
+          }
+        },
+        "inputs": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "maxLength": 64
+          },
+          "maxProperties": 256,
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        }
+      },
+      "required": [
+        "record_type",
+        "links",
+        "record_role",
+        "transition",
+        "evidence",
+        "world_tick",
+        "event_order",
+        "bindings",
+        "inputs"
+      ]
+    },
+    "Scenario": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "record_type": {
+          "const": "scenario"
+        },
+        "links": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "maxLength": 64
+          },
+          "maxProperties": 256,
+          "additionalProperties": {
+            "$ref": "#/$defs/Reference"
+          }
+        },
+        "baseline_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9]*_[a-z0-9_-]+$",
+          "title": "Id"
+        },
+        "world_tick": {
+          "type": "integer"
+        },
+        "actors": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "maxLength": 64
+          },
+          "maxProperties": 256,
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "prototype": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$",
+                "maxLength": 64
+              },
+              "values": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_]*$",
+                  "maxLength": 64
+                },
+                "maxProperties": 256,
+                "additionalProperties": {
+                  "$ref": "#/$defs/JsonValue"
+                }
+              }
+            },
+            "required": [
+              "prototype",
+              "values"
+            ]
+          }
+        },
+        "input_fields": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "maxLength": 64
+          },
+          "maxProperties": 256,
+          "additionalProperties": {
+            "$ref": "#/$defs/Field"
+          }
+        },
+        "inputs": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "maxLength": 64
+          },
+          "maxProperties": 256,
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          }
+        },
+        "occurrences": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z][a-z0-9_]*$",
+                "maxLength": 64
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "world_tick": {
+                "type": "integer"
+              },
+              "event_order": {
+                "type": "integer"
+              },
+              "bindings": {
+                "type": "object",
+                "propertyNames": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_]*$",
+                  "maxLength": 64
+                },
+                "maxProperties": 256,
+                "additionalProperties": {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_]*$",
+                  "maxLength": 64
+                }
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "world_tick",
+              "event_order",
+              "bindings"
+            ]
+          },
+          "minItems": 0,
+          "maxItems": 1024
+        },
+        "assumptions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "minItems": 0,
+          "maxItems": 128
+        }
+      },
+      "required": [
+        "record_type",
+        "links",
+        "baseline_id",
+        "world_tick",
+        "actors",
+        "input_fields",
+        "inputs",
+        "occurrences",
+        "assumptions"
+      ]
+    }
+  }
+}

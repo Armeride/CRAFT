@@ -1,0 +1,54 @@
+body_path: content.md
+created_at: 2026-11-11T00:00:00Z
+created_by:
+  id: fixture-author
+  type: user
+entity_id: ent_border_change
+extensions:
+  state_model:
+    bindings: {}
+    effects:
+      - field: owner
+        link: border
+        op: set
+        value:
+          link: faction_b
+      - field: border
+        link: border
+        op: set
+        value:
+          corridor: 남쪽 강변
+    input_fields: {}
+    links:
+      border:
+        propagation: blocking
+        reference_id: ref_border
+        relation: depends_on
+        target:
+          entity_id: ent_border
+          revision_id: rev_border
+        update_policy: pinned
+      faction_b:
+        propagation: none
+        reference_id: ref_faction_b
+        relation: related_to
+        target:
+          entity_id: ent_faction_b
+          revision_id: rev_faction_b
+        update_policy: pinned
+    nodes: []
+    record_type: transition
+    repeat:
+      max_chain_steps: 32
+      max_per_occurrence: 1
+      mode: once_per_occurrence
+    trigger:
+      event_order: 1
+      type: time
+      world_tick: 30
+parents: []
+references: []
+revision_id: rev_border_change
+scope: {}
+status: draft
+title: 조약에 의한 국경 변화

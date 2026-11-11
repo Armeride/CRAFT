@@ -1,10 +1,10 @@
 # CRAFT
 
-소설과 게임 기획에 공통으로 사용하는 로컬 우선 웹 앱의 소스 저장소다. 현재 **단계 0~3(환경·파일 계약·migration·Git 작업 격리와 보존)**를 완료했다. 단계 4는 사용자 지시를 기다린다. 웹 UI·색인·실제 에이전트 연동은 아직 없다. migration의 v2는 fixture 전용이며 제품 v1은 유지한다.
+소설과 게임 기획에 공통으로 사용하는 로컬 우선 웹 앱의 소스 저장소다. 현재 **단계 0~4(환경·파일 계약·migration·Git 작업 격리·재구축 색인/진단/검색)**를 완료했다. 단계 5는 사용자 지시를 기다린다. 웹 UI·실제 에이전트 연동은 아직 없다. migration의 v2는 fixture 전용이며 제품 v1은 유지한다.
 
 현재 목표 기준은 [PROJECT_SPEC.md v1.2](PROJECT_SPEC.md), 보완 배경은 [REVIEW_NOTES.md](REVIEW_NOTES.md)다. 설계 문서 세 개는 루트에서 관리한다. 현재 진행 규칙은 **한 단계 완료 후 멈추고 대기**다.
 
-2026-11-11 기획 추가: 모든 앱 UI의 한국어·영어 i18n과 일반 요소의 시간·trigger·조건부 상태 정의/조회/비교를 FR-021/022로 추가했다. 게임은 기획 가정 평가 범위다. **이 기능들은 아직 미구현**이며 단계 4도 시작하지 않았다. 단계별 반영은 [계획](docs/IMPLEMENTATION_PLAN.md)과 [ADR-009](docs/adr/009-ui-locales-and-state-planning.md)를 따른다. 문서 v1.2는 공개 제품 schema v1을 변경하거나 제품 v2를 출시한 것이 아니다.
+2026-11-11 기획 추가: 모든 앱 UI의 한국어·영어 i18n과 일반 요소의 시간·trigger·조건부 상태 정의/조회/비교를 FR-021/022로 추가했다. 게임은 기획 가정 평가 범위다. 단계 4에서 번역 가능한 진단과 state_model@1 계약·참조·입력 digest를 구현했다. ko/en UI는 단계 5, 상태 평가·시점/actor 비교는 단계 8에 남아 있다. 단계별 반영은 [계획](docs/IMPLEMENTATION_PLAN.md)과 [ADR-009](docs/adr/009-ui-locales-and-state-planning.md)를 따른다. 문서 v1.2는 공개 제품 schema v1을 변경하거나 제품 v2를 출시한 것이 아니다.
 
 ## 개발 환경
 
@@ -50,6 +50,17 @@ npm run workspace -- start --app-data D:/craft-local --registration <등록-ID> 
 
 독립 Git 프로젝트의 각 run에 별도 branch/worktree와 실행 전 초기 checkpoint를 만든다. fake 초안, 선택 dirty snapshot, 중단·복구·정리, refs/tree 재발견·새 run 재개, 비파괴 문서 import를 제공한다. [사용법과 보장 범위](docs/WORKSPACES.md)를 따른다. 원본에 자동 통합하거나 원격에 push하지 않는다.
 
+## 단계 4 실행
+
+~~~powershell
+npm run index -- support
+npm run project:validate -- fixtures/state-model
+npm run index -- rebuild --app-data D:/craft-local --registration <등록-ID>
+npm run index -- search --app-data D:/craft-local --registration <등록-ID> --text "국경"
+~~~
+
+등록한 독립 Git 프로젝트 또는 run/basis를 바인딩해 exact·선택·검색·역참조·진단·diff·task·상태 입력을 조회한다. DB 삭제 시 자동 재구축하며 원본은 바꾸지 않는다. [범위·명령·오류](docs/INDEXING.md)와 [상태 계약/지원표](docs/STATE_MODEL_V1.md)를 따른다. 조건 평가기는 아직 없다.
+
 ## 개발 문서
 
 - [요구사항 분류와 불변 조건](docs/REQUIREMENTS.md)
@@ -59,6 +70,8 @@ npm run workspace -- start --app-data D:/craft-local --registration <등록-ID> 
 - [단계 1 파일 형식과 API 계약](docs/FILE_FORMAT_V1.md)
 - [단계 2 마이그레이션 계약과 실행법](docs/MIGRATIONS.md)
 - [단계 3 프로젝트·작업·잠금·복구·import](docs/WORKSPACES.md)
+- [단계 4 색인·검색·진단](docs/INDEXING.md)
+- [상태 모델 v1·호환성·입력 근거](docs/STATE_MODEL_V1.md)
 - [기술 결정 ADR](docs/adr/005-development-toolchain.md)
 
-packages/domain, schema, project-fs, git-workspace, migrations, tasks, workspace-runtime에 제품 기반 코드를 둔다. tools는 로컬 실행·검증·타입 생성 도구다. fixtures는 시험용 사용자 프로젝트다. 실제 사용자 프로젝트 정본 파일을 앱 저장소 루트에 만들지 않는다.
+packages/domain, schema, project-fs, git-workspace, migrations, tasks, workspace-runtime, state-model, indexer에 제품 기반 코드를 둔다. tools는 로컬 실행·검증·타입 생성 도구다. fixtures는 시험용 사용자 프로젝트다. 실제 사용자 프로젝트 정본 파일을 앱 저장소 루트에 만들지 않는다.

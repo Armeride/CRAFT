@@ -1,0 +1,16 @@
+default_baseline_id: baseline_main
+extensions:
+  state_model:
+    required: true
+    schema_version: 1
+language: ko
+name: 시점별 국경과 조건부 문 열림
+policies:
+  approval_blocks_on_dependency_states:
+    - discussing
+    - draft
+    - in_review
+  implicit_latest_reference: forbidden
+  missing_reference: error
+project_id: prj_state_model
+schema_version: 1

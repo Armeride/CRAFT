@@ -33,8 +33,11 @@ async function invoke(root: string, args: readonly string[], input?: Uint8Array,
 export async function runGit(root: string, args: readonly string[], input?: Uint8Array, extraEnv?: NodeJS.ProcessEnv): Promise<GitOutput> {
   const absolute = await realpath(root);
   // Only exit 1 (no matching variables) is allowed; malformed config must fail closed.
-  const configured = await invoke(absolute, ['config', '--null', '--name-only', '--get-regexp', '^filter\\..*\\.(clean|smudge|process|required)$'], undefined, undefined, true);
-  const keys = configured.stdout.toString('utf8').split('\0').filter(Boolean);
+  // These builtins do not convert working-file content. Other commands retain the
+  // filter discovery/override guard; metadata reads still disable hooks and fsmonitor.
+  const metadataOnly = args[0] === 'rev-parse' || args[0] === 'symbolic-ref';
+  const configured = metadataOnly ? undefined : await invoke(absolute, ['config', '--null', '--name-only', '--get-regexp', '^filter\\..*\\.(clean|smudge|process|required)$'], undefined, undefined, true);
+  const keys = configured?.stdout.toString('utf8').split('\0').filter(Boolean) ?? [];
   const options = ['-c', 'core.hooksPath=NUL', '-c', 'core.fsmonitor=false', '-c', 'core.autocrlf=false', '-c', 'commit.gpgSign=false', '-c', 'submodule.recurse=false'];
   for (const key of keys) options.push('-c', `${key}=${key.endsWith('.required') ? 'false' : ''}`);
   return invoke(absolute, [...options, ...args], input, extraEnv);

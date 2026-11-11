@@ -8,6 +8,9 @@ import type { Baseline, Checkpoint, Entity, GameDesign, GameObservation, Project
 import { captureFiles, fileFailure, fingerprint, hash } from './files.js';
 import { locateDiagnostics, parseYaml, pointerEscape } from './yaml.js';
 import type { ParsedSource } from './yaml.js';
+import { stateKinds, stateReferencePaths, stateSchema, stateSchemaId } from '../../state-model/src/contracts.js';
+import { validateStateModel } from '../../state-model/src/model.js';
+import { statePlugin } from './state-support.js';
 
 export const builtinSchemaDigest = hash(canonicalJson({ schema: schemaBundle, reference_paths: referencePaths, kind_schemas: kindSchemas }));
 export const builtinExtensionId = (namespace: string): string => `urn:craft:schema:extension:${namespace}:1`;
@@ -72,10 +75,13 @@ export function parseProject(files: ReadonlyMap<string, SourceFile>): ProjectSna
       continue;
     }
     let support: ExtensionSupport = { supported: false };
-    if (['narrative', 'game_design'].includes(name) && declaration.schema_version === 1 && !entry.plugin) {
+    const stateInterpreter = name === 'state_model' && declaration.schema_version === 1 && canonicalJson(entry.plugin ?? null) === canonicalJson(statePlugin);
+    if (name === 'state_model' && !stateInterpreter) {
+      support = { supported: false }; // Future/missing semantic readers cannot be treated as generic custom JSON.
+    } else if (['narrative', 'game_design'].includes(name) && declaration.schema_version === 1 && !entry.plugin) {
       if (entry.schema_id !== builtinExtensionId(name) || entry.digest !== builtinSchemaDigest || entry.path) report('SCHEMA_LOCK_MISMATCH', `Bundled extension ${name} must pin the installed bundle`, 'schemas/lock.json', `/extensions/${pointerEscape(name)}`);
       else support = { supported: true };
-    } else if (entry.path && !entry.plugin) {
+    } else if (entry.path && (!entry.plugin || stateInterpreter)) {
       if (!isProjectPath(entry.path) || !entry.path.startsWith('schemas/extensions/') || !entry.path.endsWith('.json')) report('PATH_ESCAPE', 'Custom schemas must be JSON files under schemas/extensions', 'schemas/lock.json', `/extensions/${pointerEscape(name)}/path`);
       else {
         const file = files.get(entry.path);
@@ -85,6 +91,9 @@ export function parseProject(files: ReadonlyMap<string, SourceFile>): ProjectSna
           sources.set(entry.path, parsed);
           try {
             const custom = JSON.parse(file.text) as Record<string, unknown>;
+            if (name === 'state_model') {
+              if (entry.schema_id !== stateSchemaId || canonicalJson(custom) !== canonicalJson(stateSchema) || canonicalJson(entry.reference_paths) !== canonicalJson(stateReferencePaths) || canonicalJson(entry.kinds) !== canonicalJson(stateKinds)) throw new Error('state_model@1 must pin the app contract, reference paths and kinds');
+            }
             if (custom['$id'] !== entry.schema_id || custom['$schema'] !== 'https://json-schema.org/draft/2020-12/schema') throw new Error('Custom schema ID/draft mismatch');
             const inspect = (value: unknown): void => {
               if (!value || typeof value !== 'object') return;
@@ -284,6 +293,7 @@ export function parseProject(files: ReadonlyMap<string, SourceFile>): ProjectSna
     visitPaths(value, '');
   }
   diagnostics.push(...validateGraph(snapshot));
+  diagnostics.push(...validateStateModel(snapshot));
   const located = locateDiagnostics(diagnostics, sources);
   if (located.some(diagnostic => diagnostic.severity === 'error')) throw new ValidationFailure(located);
   for (const entity of entities.values()) {

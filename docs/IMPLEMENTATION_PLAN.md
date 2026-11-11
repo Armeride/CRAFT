@@ -1,6 +1,6 @@
 # 구현 단계와 각 단계별 목표
 
-기준: [명세 v1.2 18~19절](../PROJECT_SPEC.md), 2026-11-11 추가 요구 반영. 단계 0~3은 기존 범위에서 완료했고 단계 4~9는 미착수다. FR-021/022는 계획에 반영했으며 구현 완료가 아니다. 사용자의 후속 지시에 따라 **한 단계 완료 후 작업을 멈추고 대기**한다. 다음 단계에 자동 착수하지 않는다. 기간 추정은 확정하지 않는다.
+기준: [명세 v1.2 18~19절](../PROJECT_SPEC.md), 2026-11-11 추가 요구 반영. 단계 0~4는 각 범위에서 완료했고 단계 5~9는 미착수다. FR-021은 진단 기반, FR-022는 상태 계약/색인 기반만 구현했으며 UI와 전체 평가·비교는 후속 단계다. 사용자의 후속 지시에 따라 **한 단계 완료 후 작업을 멈추고 대기**한다. 다음 단계에 자동 착수하지 않는다. 기간 추정은 확정하지 않는다.
 
 ## 순서와 통과 원칙
 
@@ -8,7 +8,7 @@
 
 제품 구조는 명세 17절을 따르되 빈 패키지를 미리 늘리지 않는다. 먼저 domain/schema/project-fs/migrations/git 경계를 만들고, 실제 기능이 생길 때 indexer/context/agent/apps를 추가한다. domain은 Node·Bun·SQLite·공급자 API에 직접 의존하지 않는다. UI/REST/MCP는 같은 application service를 호출한다.
 
-v1.2 추가 요구의 배치는 [ADR-009](adr/009-ui-locales-and-state-planning.md)를 따른다. 단계 0~3을 다시 완료 처리하거나 공개 v1 schema를 재정의하지 않는다. 단계 4 승인 후 첫 하위 작업으로 상태 모델의 호환성 계약을 구현하고 나머지 색인 작업을 진행한다. 이 문서 개정만으로 단계 4를 시작한 것은 아니다.
+v1.2 추가 요구의 배치는 [ADR-009](adr/009-ui-locales-and-state-planning.md)를 따른다. 단계 0~3을 다시 완료 처리하거나 공개 v1 schema를 재정의하지 않는다. 사용자의 단계 4 지시에 따라 상태 모델의 호환성 계약을 먼저 구현하고 색인 작업을 완료했다. [ADR-010](adr/010-versioned-state-model.md)과 [ADR-011](adr/011-worker-index-and-generations.md)에 후속 결정을 남겼다.
 
 ## 단계 0 — 환경과 기술 기준
 
@@ -70,6 +70,8 @@ v1.2 추가 요구의 배치는 [ADR-009](adr/009-ui-locales-and-state-planning.
 - 통과 기준: DB 삭제 전후 지식·참조·진단·작업 결과 동일, clone/worktree 검색 비혼합, SOURCE_CHANGED/INDEX_STALE 정확 표시, 1~2글자 별칭 조회, review 없는 approved의 release 차단.
 - 추가 통과 기준: 공개 v1 무변경·명시 지원표·단일 상태 출처 매핑, 새 조건 참조의 추출/역참조/재구축·입력 digest 검증. AT-60의 계약 기반과 AT-58의 색인 기반을 검증하고 아직 조건을 평가하지는 않는다.
 - 추적: FR-004~007/016/019, FR-021/022 기반, AT-01/07~11/24/26/32~33/37/42~44/48/58/60.
+
+- 현재 결과: 완료. state_model@1/내장 reader pin/legacy adapter·입력 digest, worker SQLite full/incremental generation, scope/basis/working·원본 전후 검사, 역참조/SCC/검토·갱신 경고, NFC/FTS5·diff·task 조회를 구현했다. **8파일 158개 테스트**, lockfile 재설치와 CLI DB 삭제 복원 검증을 통과했다. 실제 옛 reader의 required 확장 쓰기 차단도 확인했다. 그래프는 전체 재분석하고 background watcher는 UI 단계에 남긴다. [지원·한계·실측](IMPLEMENTATION_STATUS.md)을 따른다. 조건 평가와 웹 UI는 포함하지 않는다.
 
 ## 단계 5 — 모델 없이 끝나는 웹 수동 흐름
 
@@ -140,7 +142,7 @@ v1.2 추가 요구의 배치는 [ADR-009](adr/009-ui-locales-and-state-planning.
 
 번호 누락을 막기 위한 주 완료 단계다. 모든 AT는 단계 9에서 다시 실행한다. **현재 구현 범위에서 AT-14/15/16/18/19/30/31/39/40/50의 10개 시나리오를 검증**했다. AT-11/20/27/28/38/47은 단계 3의 파일·fake·application command 경계를 검증했고 색인/MCP/실제 provider/UI와 결합한 전체 인수는 후속 단계다. fixture registry의 검증을 제품 전체 인수 완료로 취급하지 않는다. 환경 probe 6개는 AT가 아니다.
 
-AT-51~60은 2026-11-11 추가한 미구현 인수 기준이며 이전의 123개 테스트 통과 기록에 포함되지 않는다.
+단계 4에서 AT-01/07~10/24/26/32~33/42~43의 application/파일·색인 시나리오를 검증했다. AT-11/37은 작업별 색인/basis 격리까지이며 MCP는 6, AT-44/48은 검토 유효성·scope 조회 기반이며 전체 UI/도메인 인수는 5/8이다. AT-58은 입력 digest/캐시 격리 기반, AT-60은 공개 v1 보존·새 계약·옛 reader 차단을 검증했다. AT-51~57/59와 전체 상태 평가·UI는 아직 완료하지 않았다. 158개 테스트 수와 60개 제품 인수 기준 수를 혼동하지 않는다.
 
 | AT | 주 완료 단계 | 검증 목표 |
 |---|---|---|

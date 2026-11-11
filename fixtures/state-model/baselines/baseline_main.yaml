@@ -1,0 +1,17 @@
+closure_policy: require_selected_dependencies
+id: baseline_main
+kind: working
+name: 작업 기준
+scope: {}
+selected:
+  ent_actor: rev_actor
+  ent_border: rev_border
+  ent_border_change: rev_border_change
+  ent_faction_a: rev_faction_a
+  ent_faction_b: rev_faction_b
+  ent_gate: rev_gate
+  ent_gate_rule: rev_gate_rule
+  ent_gate_scenario: rev_gate_scenario
+  ent_overview: rev_overview_a
+  ent_treaty: rev_treaty
+  ent_treaty_occurrence: rev_treaty_occurrence

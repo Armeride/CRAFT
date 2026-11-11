@@ -1,0 +1,13 @@
+body_path: content.md
+created_at: 2026-11-11T00:00:00Z
+created_by:
+  id: fixture-author
+  type: user
+entity_id: ent_treaty
+extensions: {}
+parents: []
+references: []
+revision_id: rev_treaty
+scope: {}
+status: draft
+title: 3장 조약 체결 기록

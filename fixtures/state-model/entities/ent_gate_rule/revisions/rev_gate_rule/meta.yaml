@@ -1,0 +1,78 @@
+body_path: content.md
+created_at: 2026-11-11T00:00:00Z
+created_by:
+  id: fixture-author
+  type: user
+entity_id: ent_gate_rule
+extensions:
+  state_model:
+    bindings:
+      actor: actor
+      target: gate
+    condition: ready
+    effects:
+      - binding: target
+        field: open
+        link: gate
+        op: set
+        value: true
+    input_fields: {}
+    links:
+      actor:
+        propagation: blocking
+        reference_id: ref_actor
+        relation: depends_on
+        target:
+          entity_id: ent_actor
+          revision_id: rev_actor
+        update_policy: pinned
+      gate:
+        propagation: blocking
+        reference_id: ref_gate
+        relation: depends_on
+        target:
+          entity_id: ent_gate
+          revision_id: rev_gate
+        update_policy: pinned
+    nodes:
+      - id: level
+        left:
+          binding: actor
+          field: level
+          link: actor
+          type: state
+        op: compare
+        operator: gte
+        right:
+          type: literal
+          value: 10
+      - id: quest
+        left:
+          binding: actor
+          field: quest_completed
+          link: actor
+          type: state
+        op: compare
+        operator: eq
+        right:
+          type: literal
+          value: true
+      - children:
+          - level
+          - quest
+        id: ready
+        op: all
+    record_type: transition
+    repeat:
+      max_chain_steps: 32
+      max_per_occurrence: 1
+      mode: once_per_occurrence
+    trigger:
+      name: interact
+      type: event
+parents: []
+references: []
+revision_id: rev_gate_rule
+scope: {}
+status: draft
+title: 레벨과 퀘스트 조건부 입장

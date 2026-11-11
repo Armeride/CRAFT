@@ -23,7 +23,7 @@ export function fileFailure(code: string, message: string, path: string): Valida
 
 /** Read bytes through one open handle and check identity; never follow project symlinks. */
 export async function readSource(root: string, path: string): Promise<SourceFile> {
-  if (!isProjectPath(path)) throw fileFailure('PATH_ESCAPE', 'Invalid portable relative path', path);
+  if (!isProjectPath(path) || path.split('/').some(part => part.toLowerCase() === '.git')) throw fileFailure('PATH_ESCAPE', 'Invalid portable relative path or Git metadata path', path);
   const absoluteRoot = await realpath(root);
   const absolute = resolve(absoluteRoot, ...path.split('/'));
   if (!absolute.startsWith(absoluteRoot + sep)) throw fileFailure('PATH_ESCAPE', 'Path is outside project', path);
@@ -67,6 +67,7 @@ export async function captureFiles(root: string, canonicalOnly = true): Promise<
       if (canonicalOnly && depth === 0 && !(roots.has(entry.name) || rootFiles.has(entry.name))) continue;
       const absolute = join(directory, entry.name);
       const path = relative(absoluteRoot, absolute).split(sep).join('/');
+      if (entry.name.toLowerCase() === '.git') throw fileFailure('PATH_ESCAPE', 'Nested Git metadata is not canonical project data', path);
       if (!isProjectPath(path)) throw fileFailure('PATH_ESCAPE', 'Invalid portable path', path);
       const portable = path.normalize('NFC').toLowerCase();
       if (portablePaths.has(portable)) throw fileFailure('PATH_COLLISION', 'Case/Unicode path collision', path);

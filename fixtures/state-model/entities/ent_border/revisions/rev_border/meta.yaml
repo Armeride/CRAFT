@@ -1,0 +1,45 @@
+body_path: content.md
+created_at: 2026-11-11T00:00:00Z
+created_by:
+  id: fixture-author
+  type: user
+entity_id: ent_border
+extensions:
+  state_model:
+    fields:
+      border:
+        type: object
+      owner:
+        type: reference
+    initial:
+      source: declared
+      values:
+        border:
+          corridor: 북쪽 능선
+        owner:
+          link: faction_a
+      world_tick: 0
+    links:
+      faction_a:
+        propagation: none
+        reference_id: ref_faction_a
+        relation: related_to
+        target:
+          entity_id: ent_faction_a
+          revision_id: rev_faction_a
+        update_policy: pinned
+      faction_b:
+        propagation: none
+        reference_id: ref_faction_b
+        relation: related_to
+        target:
+          entity_id: ent_faction_b
+          revision_id: rev_faction_b
+        update_policy: pinned
+    record_type: definition
+parents: []
+references: []
+revision_id: rev_border
+scope: {}
+status: draft
+title: 국경 지역

@@ -7,6 +7,7 @@ import { isProjectPath } from '../../domain/src/path.js';
 import { Lease, worktreeScope } from '../../git-workspace/src/locks.js';
 import { assertOwnedPath, checkedManagedRoot } from '../../git-workspace/src/worktree.js';
 import { gitText } from '../../git-workspace/src/git.js';
+import { markSourceChanged } from '../../git-workspace/src/generation.js';
 import { atomicText, readState, writeState } from '../../workspace-runtime/src/state.js';
 import type { Transaction } from '../../workspace-runtime/src/generated.js';
 import { prepareChanges } from './changes.js';
@@ -139,6 +140,7 @@ async function finish(root: string, stateRoot: string, lease: Lease, transaction
   if (fingerprint(await captureFiles(root, false)) !== transaction.afterFingerprint) throw fileFailure('FILE_CHANGED_EXTERNALLY', 'Source changed before transaction completion', 'project.yaml');
   if (transaction.branch !== await gitText(root, ['symbolic-ref', '--short', 'HEAD'])) throw fileFailure('JOURNAL_SCOPE_MISMATCH', 'Workspace branch changed during write', 'project.yaml');
   transaction.state = 'applied'; delete transaction.error;
+  if (transaction.edits.some(edit => edit.before?.digest !== edit.after?.digest)) await markSourceChanged(root, lease);
   await writeState(stateRoot, journalPath, 'Transaction', transaction);
 }
 export async function recoverTransactions(root: string, stateRoot: string, lease: Lease, options: WriteOptions): Promise<string[]> {

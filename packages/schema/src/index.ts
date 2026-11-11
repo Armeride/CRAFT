@@ -3,7 +3,7 @@ import { default as formats } from 'ajv-formats';
 import schema from '../core/v1/schema.json' with { type: 'json' };
 import paths from '../core/v1/reference-paths.json' with { type: 'json' };
 import type { Diagnostic, LocatedReference } from '../../domain/src/model.js';
-import type { Reference } from './generated.js';
+import type { JsonValue, Reference } from './generated.js';
 
 // Explicit declaration of reference-bearing paths; arbitrary object strings are never inferred.
 export const referencePaths: Readonly<Record<string, readonly string[]>> = paths;
@@ -40,7 +40,7 @@ export class SchemaValidator {
     return (validate.errors ?? []).map(error => {
       const property: unknown = error.params['missingProperty'] ?? error.params['additionalProperty'];
       const suffix = typeof property === 'string' ? `/${property.replace(/~/g, '~0').replace(/\//g, '~1')}` : '';
-      return { code: 'SCHEMA_INVALID', message: `${error.message ?? 'Invalid value'} (${error.schemaPath})`, severity: 'error', path, pointer: basePointer + error.instancePath + suffix };
+      return { code: 'SCHEMA_INVALID', message: `${error.message ?? 'Invalid value'} (${error.schemaPath})`, messageKey: `validation.${error.keyword}`, params: { ...JSON.parse(JSON.stringify(error.params)) as Record<string, JsonValue>, schemaPath: error.schemaPath, definition }, severity: 'error', path, pointer: basePointer + error.instancePath + suffix };
     });
   }
 
@@ -53,7 +53,7 @@ export class SchemaValidator {
   validateCustom(schemaId: string, value: unknown, path: string, pointer: string): Diagnostic[] {
     const validate = this.ajv.getSchema(schemaId);
     if (!validate) throw new Error(`Custom schema is not registered: ${schemaId}`);
-    return validate(value) ? [] : (validate.errors ?? []).map(error => ({ code: 'EXTENSION_INVALID', message: error.message ?? 'Invalid custom extension', severity: 'error', path, pointer: pointer + error.instancePath }));
+    return validate(value) ? [] : (validate.errors ?? []).map(error => ({ code: 'EXTENSION_INVALID', message: error.message ?? 'Invalid custom extension', messageKey: `validation.${error.keyword}`, params: { ...JSON.parse(JSON.stringify(error.params)) as Record<string, JsonValue>, schemaPath: error.schemaPath, schemaId }, severity: 'error', path, pointer: pointer + error.instancePath }));
   }
 }
 

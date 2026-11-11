@@ -1,4 +1,4 @@
-import type { Baseline, Entity, Project, Reference, Revision } from '../../schema/src/generated.js';
+import type { Baseline, Entity, JsonValue, Project, Reference, Revision } from '../../schema/src/generated.js';
 
 export type { Baseline, Entity, Project, Reference, Revision, Scope, SnapshotTarget } from '../../schema/src/generated.js';
 
@@ -10,6 +10,8 @@ export interface Diagnostic {
   pointer: string;
   line?: number;
   column?: number;
+  messageKey?: string;
+  params?: Readonly<Record<string, JsonValue>>;
 }
 
 export class ValidationFailure extends Error {

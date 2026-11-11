@@ -1,0 +1,24 @@
+body_path: content.md
+created_at: 2026-11-11T00:00:00Z
+created_by:
+  id: fixture-author
+  type: user
+entity_id: ent_gate
+extensions:
+  state_model:
+    fields:
+      open:
+        type: boolean
+    initial:
+      source: declared
+      values:
+        open: false
+      world_tick: 0
+    links: {}
+    record_type: definition
+parents: []
+references: []
+revision_id: rev_gate
+scope: {}
+status: draft
+title: 성문
