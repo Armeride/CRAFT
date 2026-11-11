@@ -1,55 +1,51 @@
-# 단계 5 — UI 초안 01
+# 단계 5 — UI 초안 02
 
-현재는 **사용자 검토를 위한 첫 UI 초안**이다. 단계 5 전체 완료가 아니다. 사용자가 화면을 확인하고 추가 요구를 전달하면 같은 단계에서 수정한다. 이 검토 지점에서 멈추며 단계 6으로 넘어가지 않는다.
+첫 초안에 대한 사용자 피드백을 반영했다. **단계 5는 진행 중이며 UI 확인 → 추가 요구 → 수정** 방식을 유지한다. 이 검토 지점에서 멈추고 단계 6을 시작하지 않는다. 설계는 [ADR-013](adr/013-workspace-navigation-and-preferences.md), 검증 결과는 [구현 상태](IMPLEMENTATION_STATUS.md)를 따른다.
 
-## 실행과 확인
+## 실행
 
 ~~~powershell
 npm ci
 npm run ui:preview
 ~~~
 
-기본 주소는 **http://127.0.0.1:4173**이다. 로컬 서버는 127.0.0.1에서만 수신한다. 종료는 실행 터미널의 Ctrl+C다. 재실행하면 기존 예시와 저장한 작업 파일을 재사용한다. 별도 port/home이 필요하면 다음처럼 실행한다.
+기본 주소는 http://127.0.0.1:4173이다. **이번 세션의 새 검토용 서버는 http://127.0.0.1:4174**에서 실행한다. 기존 창은 새 주소로 열어 확인한다.
 
 ~~~powershell
-npm run ui:preview -- --port 4174 --home .tmp/my-ui-preview
+npm run ui:preview -- --port 4174
 ~~~
 
-처음 실행하면 fixtures/state-model을 .tmp/ui-preview/example-project에 복사하고, UI 확인용 본문과 미채택 국경 검토안을 **복사본에만** 추가해 독립 Git 프로젝트를 만든다. 기존 fixture·앱 소스 baseline·사용자 원본은 바꾸지 않는다. 앱 데이터와 작업 worktree는 .tmp/ui-preview/app-data에 둔다. 이 폴더는 재실행 시 덮어쓰거나 자동 삭제하지 않는다. 로컬 예시이며 원격 백업이 아니다.
+예시와 앱 데이터는 .tmp/ui-preview에 보존된다. fixtures/state-model의 복사본을 처음 한 번 초기화하고 이후 원문·작업을 덮어쓰지 않는다. Ctrl+C로 종료해도 저장된 파일은 남는다. UI 수정은 ui:build 후 새로고침, API 수정은 서버 재시작으로 반영한다. 외부 배포/모델 호출/원격 push는 없다.
 
-## 이번에 검토할 흐름
+## 확인할 화면
 
-1. 왼쪽에서 모든 요소/세계와 설정/사건과 변화/조건과 가정을 탐색한다. 가운데 문서와 오른쪽 연결·영향·직접 상태를 비교한다.
-2. 국경 지역의 본문, 참조와 영향, 리비전 탭을 연다. rev_border_proposal로 전환하거나 채택본과 비교한다. 현재 baseline의 선택은 유지된다.
-3. 상단에서 이름/본문을 검색한다. 예를 들어 “조약에”는 본문까지 검색하고, 1~2글자는 정확한 이름/별칭 경로를 사용한다.
-4. 한국어/영어를 전환한다. 프로젝트 이름·원고·ID·태그·조건 입력은 원문을 유지한다. UI 언어는 로컬 선호로 보존한다.
-5. 초안 만들기에서 목표를 입력하고 별도 작업 공간을 만든다. 본문을 편집하고 **초안 저장**을 누른다. 새로고침 후 작업 초안 → 이전 작업 초안 열기로 복원한다. 현재는 명시 저장 방식이다.
-6. 검토할 항목에서 실제 baseline 진단과 근거를 확인한다. 직접 status를 자동 변경하거나 정본 통합을 수행하지 않는다.
-7. 프로젝트 열기에서 project.yaml이 있는 다른 로컬 Git 프로젝트 경로를 입력할 수 있다. 원격 clone UI는 아직 없다.
+1. **모든 요소**는 프로젝트 대시보드를 연다. 분류별 현황·직접 상태·고정 참조 그래프를 확인한다.
+2. 분류 **이름**은 해당 분류 대시보드와 목록을 열고, 오른쪽 **화살표**는 펼침/접기만 바꾼다. 목록은 같은 왼쪽 탐색 안에서 독립적으로 스크롤하며 다른 메뉴가 밀리지 않는다. 별도 두 번째 요소 목록 열은 제거했다.
+3. 왼쪽 경계선을 끌거나 separator에 초점을 두고 좌우 화살표/Home/End로 너비를 조절한다. 선호 너비는 보존된다.
+4. 상단 오른쪽 버튼으로 정보창을 켜고 끈다. 프로젝트/분류에서는 프로젝트 정보, 요소에서는 참조·영향·검토 정보를 보여준다. 작은 화면은 기본 접힌 정보 drawer이며 같은 버튼으로 제어한다.
+5. **설정**의 전체/화면/언어/글꼴과 읽기/작업 공간/편집 분류와 검색을 확인한다. 언어·라이트/다크/시스템 선택은 설정 안에 있다. 기본은 시스템이며 OS 선호 변경을 실시간 반영한다.
+6. 한국어 Noto Sans KR·영어 Inter를 로컬에서 제공한다. UI/본문 크기·행간·언어별 글꼴, 목록 간격/높이, 패널/미리보기를 조절한다. 설치 글꼴 조회는 지원 브라우저의 버튼/허용 이후만 수행한다. 거부/미지원에는 이름 직접 입력과 권장 글꼴 fallback을 제공한다. [라이선스](THIRD_PARTY_FONTS.md)를 함께 배포한다.
+7. 요소의 **직접 편집**으로 독립 working 문서를 연다. 입력을 실시간 미리보기에서 확인하고 **초안 저장**으로 파일에 보존한다. 원본/작업 초안 보기와 참조·리비전 비교를 유지한다. 탭 화살표는 초점만 이동하고 Enter/Space 또는 클릭으로 활성화한다.
+8. **AI 대화 열기**는 기본 왼쪽 대화/오른쪽 문서다. 버튼이나 설정으로 좌우를 바꾸거나 대화를 접는다. **실제 AI는 아직 연결하지 않았다.** 입력은 ‘요청 보관’으로 사용자 작업 메모만 저장하며 AI 응답·자동 수정을 만들지 않는다.
+9. **작업 초안** 목록에서 저장된 작업을 다시 연다. 요소/기준/리비전별 문맥과 요청을 분리하고 여러 작업이 일치하면 명시 선택을 요구한다. 문맥 없는 이전 초안은 추정 연결하지 않고 그대로 보존한다.
 
-차분한 녹색·밝은 문서 영역, 왼쪽 탐색/목록·가운데 본문·오른쪽 문맥 구조로 시작했다. 화면 폭이 줄면 보조 문맥을 접고, 작은 화면에서는 탐색 메뉴를 버튼으로 연다. 실제 이미지·외부 폰트·CDN을 사용하지 않는다.
+## 데이터와 지원 경계
 
-## 구현과 검증 경계
+개인 선호는 versioned 브라우저 로컬 설정이며 정본 지식이 아니다. locale/theme/font/배치 변경은 원문·ID·review/semantic digest를 수정하지 않는다. 글꼴 목록을 서버로 보내지 않는다. 원고·요청은 브라우저 저장소가 아닌 task working 파일에 저장한다.
 
-- apps/web: React/Vite, ko/en i18next catalog, 언어·선택/폼 상태, safe text Markdown 표시, 반응형 CSS·키보드 탭/모달·접근성 이름.
-- apps/server: Fastify의 같은 origin/session/CSRF 검증, Host 제한·보안 header·표준 오류. 서버가 ProjectIndex/TaskService의 scope를 바인딩하며 브라우저는 경로/token으로 다른 작업 범위를 고르지 못한다.
-- 색인의 catalog/exact/search/reverse/analyze/diff를 재사용한다. catalog와 exact는 같은 generation의 원본에서 읽으며 exact의 참조 목록은 모든 지원 확장의 선언 경로를 따른다. UI locale은 정본·semantic digest 입력이 아니다.
-- 초안은 TaskService의 초기 task/checkpoint commit과 별도 run/worktree를 사용한다. 저장은 expectedDigest와 기존 검증·lease/journal을 사용하며 외부 수정 충돌 시 입력을 보존하고 덮어쓰지 않는다.
-- 브라우저의 최근 run ID는 복원 편의값이다. 실제 초안은 task working 파일에 보존하며 브라우저 저장소를 정본으로 사용하지 않는다. 미저장 상태에서는 페이지 이탈 경고를 제공한다.
+문서 편집은 ui-draft.md, 문맥은 ui-context.json, 사용자 요청은 ui-requests.json에 보존한다. source의 entity/revision/baseline·원본 digest를 고정하며 로컬 경로/권한 token을 정본에 넣지 않는다. 저장은 기존 lease/journal·expectedDigest를 사용한다. 요청은 100개/각 12,000자/전체 1MiB 한도이며 requestId 재사용·충돌을 검증한다. 자동 재시도는 실행 전 거부된 로컬 session 401 한 번에만 한정한다.
 
-검증 명령:
+대시보드 그래프는 실제 Reference의 정확한 리비전을 사용한다. 현재 분류의 직접 이웃과 과거 고정본을 구분하고 최대 48개 요소/120개 관계의 잘림을 알린다. 전체 정보는 요소 상세에서 확인한다. layout/위치 저장·내보내기·고급 그래프 편집은 후순위다.
+
+실제 AI 실행/도구/자동 수정은 6, 상태 조건 평가/시점·actor 비교는 8이다. 본문 외 구조화 metadata/새 revision/review/baseline 편집, autosave, proposal 영속 idempotency·사용자 diff/HEAD 승인·정본 통합, clone/import/migration 화면·SSE는 단계 5의 나머지 범위다. 폰트 인식의 실제 OS/브라우저 확대와 추가 세부 설정은 독립 확장으로 남긴다.
+
+## 검증
 
 ~~~powershell
 npm run check
 npm run test:ui
 ~~~
 
-check는 생성 타입·core/web strict typecheck·서버/worker build·Vite build·Vitest 전체를 실행한다. test:ui는 **별도** .tmp/ui-e2e와 4175 포트의 예시 서버에서 설치된 Chrome을 headless로 실행한다. 사용자 브라우저의 기존 profile을 사용하지 않는다. Chrome이 없다면 Playwright의 공식 브라우저 설치/설정을 먼저 준비해야 한다. 전체 지원 브라우저/OS 검증을 완료한 것은 아니다.
+check는 생성 타입·core/web typecheck·서버/worker/Vite build·전체 Vitest다. test:ui는 매번 별도의 .tmp/ui-e2e-<식별값>과 4175 포트에서 Chrome headless를 실행하며 사용자 브라우저 profile을 사용하지 않는다. 현재 화면의 ko/en·라이트/다크 자동 WCAG A/AA 검사를 포함한다. 자동 검사 통과는 모든 수동 접근성/OS 지원 완료가 아니다.
 
-이번 검증은 API session/Origin/Host·잘못된 범위, 원본 보존·초안 저장/충돌/복구, catalog key/변수·복수형/locale 선택과 실제 브라우저의 검색/리비전/diff, 목표·미저장 입력의 언어 전환 보존, 저장 후 재로드, 390px/1440px·키보드 탭을 포함한다. ko/en의 표시된 본문/참조/리비전/진단/모달에 axe의 WCAG A/AA 자동 점검을 적용했다. 자동 검사 통과를 전체 수동 접근성·스크린리더 검증 완료로 간주하지 않는다. 구체 수치는 [구현 상태](IMPLEMENTATION_STATUS.md)를 따른다.
-
-## 아직 연결하지 않은 단계 5 기능
-
-실제 사용자 diff 승인·proposal 영속 idempotency·정본 통합, 새 revision/review/baseline 편집, working autosave·여러 작업 탐색, remote clone/import/migration 화면, scope 선택·SSE cursor/reconnect·watcher 힌트는 남아 있다. 상태 조건의 평가·시점/actor 전후 비교는 단계 8이다. 실제 모델/MCP/에이전트 실행은 아직 연결하지 않았다.
-
-UI 피드백을 받은 뒤 탐색 구조·용어·정보 밀도·편집/검토 흐름을 수정하고 나머지 단계 5 요구를 이어간다. 현재 초안을 단계 5 전체 완료로 표시하지 않는다.
+설치 글꼴의 허용/미지원 분기는 브라우저 API를 모의한 시험으로 검증했다. 실제 OS 폰트 권한은 사용자가 직접 확인한다. 큰 목록은 모의 catalog를 주입해 메뉴 유지/독립 스크롤을 검증하며 실제 1,000요소/10,000리비전 성능 목표와 구분한다. 느린 초기 조회를 주입해 저장된 대화 복원 전에 새 작업을 만들지 않는지도 확인한다.

@@ -7,13 +7,14 @@ import { ProjectIndex, IndexError } from '../../packages/indexer/src/service.js'
 import { getRegistration, registerLocal } from '../../packages/tasks/src/projects.js';
 import { TaskService } from '../../packages/tasks/src/service.js';
 import { ValidationFailure } from '../../packages/domain/src/model.js';
-import type { Catalog, Draft, EntityDetail, ProjectChoice } from './contracts.js';
+import type { Catalog, ProjectChoice } from './contracts.js';
+
+import { registerDraftRoutes } from './drafts.js';
 
 export interface WebOptions { appData: string; port: number; webRoot?: string; examples?: string[] }
 const secret = () => randomBytes(32).toString('hex');
 const equal = (a: unknown, b: string) => typeof a === 'string' && /^[a-f0-9]{64}$/.test(a) && timingSafeEqual(Buffer.from(a), Buffer.from(b));
 const idParams = { type: 'object', required: ['id'], additionalProperties: false, properties: { id: { type: 'string', pattern: '^reg_[a-f0-9-]+$' } } };
-const runParams = { type: 'object', required: ['id'], additionalProperties: false, properties: { id: { type: 'string', pattern: '^run_[a-f0-9-]+$' } } };
 export async function createWebApp(options: WebOptions) {
   await mkdir(options.appData, { recursive: true });
   const app = Fastify({ logger: false, bodyLimit: 512 * 1024, trustProxy: false, ajv: { customOptions: { removeAdditional: false, coerceTypes: false, useDefaults: false } } });
@@ -60,21 +61,7 @@ export async function createWebApp(options: WebOptions) {
   app.get('/api/session', async (_request, reply) => { reply.header('Set-Cookie', `${cookieName}=${session}; HttpOnly; SameSite=Strict; Path=/`); return { csrf, projects: [...choices.values()], demo: !!options.examples?.length }; });
   app.post<{ Body: { root: string } }>('/api/projects/open', { schema: { body: { type: 'object', additionalProperties: false, required: ['root'], properties: { root: { type: 'string', minLength: 1, maxLength: 4096 } } } } }, async request => { const registration = await registerLocal(options.appData, request.body.root); await addProject(registration.id); return choices.get(registration.id); });
   app.post<{ Params: { id: string }; Body: { operation: 'catalog' | 'exact' | 'search' | 'analyze' | 'reverse' | 'diff' | 'tasks' | 'state'; args?: Record<string, unknown>; baselineId?: string } }>('/api/projects/:id/query', { schema: { params: idParams, body: { type: 'object', additionalProperties: false, required: ['operation'], properties: { operation: { enum: ['catalog', 'exact', 'search', 'analyze', 'reverse', 'diff', 'tasks', 'state'] }, args: { type: 'object', maxProperties: 12 }, baselineId: { type: 'string', minLength: 1, maxLength: 256 } } } } }, request => withIndex(request.params.id, index => index.query(request.body.operation, request.body.args ?? {}, { scopeToken: index.scopeToken, ...(request.body.baselineId ? { baselineId: request.body.baselineId } : {}) })));
-  async function readDraft(id: string): Promise<Draft> {
-    const { run } = await tasks.run(id);
-    if (!choices.has(run.registrationId)) throw new IndexError('CONTEXT_FORBIDDEN');
-    const snapshot = await tasks.project(id), file = snapshot.files.get(`tasks/${run.taskId}/working/ui-draft.md`);
-    const task = snapshot.documents.get(`tasks/${run.taskId}/task.yaml`) as { goal: string } | undefined;
-    return { runId: id, registrationId: run.registrationId, goal: task?.goal ?? '', text: file?.text ?? '', digest: file?.digest ?? null, state: run.status };
-  }
-  app.post<{ Params: { id: string }; Body: { entityId: string; revisionId: string; goal: string; expectedSnapshot: string; baselineId: string } }>('/api/projects/:id/drafts', { schema: { params: idParams, body: { type: 'object', additionalProperties: false, required: ['entityId', 'revisionId', 'goal', 'expectedSnapshot', 'baselineId'], properties: { entityId: { type: 'string', minLength: 1, maxLength: 256 }, revisionId: { type: 'string', minLength: 1, maxLength: 256 }, goal: { type: 'string', minLength: 1, maxLength: 4000 }, expectedSnapshot: { type: 'string', pattern: '^[a-f0-9]{64}$' }, baselineId: { type: 'string', minLength: 1, maxLength: 256 } } } } }, async request => withIndex(request.params.id, async index => {
-    const source = await index.query<EntityDetail>('exact', { entityId: request.body.entityId, revisionId: request.body.revisionId }, { scopeToken: index.scopeToken, expectedSnapshot: request.body.expectedSnapshot, baselineId: request.body.baselineId });
-    const run = await tasks.start(request.params.id, { goal: request.body.goal, baselineId: request.body.baselineId });
-    await tasks.saveDraft(run.runId, 'ui-draft.md', source.data.body, null);
-    return readDraft(run.runId);
-  }));
-  app.get<{ Params: { id: string } }>('/api/runs/:id/draft', { schema: { params: runParams } }, request => readDraft(request.params.id));
-  app.put<{ Params: { id: string }; Body: { text: string; expectedDigest: string | null } }>('/api/runs/:id/draft', { schema: { params: runParams, body: { type: 'object', additionalProperties: false, required: ['text', 'expectedDigest'], properties: { text: { type: 'string', maxLength: 300000 }, expectedDigest: { anyOf: [{ type: 'null' }, { type: 'string', pattern: '^[a-f0-9]{64}$' }] } } } } }, async request => { const { run } = await tasks.run(request.params.id); if (!choices.has(run.registrationId)) throw new IndexError('CONTEXT_FORBIDDEN'); await tasks.saveDraft(run.runId, 'ui-draft.md', request.body.text, request.body.expectedDigest); return readDraft(run.runId); });
+  await registerDraftRoutes(app, { appData: options.appData, tasks, withIndex, authorize: id => { if (!choices.has(id)) throw new IndexError('CONTEXT_FORBIDDEN'); } });
   if (options.webRoot) { await app.register(staticFiles, { root: options.webRoot, index: ['index.html'], cacheControl: false }); }
   app.addHook('onClose', async () => { await Promise.allSettled(tails.values()); await Promise.all([...indexes.values()].map(index => index.close())); });
   return app;

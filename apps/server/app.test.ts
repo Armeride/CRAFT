@@ -9,6 +9,7 @@ import type { QueryEnvelope } from '../../packages/indexer/src/types.js';
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { TaskService } from '../../packages/tasks/src/service.js';
+import { randomUUID } from 'node:crypto';
 const fixtures: IndexFixture[] = [], apps: Awaited<ReturnType<typeof createWebApp>>[] = [];
 afterEach(async () => { for (const app of apps.splice(0)) await app.close(); for (const f of fixtures.splice(0)) await removeIndexFixture(f); });
 async function setup() {
@@ -20,6 +21,27 @@ async function setup() {
   return { ...f, appData: f.app, app, registration, headers, query };
 }
 describe('local UI service boundary', () => {
+  it('binds working requests to exact elements, preserves them and rejects conflicts or duplicate identity reuse', async () => {
+    const f = await setup(), before = await repositoryGuard(f.root);
+    async function create(entityId: string, revisionId: string) { const source = (await f.query('exact', { entityId, revisionId })).json<QueryEnvelope<EntityDetail>>(); const response = await f.app.inject({ method: 'POST', url: `/api/projects/${f.registration.id}/drafts`, headers: f.headers, payload: { entityId, revisionId, expectedSnapshot: source.snapshotToken, baselineId: 'baseline_main', goal: '요소별 작업' } }); expect(response.statusCode).toBe(200); return response.json<Draft>(); }
+    const a = await create('ent_border', 'rev_border'), b = await create('ent_gate', 'rev_gate');
+    expect(a.source?.entityId).toBe('ent_border'); expect(b.source?.entityId).toBe('ent_gate');
+    const requestId = randomUUID(), payload = { requestId, text: '국경의 영향 검토 <원문>', expectedDigest: null };
+    const first = await f.app.inject({ method: 'POST', url: `/api/runs/${a.runId}/requests`, headers: f.headers, payload }); expect(first.statusCode).toBe(200); expect(first.json<Draft>().requests).toHaveLength(1);
+    const repeated = await f.app.inject({ method: 'POST', url: `/api/runs/${a.runId}/requests`, headers: f.headers, payload }); expect(repeated.json<Draft>().requests).toEqual(first.json<Draft>().requests);
+    const conflict = await f.app.inject({ method: 'POST', url: `/api/runs/${a.runId}/requests`, headers: f.headers, payload: { ...payload, requestId: randomUUID() } }); expect(conflict.statusCode).toBe(409);
+    const reused = await f.app.inject({ method: 'POST', url: `/api/runs/${a.runId}/requests`, headers: f.headers, payload: { ...payload, text: '다른 내용' } }); expect(reused.json().code).toBe('REQUEST_ID_REUSED');
+    expect((await f.app.inject({ url: `/api/runs/${b.runId}/draft`, headers: f.headers })).json<Draft>().requests).toEqual([]);
+    const listed = await f.app.inject({ url: `/api/projects/${f.registration.id}/drafts`, headers: f.headers }); expect(listed.json<{ drafts: Draft[] }>().drafts.map(value => value.source?.entityId).sort()).toEqual(['ent_border', 'ent_gate']);
+    expect(await repositoryGuard(f.root)).toEqual(before);
+  }, 60_000);
+  it('preserves earlier drafts without assigning guessed element context and rejects malformed context', async () => {
+    const f = await setup(), service = new TaskService(f.appData), run = await service.start(f.registration.id, { goal: '기존 UI 초안' }); await service.saveDraft(run.runId, 'ui-draft.md', '보존할 기존 원문', null);
+    const value = (await f.app.inject({ url: `/api/runs/${run.runId}/draft`, headers: f.headers })).json<Draft>(); expect(value.source).toBeNull(); expect(value.text).toBe('보존할 기존 원문'); expect(value.requests).toEqual([]);
+    await service.saveDraft(run.runId, 'ui-context.json', '{"version":900,"source":{}}', null);
+    expect((await f.app.inject({ url: `/api/runs/${run.runId}/draft`, headers: f.headers })).json().code).toBe('WORKING_CONTEXT_INVALID');
+    expect((await service.project(run.runId)).files.get(`tasks/${run.taskId}/working/ui-draft.md`)?.text).toBe('보존할 기존 원문');
+  }, 60_000);
   it('rejects forged hosts, cross-origin requests and absent or malformed sessions', async () => {
     const f = await setup(), url = `/api/projects/${f.registration.id}/query`, payload = { operation: 'catalog' };
     expect((await f.app.inject({ method: 'POST', url, headers: { host: '127.0.0.1:4173' }, payload })).statusCode).toBe(401);

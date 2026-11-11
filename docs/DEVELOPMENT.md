@@ -22,6 +22,7 @@
 | Vite | 8.3.8 | UI build |
 | Fastify / @fastify/static | 5.12.8 / 10.1.10 | loopback API·같은 origin 정적 UI |
 | i18next / react-i18next | 27.1.1 / 18.0.1 | ko/en catalog·언어 전환 |
+| Noto Sans KR Variable / Inter Variable | 5.3.1 / 5.3.0 | self-host ko/en 권장 글꼴·OFL 동봉 |
 | Playwright / axe Playwright | 1.65.0 / 4.14.0 | 별도 Chrome E2E·자동 접근성 |
 | SQLite | 3.53.4 | 위 설치에서 실제 SQL 조회로 확인 |
 | Claude Code | 2.1.294 | `--version`만 실행 |
@@ -51,13 +52,13 @@ node dist/tools/environment.js
 | `npm run schema:check` | 생성 타입과 schema 일치 확인, 파일 쓰기 없음 |
 | `npm run typecheck` | packages/tools 및 Vitest 설정 strict 타입 검사 |
 | `npm run build` | 제품 기반 모듈과 도구를 dist에 컴파일 |
-| `npm test` | 10파일 166개 Vitest 테스트: 기존 158개 + UI API 4개/catalog·locale 4개. worker/별도 프로세스 시험은 먼저 build 필요 |
+| `npm test` | 12파일 174개 Vitest 테스트: 이전 166개 + API 2개/설정 3개/graph 3개. worker/별도 프로세스 시험은 먼저 build 필요 |
 | `npm run test:watch` | 테스트 감시 모드 |
 | `npm run check` | schema 타입 일치 → core/web 타입 검사 → 서버/worker·UI 빌드 → 전체 Vitest 테스트 |
 | `npm run migration -- support` | 제품 registry의 지원표, fixture는 명시 --registry fixture |
 | `npm run workspace -- open ...` | 단계 3 로컬 등록·task/run·fake·복구·clone·import CLI, [계약](WORKSPACES.md) 참조 |
 
-`npm run index -- support`와 색인 CLI는 [INDEXING.md](INDEXING.md)를 따른다. 첫 UI는 npm run ui:preview로 빌드·실행하며 주소는 http://127.0.0.1:4173이다. npm run test:ui는 설치된 Chrome과 별도 예시 서버로 4개 E2E를 실행한다. UI 변경은 npm run ui:build 후 새로고침으로 확인한다. [UI_PREVIEW.md](UI_PREVIEW.md)를 따른다.
+`npm run index -- support`와 색인 CLI는 [INDEXING.md](INDEXING.md)를 따른다. 첫 UI는 npm run ui:preview로 빌드·실행하며 주소는 http://127.0.0.1:4173이다. npm run test:ui는 설치된 Chrome과 별도 예시 서버로 7개 E2E를 실행한다. UI 변경은 npm run ui:build 후 새로고침, API 변경은 서버 재시작으로 확인한다. 초안 02의 현재 검토용 주소는 http://127.0.0.1:4174다. [UI_PREVIEW.md](UI_PREVIEW.md)를 따른다.
 
 ## 단계 0 환경 probe 기록과 후속 검증
 

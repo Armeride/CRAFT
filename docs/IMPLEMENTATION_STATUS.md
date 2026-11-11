@@ -1,17 +1,37 @@
 # 구현 상태
 
-갱신: 2026-11-11, Asia/Seoul. **단계 0~4 완료, 단계 5 진행 중(UI 초안 01 사용자 검토 대기)**. 단계 6~9는 미착수, 10은 선택 확장이다. 사용자가 UI 초안 확인 → 추가 요구 → 수정 방식을 요청했다. 첫 검토 지점에서 멈추며 단계 5 전체 완료로 처리하거나 단계 6에 착수하지 않는다.
+갱신: 2026-11-11, Asia/Seoul. **단계 0~4 완료, 단계 5 진행 중(UI 초안 02 사용자 검토 대기)**. 단계 6~9는 미착수, 10은 선택 확장이다. 사용자가 UI 초안 확인 → 추가 요구 → 수정 방식을 요청했다. 두 번째 검토 지점에서 멈추며 단계 5 전체 완료로 처리하거나 단계 6에 착수하지 않는다.
 
 ## 기준과 범위 구분
 
-- 목표: PROJECT_SPEC.md v1.2 전체, REVIEW_NOTES.md. [확정 요구·설계 기준·미결정](REQUIREMENTS.md)을 구분한다. FR 22개·AT 60개는 제품 전체 기준이며 아래 테스트 수와 다르다.
-- 앱 소스: master. 단계 0·1은 3847002, 2는 6a83094, 3은 906e996, 추가 기획은 2220dc5이며 단계 4는 1fe44d2이며 UI 초안 01을 후속 로컬 commit으로 보존한다. 앱 remote/push 없음.
+- 목표: PROJECT_SPEC.md v1.3 전체, REVIEW_NOTES.md. [확정 요구·설계 기준·미결정](REQUIREMENTS.md)을 구분한다. FR 25개·AT 66개는 제품 전체 기준이며 아래 테스트 수와 다르다.
+- 앱 소스: master. 단계 0·1은 3847002, 2는 6a83094, 3은 906e996, 추가 기획은 2220dc5이며 단계 4는 1fe44d2이며 UI 초안 01은 2bbd8cf, 초안 02는 후속 로컬 commit으로 보존한다. 앱 remote/push 없음.
 - 실행 기준: Windows x64, Node 24.21.0/npm 11.19.0과 exact lockfile. 전역 설정·소유권·인증을 변경하지 않는다.
 - FR-021: 진단 code/messageKey/params와 fallback 문구를 분리했다. 단계 5 초안 01에서 ko/en catalog·언어 전환/선호·폼 상태 보존을 연결했다. 전체 화면 인수는 진행 중이다.
 - FR-022: state_model@1 파일·호환성·참조·입력 digest/색인까지 구현했다. 평가기·상태 결과·시점/actor 전후 비교는 단계 8이다. 현재 state/state-input은 evaluatorAvailable:false다.
-- 공개 core/narrative/game_design v1·core 생성 타입·기존 fixture/semantic model 1은 유지했다. 새 상태 확장과 fixture만 별도로 추가했다. 문서 v1.2는 제품 core v2가 아니다.
+- 공개 core/narrative/game_design v1·core 생성 타입·기존 fixture/semantic model 1은 유지했다. 새 상태 확장과 fixture만 별도로 추가했다. 문서 v1.3도 제품 core v2가 아니다.
 
-## 단계 5 — UI 초안 01 검토 지점
+## 단계 5 — UI 초안 02 검토 지점
+
+사용자 피드백 8개와 추가 답변을 FR-023~025/AT-61~66으로 기록했다. 확정 요구는 설정/시스템 테마/글꼴, 통합 탐색·대시보드/graph, resize·정보 제어, 요소별 대화/문서·직접 편집이다. 기본 왼쪽 대화/오른쪽 문서와 좌우 전환을 적용했다. [실행/검토](UI_PREVIEW.md), [ADR-013](adr/013-workspace-navigation-and-preferences.md)을 따른다. 단계 6은 시작하지 않았다.
+
+- versioned 로컬 preferences/typed registry·전체/분류/검색, 설정 내 언어·system/light/dark, live OS theme 반영. Noto Sans KR Variable 5.3.1/Inter Variable 5.3.0 self-host·OFL 포함, 언어별 font·크기/행간·UI 크기/목록 간격 등 14개 설정.
+- 한 왼쪽 탐색의 독립 scroll·높이 공유, 전체/분류 dashboard, 실제 고정 Reference의 bounded graph·과거 pin/외부 분류, pointer/keyboard 너비 조절·보존, 오른쪽 정보 toggle/작은 화면 drawer.
+- Document/Chat/useWorkspace/useDrafts로 UI 책임 분리, 독립 working 문서의 직접 편집/실시간 preview·명시 저장, 대화/문서 반전. 사용자 요청은 ui-requests.json, source 문맥은 ui-context.json에 보존한다. 미연결 AI 응답/수정은 생성하지 않는다.
+- task/run별 파일·원본 digest·요소/기준/리비전 binding·expectedDigest/요청 ID, legacy unbound 보존. 초기 목록 지연 때 서버 목록을 기다리고, 여러 후보/불완전 목록에는 임의 새 작업이나 latest 선택을 하지 않는다. Session 401만 실행 전 거부를 확인해 한 번 갱신/재시도한다.
+- backend API는 WorkingSource/요청 보관/목록을 추가했다. working 문서는 core schema 변경이 아니다. 공개 core/extension v1·생성 타입·기존 fixture/semantic model 1은 유지했다.
+
+검증 완료: npm run check의 생성 타입·core/web typecheck·서버/worker/Vite build와 **12파일 174개 Vitest**가 모두 통과했다(204.33초). npm run test:ui의 **7개 Chrome E2E**도 최종 변경 후 모두 통과했다(40.4초). 폰트 설치 시 npm audit는 149 packages/보고된 취약점 0건이었다. API 6개, locale 4개, preferences 3개, graph 3개와 기존 전체 회귀다. 브라우저에서는 system/명시 theme·선호 reload, category dashboard/정확 pin·search/diff, 설치 font의 사용자 동작/미지원 모의 분기, 큰 모의 목록의 내부 scroll/다른 메뉴 유지·resize/toggle, 요소 A/B 요청 비혼합·저장/언어/배치/세션 갱신·지연된 초기 복원을 검증한다. 라이트/다크/ko/en dashboard·문서·설정·편집/대화의 자동 WCAG A/AA 검사도 포함한다. 실제 OS 폰트 허용·타 브라우저/스크린리더 전체 검증은 아니다.
+
+검증 중 키보드 탭의 비동기 활성화 초점 유실과 초기 작업 목록이 늦을 때의 중복 생성 경계를 발견해 수동 tab 활성화·복원 선행으로 수정했다. 후자는 응답을 지연시키고 새 작업 POST가 0회인지 검사했다. 모의 catalog의 테스트 종료 시 pending route도 정리했다.
+
+현재 서버: http://127.0.0.1:4174, .tmp/ui-preview 재사용. 이전 예시·사용자 working 파일은 덮어쓰거나 제거하지 않는다. E2E는 매번 별도 .tmp/ui-e2e-<식별값>에서 수행한다. screenshot은 draft-02-dashboard/dark/work/mobile.png다. 문서·코드는 로컬 commit으로 보존하고 사용자 확인을 기다린다.
+
+후순위: 고급 graph 배치/위치 저장·내보내기, OS 전반의 font 감지·추가 세부 설정. 실제 AI 실행은 6, 상태 평가/시점·actor 비교는 8이다. 단계 5 나머지 metadata/revision/review/baseline 편집·autosave·통합/승인/SSE 등은 계속 미완료다.
+
+## 단계 5 — UI 초안 01 검증 이력
+
+아래는 2bbd8cf 당시 기록이다. 현재 실행/지원 범위는 위 초안 02를 따른다.
 
 사용자는 단계를 진행하되 UI부터 초안을 제시하고 직접 확인/추가 요구를 전달하는 방식을 요청했다. 현재 초안 범위에서 멈추고 피드백을 기다린다. 실행/검토는 [UI_PREVIEW.md](UI_PREVIEW.md), 결정은 [ADR-012](adr/012-web-draft-and-local-session.md)를 따른다.
 

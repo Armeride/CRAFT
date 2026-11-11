@@ -152,3 +152,16 @@ worker SQLite/증분·복원·scope·SCC·검토/갱신 경고·NFC/FTS5·입력
 ## 8. 단계 5 UI 초안 검토 — 2026-11-11
 
 사용자는 UI 초안을 직접 확인하고 추가 요구를 전달하는 반복 방식을 요청했다. [UI 초안 01](docs/UI_PREVIEW.md)은 실제 색인/작업 서비스를 연결한 ko/en 탐색·리비전/참조/diff·진단·명시 working 초안 저장까지 제공한다. [ADR-012](docs/adr/012-web-draft-and-local-session.md)에 스택/locale/session·검증 결정을 남겼다. 첫 초안 검토 지점에서 멈추고 단계 5 전체 완료·단계 6 착수로 처리하지 않는다. 초기 상태 값 표시는 정의 원문이며 조건 평가 결과가 아니다. 전체 상태 평가·시점/actor 비교는 단계 8에 유지한다.
+
+## 9. v1.3 — UI 피드백과 초안 02
+
+2026-11-11. 사용자 8개 항목과 대화/문서 좌우 배치 후속 답변을 반영했다. 1~8절은 당시 검토 이력이며 현재 요구는 FR 25개/AT 66개다.
+
+| ID | 추가 요구 | 반영 | 검증 |
+|---|---|---|---|
+| R-27 | 시스템 theme·분류 설정·언어/글꼴/읽기 개선 | FR-023, 15.5절, typed preferences/registry·로컬 fonts·명시 font access | AT-61~62 |
+| R-28 | 한 열 탐색·분류 dashboard/graph·목록 높이/scroll | FR-024, 15.5절, 정확한 고정 Reference와 한도 표시 | AT-63 |
+| R-29 | 왼쪽 resize·오른쪽 정보 제어 | FR-024, pointer/keyboard·선호 보존·작은 화면 drawer | AT-64 |
+| R-30 | 요소별 대화/문서 나란히·직접 편집·좌우 전환 | FR-025, 독립 working preview/명시 저장·사용자 요청 메모 보관 | AT-65~66 |
+
+확정 요구와 설계 선택/후순위는 [ADR-013](docs/adr/013-workspace-navigation-and-preferences.md)을 따른다. 기본 theme는 system, 밝은 모드는 라이트/기본으로 해석했다. 실제 AI는 6에 연결하며 현재 UI는 미연결을 표시한다. 고급 graph 장식/위치 저장·범용 OS font 인식은 독립 확장으로 남겼다. 공개 schema v1·기존 fixture/불변 조건은 유지한다. [초안 02](docs/UI_PREVIEW.md)를 제시하고 피드백을 기다리며 단계 5 전체 완료로 표시하지 않는다.

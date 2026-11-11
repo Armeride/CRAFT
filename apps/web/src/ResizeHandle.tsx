@@ -1,0 +1,7 @@
+import { useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import { clamp } from './preferences.js';
+export function ResizeHandle({ value, onChange }: { value: number; onChange: (width: number) => void }) {
+  const { t } = useTranslation(), drag = useRef<{ x: number; width: number } | null>(null);
+  return <div className="sidebar-resizer" role="separator" tabIndex={0} aria-orientation="vertical" aria-label={t('panel.resize')} aria-description={t('panel.resizeHint')} aria-valuemin={240} aria-valuemax={440} aria-valuenow={Math.round(value)} onKeyDown={event => { const next = event.key === 'ArrowRight' ? value + 12 : event.key === 'ArrowLeft' ? value - 12 : event.key === 'Home' ? 240 : event.key === 'End' ? 440 : null; if (next !== null) { event.preventDefault(); onChange(clamp(next, 240, 440)); } }} onPointerDown={event => { if (event.button !== 0) return; event.currentTarget.setPointerCapture(event.pointerId); drag.current = { x: event.clientX, width: value }; }} onPointerMove={event => { if (drag.current && event.currentTarget.hasPointerCapture(event.pointerId)) onChange(clamp(drag.current.width + event.clientX - drag.current.x, 240, 440)); }} onPointerUp={event => { drag.current = null; if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId); }} onPointerCancel={() => { drag.current = null; }}/ >;
+}

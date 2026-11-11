@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import { ko, en, initialLocale, setupI18n, i18n } from './i18n.js';
 const vars = (text: string) => [...text.matchAll(/{{\s*([^}, ]+)/g)].map(match => match[1]).sort();
 describe('UI locale contract', () => {
@@ -16,7 +16,7 @@ describe('UI locale contract', () => {
     await i18n.changeLanguage('ko'); expect(i18n.t('items', { count: 2 })).toBe('2개 요소'); expect(i18n.t('draft.goalDefault', { title })).toContain(title);
   });
   it('has translations for every literal UI key used in components', async () => {
-    const text = await readFile('apps/web/src/App.tsx', 'utf8');
+    const text = (await Promise.all((await readdir('apps/web/src')).filter(path => path.endsWith('.tsx')).map(path => readFile('apps/web/src/' + path, 'utf8')))).join('\n');
     for (const match of text.matchAll(/\bt\('([a-zA-Z.]+)'\s*[,)]/g)) expect(Object.hasOwn(ko, match[1]!) || Object.hasOwn(ko, match[1]! + '_other'), match[1]).toBe(true);
   });
 });

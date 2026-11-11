@@ -24,7 +24,7 @@
     "workspace": "node dist/tools/workspace-cli.js",
     "index": "node dist/tools/index-cli.js",
     "typecheck:core": "tsc --noEmit",
-    "ui:build": "vite build --config apps/web/vite.config.ts",
+    "ui:build": "vite build --config apps/web/vite.config.ts --logLevel warn",
     "ui:preview": "npm run build && npm run ui:build && node dist/tools/ui-preview.js",
     "test:ui": "playwright test"
   },
@@ -45,6 +45,8 @@
   },
   "dependencies": {
     "@fastify/static": "10.1.10",
+    "@fontsource-variable/inter": "5.3.0",
+    "@fontsource-variable/noto-sans-kr": "5.3.1",
     "ajv": "8.20.0",
     "ajv-formats": "3.0.1",
     "better-sqlite3": "13.0.3",

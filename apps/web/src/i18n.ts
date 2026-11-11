@@ -1,8 +1,10 @@
+import { uiKo, uiEn } from './copy.js';
 import i18next from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
 export const ko = {
-  'app.workspace': '창작 작업실', 'app.preview': 'UI 초안 01', 'app.local': '로컬 작업 공간',
+  ...uiKo,
+  'app.workspace': '창작 작업실', 'app.preview': 'UI 초안 02', 'app.local': '로컬 작업 공간',
   'nav.library': '지식 탐색', 'nav.all': '모든 요소', 'nav.world': '세계와 설정', 'nav.changes': '사건과 변화', 'nav.scenarios': '조건과 가정', 'nav.work': '작업', 'nav.tasks': '작업 초안', 'nav.diagnostics': '검토할 항목',
   'project.open': '프로젝트 열기', 'project.select': '프로젝트 선택', 'project.example': '예시 프로젝트', 'project.dialog': '로컬 프로젝트 열기', 'project.path': 'Git 프로젝트 폴더', 'project.pathHint': 'project.yaml이 있는 Git 저장소의 전체 경로를 입력하세요.', 'project.opening': '프로젝트를 여는 중…',
   'baseline.label': '채택 기준', 'baseline.selected': '채택본', 'baseline.unselected': '미채택 초안',
@@ -23,7 +25,8 @@ export const ko = {
   'errors.AUTH_REQUIRED': '세션이 만료되었습니다. 화면을 새로 고쳐 주세요.', 'errors.BASE_CHANGED': '기준 자료가 바뀌었습니다. 다시 불러온 뒤 확인하세요.', 'errors.SOURCE_CHANGED': '조회 중 자료가 바뀌었습니다. 다시 시도하세요.', 'errors.FILE_CHANGED_EXTERNALLY': '다른 곳에서 초안을 수정했습니다. 현재 입력은 유지되며 덮어쓰지 않았습니다.', 'errors.WORKTREE_BUSY': '다른 작업이 진행 중입니다. 잠시 뒤 다시 시도하세요.', 'errors.CONTEXT_FORBIDDEN': '이 작업 공간에 접근할 수 없습니다.', 'errors.PROJECT_NOT_READY': '이 프로젝트는 현재 열 수 없습니다. Git과 파일 검증 상태를 확인하세요.', 'errors.REQUEST_INVALID': '입력 형식을 확인해 주세요.', 'errors.REQUEST_FAILED': '요청을 처리하지 못했습니다. 입력과 프로젝트 상태를 확인하세요.',
 } as const;
 export const en: Record<keyof typeof ko, string> = {
-  'app.workspace': 'Creative workspace', 'app.preview': 'UI draft 01', 'app.local': 'Local workspace',
+  ...uiEn,
+  'app.workspace': 'Creative workspace', 'app.preview': 'UI draft 02', 'app.local': 'Local workspace',
   'nav.library': 'LIBRARY', 'nav.all': 'All elements', 'nav.world': 'World & setting', 'nav.changes': 'Events & changes', 'nav.scenarios': 'Rules & assumptions', 'nav.work': 'WORK', 'nav.tasks': 'Working drafts', 'nav.diagnostics': 'Needs attention',
   'project.open': 'Open project', 'project.select': 'Select project', 'project.example': 'Example project', 'project.dialog': 'Open a local project', 'project.path': 'Git project folder', 'project.pathHint': 'Enter the full path to a Git repository containing project.yaml.', 'project.opening': 'Opening project…',
   'baseline.label': 'Baseline', 'baseline.selected': 'Selected', 'baseline.unselected': 'Unselected draft',

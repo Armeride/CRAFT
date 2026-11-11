@@ -1,4 +1,10 @@
 const paths: Record<string, string> = {
+  settings: 'M10 3h4l1 3 3 1 3 3v4l-3 1-1 3-3 3h-4l-1-3-3-1-3-3v-4l3-1 1-3z M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0',
+  panel: 'M3 4h18v16H3z M15 4v16',
+  chat: 'M4 4h16v12H9l-5 4z M8 8h8 M8 12h5',
+  swap: 'M4 8h16 M16 4l4 4-4 4 M20 16H4 M8 12l-4 4 4 4',
+  spark: 'M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5z',
+  type: 'M4 4h16 M12 4v16 M8 20h8',
   book: 'M4 4h6a3 3 0 0 1 2 1 3 3 0 0 1 2-1h6v15h-6a3 3 0 0 0-2 1 3 3 0 0 0-2-1H4z M12 5v15',
   grid: 'M4 4h6v6H4z M14 4h6v6h-6z M4 14h6v6H4z M14 14h6v6h-6z',
   globe: 'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0 M3 12h18 M12 3c5 5 5 13 0 18-5-5-5-13 0-18',
