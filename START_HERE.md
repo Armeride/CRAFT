@@ -156,12 +156,41 @@ ADR은 선택 이유와 트레이드오프를 남긴다. 단순 진행 로그로
 
 ## 7. 이 전달물의 현재 상태
 
-완료: 단계 0~4 소스/환경·파일 계약·migration·Git 작업·worker SQLite/검색/진단과 상태 계약 기반, 158개 테스트/CLI 검증. 단계 3은 906e996, 추가 기획은 2220dc5, 단계 4는 1fe44d2이며 UI 초안은 후속 로컬 commit이다. 자세한 실제 범위는 docs/IMPLEMENTATION_STATUS.md를 따른다.
+단계 0~5를 완료했다. 단계 5 구현은 96847f4에 보존했고 전체 Vitest 192개와 Chrome E2E 12개를 통과했다. 실제 검증 범위와 후속 UI 보강 결과는 docs/IMPLEMENTATION_STATUS.md를 따른다.
 
 기획 추가 완료: 2026-11-11 사용자 요청으로 FR-021/022와 AT-51~60을 추가했다. 당시 요구는 FR 22개·AT 60개였으며 새 인수 기준 중 AT-58의 색인 기반과 AT-60의 계약/옛 reader 호환을 검증했다. 전체 UI/상태 평가 인수는 아직 아니다.
 
 현재 요구는 FR 26개·AT 68개다. FR-026/AT-67~68에 외부 검토·엔진 선택·중심 배치/군집·캔버스 탐색을 기록했다. FR-023~025/AT-61~66으로 추가 UI 요구를 기록하고 확정 요구·설계 선택·후순위를 분리했다.
 
-진행 중: 단계 5 UI 초안 03을 제시했다. npm run ui:preview로 확인하며 첫 UI·ko/en·별도 수동 초안 저장을 구현했다. 사용자 피드백을 기다린다. 미수행: 전체 수동 검토/통합·autosave·SSE/나머지 화면, 상태 평가·시점/actor 비교, 실제 모델/MCP. 단계 6에 착수하지 않는다.
+UI 초안 03은 사용자 승인을 받았다. 수동 작성·검토·실제 diff 승인 통합·자동 저장/충돌/복구·관리/SSE까지 작업 005에서 완성했다. 다음 단계는 에이전트 실행기와 내부 MCP를 연결하는 단계 6이며 사용자 진행 지시를 기다린다. 상태 평가·시점/actor 비교는 단계 8의 목표다.
 
 문서 버전 1.4도 제품 schema v2 출시가 아니다. 공개 core/narrative/game_design v1·기존 fixture를 유지하며 별도 state_model@1 계약을 추가했다. 상세 지원/실행법은 docs/STATE_MODEL_V1.md와 docs/INDEXING.md를 따른다.
+
+## 8. 다른 세션에서 이어갈 때
+
+읽는 순서는 이 문서 → 현재 구현 상태 → PROJECT_SPEC.md 전체와 REVIEW_NOTES.md → 요구사항 구분과 단계 6 계획이다. 실행기 경계는 ADR-004, 작업 격리는 ADR-008, 조회 scope는 ADR-011, 수동 검토/통합은 ADR-015에 근거를 남겼다. [현재 구현 상태](docs/IMPLEMENTATION_STATUS.md), [요구사항 구분](docs/REQUIREMENTS.md), [단계 6 계획](docs/IMPLEMENTATION_PLAN.md#단계-6--에이전트와-내부-mcp)
+
+| 재사용할 기반 | 코드와 계약 |
+|---|---|
+| 작업 생성·파일 저장·checkpoint·fake·취소/복구 | packages/tasks/src/service.ts, docs/WORKSPACES.md |
+| basis/working·검색·역참조·검증 | packages/indexer/src/service.ts, packages/indexer/src/types.ts, docs/INDEXING.md |
+| 수동 명령·proposal·사용자 검토·통합 | packages/tasks/src/manual.ts, integration.ts, manual-contracts.ts, docs/MANUAL_WORKFLOW.md |
+| Git 실행·worktree·잠금·운영 상태 | packages/git-workspace/src/, packages/workspace-runtime/ |
+| REST·SSE·기존 작업 UI | apps/server/, apps/web/src/ManualWorkspace.tsx, useDrafts.ts, useWorkspaceEvents.ts |
+
+새 checkout의 검증 명령은 아래와 같다. npm ci는 Node 24.21.0/npm 11.19.0에서 실행하며 Chrome E2E는 설치된 Chrome을 사용한다.
+
+~~~powershell
+npm ci
+npm run check
+npm run test:ui
+npm run ui:preview -- --port 4174
+~~~
+
+같은 PC의 다른 세션은 D:/git/CRAFT를 열고 branch·HEAD·미커밋 변경부터 확인한다. 2026-11-13 확인 시 원격 main은 6391781, 로컬 단계 5 구현은 96847f4였다. 새 clone의 인수인계 기준은 원격에 반영된 commit으로 결정되므로 필요한 구현·문서 commit이 포함됐는지 먼저 확인한다. 최신 로컬 문서 commit은 git log -1로 확인한다.
+
+node_modules/dist는 재생성할 수 있다. .tmp/ui-preview에는 사용자가 작성한 초안과 앱 운영 데이터가 있을 수 있으며 Git에서 제외된다. 같은 PC에서는 해당 자료를 보존하고, 다른 PC로 옮길 자료가 있으면 별도로 전달한다. tracked 소스·fixture·문서로 테스트와 기본 예시를 재생성할 수 있다.
+
+2026-11-13 ChatGPT 앱 전환 점검에서 일반 셸은 helper_unknown_error와 setup refresh 오류를 보였고 권한 검토를 거친 실행은 통과했다. 새 세션에서는 실제 오류와 권한 설정을 확인해 실행 경로를 판단한다. Git 소유권 오류가 발생하면 해당 명령의 safe.directory에 실제 checkout 경로를 지정할 수 있다. 이 세션에서는 D:/git/CRAFT 한 명령 범위로 사용했다. 타입 검사·SQLite·Chrome·검토 서버·Git 원격 읽기/push dry-run을 확인했다.
+
+단계 6 진행 지시를 받은 세션은 설치된 실행기의 help/버전·인증 상태와 공식 프로토콜부터 확인하고, 공통 adapter/capability/event와 fake 경로 → 같은 worktree scope의 내부 MCP → 각 공급자 연결 → 기존 검토/통합 UI 연결 순서로 구체화한다. 실제 공급자 호출은 명시 동의 범위를 확인한다. 단계 6 완료 기준과 테스트 결과를 기록하고 사용자에게 인계한다.

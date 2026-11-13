@@ -5,7 +5,7 @@
 ## 기준과 범위 구분
 
 - 목표: PROJECT_SPEC.md v1.4 전체, REVIEW_NOTES.md. [확정 요구·설계 기준·미결정](REQUIREMENTS.md)을 구분한다. FR 26개·AT 68개는 제품 전체 기준이며 아래 테스트 수와 다르다.
-- 앱 소스: main(이전 master). 단계 0·1은 3847002, 2는 6a83094, 3은 906e996, 추가 기획은 2220dc5이며 단계 4는 1fe44d2이며 UI 초안 01은 2bbd8cf, 초안 02는 6391781이며 초안 03도 로컬 commit으로 보존한다. 현재 origin=https://github.com/Armeride/CRAFT.git. 사용자가 main으로 push했고 2026-11-13 원격 HEAD/main과 로컬 6391781 일치를 확인했다. 이번 그래프 변경은 별도 로컬 commit으로 보존한다.
+- 앱 소스는 main이다. 단계 0·1은 3847002, 2는 6a83094, 3은 906e996, 추가 기획은 2220dc5, 단계 4는 1fe44d2, UI 초안 01은 2bbd8cf, 초안 02는 6391781, 초안 03은 50b5b6c, 단계 5 완료 구현은 96847f4다. origin은 https://github.com/Armeride/CRAFT.git이며 2026-11-13 원격 main 조회 결과는 6391781이다. 인계 문서 보강 commit은 이 문서 이후의 Git 이력으로 확인한다. 새 clone은 필요한 로컬 commit이 원격에 포함됐는지 확인한다.
 - 실행 기준: Windows x64, Node 24.21.0/npm 11.19.0과 exact lockfile. 전역 설정·소유권·인증을 변경하지 않는다.
 - FR-021: 진단 code/messageKey/params와 fallback 문구를 분리했다. 단계 5 초안 01에서 ko/en catalog·언어 전환/선호·폼 상태 보존을 연결했다. 현재 구현한 웹 화면 인수는 작업 005에서 검증했으며 후속 화면도 같은 gate를 유지한다.
 - FR-022: state_model@1 파일·호환성·참조·입력 digest/색인까지 구현했다. 평가기·상태 결과·시점/actor 전후 비교는 단계 8이다. 현재 state/state-input은 evaluatorAvailable:false다.
@@ -185,7 +185,7 @@ npm run index -- search --app-data D:/craft-local --registration <등록-ID> --t
 
 현재 범위의 AT-14/15/16/18/19/30/31/39/40/50 시나리오를 검증했다. AT-11/20/27/28/38/47은 파일·fake·application command 기반이 있으며 전체 색인/MCP/provider/UI 인수는 해당 후속 단계에 남긴다. 모든 AT가 끝났다는 선언은 아니다.
 
-## 실제 실행과 검토 산출물
+## 단계 3 실행과 검토 산출물 이력
 
 ~~~powershell
 npm ci
@@ -207,27 +207,29 @@ npm run workspace -- start --app-data <관리-경로> --registration <등록-ID>
 
 ## 현재 한계와 미결정
 
-- 단계 5 초안의 UI/REST/ko/en·명시 working 저장은 있다. SSE·전체 수동 검토/통합과 실제 Codex/Claude·MCP/스킬·provider 교체는 아직 없다. i18n 구현체는 ADR-012로 고정했다.
+- 단계 5의 수동 작성·검토·통합·자동 저장/충돌/복구·SSE·관리 UI를 구현했다. 실제 Codex/Claude 실행기와 내부 MCP는 단계 6, 스킬/외부 MCP·provider 교체는 단계 7의 목표다.
 - 상태 파일/입력·참조는 검증하지만 trigger 실행·시점/actor 상태 비교·canon/plan·confirmed/working·POV 결과 필터는 단계 8이다. author만 지원하고 character/reader 요청은 거부한다.
-- 현재 diff는 metadata/ref 비교와 본문 단일 hunk다. 사용자 diff 승인 token·proposal 중복 방지·target 재검증은 단계 5, B/T/R 의미 통합·전체 장애/규모 시험은 9다.
-- 그래프 전체 재분석과 요청마다 원본 hash 확인은 정확성을 위한 현재 비용이다. watcher 힌트/갱신 UI는 5, 영향 부분 최적화와 큰 자료 성능은 9에서 판단한다.
+- 요소 비교는 metadata/ref 비교와 본문 단일 hunk를 제공하고 통합 검토는 전체 실제 Git diff를 제공한다. 승인 token·proposal 멱등성과 source/target 재검증을 구현했다. 다른 schema B/T/R·일반 텍스트 자동 3-way merge·전체 장애/규모 시험은 단계 9의 목표다.
+- 그래프 전체 재분석과 요청마다 원본 hash 확인은 현재의 계산 비용이다. watcher 힌트·갱신 UI를 구현했으며 영향 부분 최적화와 큰 자료 성능은 단계 9에서 판단한다.
 - product migration registry는 core 1만 지원한다. fixture core 2를 제품 업그레이드로 사용하지 않는다. 새 상태 계약은 선택적 추가 확장이며 자동 의미 migration은 없다.
-- CLI recover는 task run용이다. import 실패의 일반 운영 복구 UI는 후속이다. 별도 integration 공간 준비는 merge/target 갱신이 아니다.
+- CLI recover는 task run용이고 UI는 작업 저장 복구와 중단된 승인 통합의 완료/원복을 제공한다. import 등 HTTP 관리 명령의 불명 결과는 보존된 결과를 확인하며 세부 경계는 MANUAL_WORKFLOW.md를 따른다. 운영 데이터 전체 손실·전원/디스크 장애는 단계 9의 검증 대상이다.
 - OS lock/expected hash는 협력 앱의 경합을 다룬다. worktree는 OS sandbox가 아니다. 네트워크 볼륨/다른 OS·전원/디스크 장애 내구성은 단계 9에서 확대 검증한다.
 - native 모듈은 해당 OS/ABI에서 재설치한다. remotePreserved는 local remote-tracking ref 관측이며 실시간 서버 보장이 아니다. local-only 결과는 새 clone에 없다.
-- 환경 sandbox setup refresh 제약 때문에 자동화 명령은 일반 권한 실행 경로를 사용했다. safe.directory는 D:/git/CRAFT 한 명령 범위로만 설정했으며 전역 Git/CLI 설정·인증·소유권은 바꾸지 않았다.
+- 2026-11-13 ChatGPT 앱 전환 점검에서도 일반 셸의 helper_unknown_error/setup refresh 오류가 재현됐고 권한 검토를 거친 실행은 통과했다. Node 24.21.0/npm 11.19.0, 타입 검사·SQLite·Chrome·4174 검토 서버·원격 읽기/push dry-run을 확인했다. Git safe.directory는 D:/git/CRAFT 한 명령 범위로 사용했다. 새 세션은 해당 실행 환경의 실제 권한·오류를 확인한다.
 
-## 다음 작업 — UI 피드백 후 단계 5 계속
+## 다음 작업 — 사용자 지시 후 단계 6
 
-1. UI 초안 01에 대한 사용자 피드백을 먼저 반영한다. 스택/i18n/E2E 버전은 ADR-012로 고정했으므로 초기화/중복 구현하지 않는다.
-2. 구현한 loopback/session/Origin·REST 경계를 유지하며 SSE cursor/reconnect·watcher 힌트를 기존 task/index application service에 연결한다. author 범위·scope/snapshot/freshness 계약을 유지한다.
-3. 프로젝트/요소/검색/진단·working autosave·새 revision/review/baseline 선택의 수동 흐름을 만든다. 상태 파일 편집은 새 revision 규칙을 지킨다.
-4. proposal idempotency·diff/HEAD 검토 token·별도 integration 검증을 연결하고 모델 없는 실제 UI 흐름을 검증한다.
-5. 모든 앱 소유 문구·접근성/오류/형식화를 ko/en catalog로 제공하고 locale 전환 중 원문·초안·정본 digest 보존을 확인한다.
-6. 초안 확인 → 추가 요구 → 수정 방식을 유지한다. 현재는 UI 초안 03 검토 대기다. 단계 5 전체 검증/인계 뒤에도 멈추며 단계 6에 자동 착수하지 않는다.
+1. [새 세션 진입 순서](../START_HERE.md#8-다른-세션에서-이어갈-때)로 문서·HEAD·실행 환경을 확인한다. 단계 6 구현은 사용자의 진행 지시 후 시작한다.
+2. 설치된 실행기의 버전/help/인증 상태와 공식 프로토콜을 확인하고 단계 6의 adapter/capability/event 계약을 구체화한다. 이 확인은 단계 6 착수 시 수행할 일이다.
+3. 기존 TaskService의 격리 작업/초기 checkpoint·저장/취소/복구와 ProjectIndex의 scope/basis/working 조회를 재사용해 공통 실행기와 fake 흐름을 구성한다.
+4. search/entity/reverse/context/checkpoint/propose/validate 내부 MCP를 같은 application service와 run scope에 연결한다.
+5. 각 공급자 adapter를 연결하고 기존 수동 proposal·검토/통합 서비스와 웹 작업 흐름으로 전달한다. 실패/취소·경로/권한·ko/en/접근성 회귀와 명시 동의 범위의 실제 공급자 smoke를 검증한다.
+6. 단계 6 완료 기준·검증 결과·한계를 기록하고 대기한다. 별도 UI 요구는 새 작업으로 진행한다.
 
 ## 보존 상태
 
-단계 4 소스는 1fe44d2에 보존했다. 이번 UI 초안 소스·CLI·테스트·문서는 후속 로컬 Git commit으로 보존한다. 앱 저장소 자체에는 추가 worktree/remote가 없고 push하지 않는다. 단계 2 .tmp/stage2 CLI smoke 0CVDZz/, 단계 3 .tmp/stage3 CLI smoke zptFkI/와 최종 단계 4 .tmp/stage4 CLI smoke OrhOfS/를 검토용으로 유지한다. 모두 fixture 복사본이며 Git 제외 로컬 자료이고 원격 백업은 아니다. node_modules/dist/.tmp는 생성물이다. 일회 테스트 디렉터리는 소유 절대 경로·worktree 포함 범위를 확인해 정리한다.
+단계 5 소스·테스트·완료 문서는 96847f4에 보존했다. 이후 인계 문서 수정은 후속 로컬 commit으로 보존하며 최신 기준은 git log -1과 현재 Git 상태를 함께 확인한다. 원격 main은 위 조회 시점의 commit을 참고한다.
+
+단계 2 .tmp/stage2 CLI smoke 0CVDZz/, 단계 3 .tmp/stage3 CLI smoke zptFkI/, 단계 4 .tmp/stage4 CLI smoke OrhOfS/는 당시 로컬 검토 산출물이다. tracked fixture와 테스트 코드로 각 검증을 재생성할 수 있다. node_modules/dist는 설치·빌드로 재생성한다. 기존 로컬 자료를 정리할 때는 소유 절대 경로·worktree 포함 범위를 확인한다.
 
 UI 초안 보존: .tmp/ui-preview의 예시/앱 데이터와 .tmp/ui-e2e의 검증 예시는 Git 제외 로컬 자료다. 사용자가 저장한 초안이 생길 수 있으므로 전체 .tmp 자동 삭제를 하지 않는다. 화면 확인을 위한 preview 서버를 유지하며 종료해도 파일은 남는다.
