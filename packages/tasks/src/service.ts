@@ -10,7 +10,7 @@ import { isProjectPath } from '../../domain/src/path.js';
 import { checkImmutability, semanticDigest } from '../../project-fs/src/changes.js';
 import type { FileChange } from '../../project-fs/src/changes.js';
 import { objectFile, rawObject, textFile } from '../../project-fs/src/content.js';
-import { captureFiles, fileFailure, fingerprint, isCanonicalPath, newId, readSource } from '../../project-fs/src/files.js';
+import { captureFiles, fileFailure, fingerprint, hash, isCanonicalPath, newId, readSource } from '../../project-fs/src/files.js';
 import { loadCommittedProject, readCommittedFiles } from '../../project-fs/src/git-baseline.js';
 import { loadProject, parseProject } from '../../project-fs/src/project.js';
 import { applyTransaction, assertNoPending, assertSavedRecords, pendingTransactions, recoverTransactions } from '../../project-fs/src/writer.js';
@@ -23,8 +23,9 @@ import { gitLocations, withKernelLock, withMetadataLock, withWorktreeLock, workt
 import type { Lease } from '../../git-workspace/src/locks.js';
 import { discoverTasks } from './discovery.js';
 import { getRegistration } from './projects.js';
+import { assertIntegrationReady } from './integration-state.js';
 
-export interface StartTaskOptions { goal: string; title?: string; acceptance?: string[]; baselineId?: string; targetRef?: string; includeWorkingPaths?: readonly string[] }
+export interface StartTaskOptions { goal: string; title?: string; acceptance?: string[]; baselineId?: string; targetRef?: string; includeWorkingPaths?: readonly string[]; expectedWorkingFingerprint?: string }
 export interface FakeDraftOptions { entityId: string; body: string; signal?: AbortSignal; onPhase?: (phase: 'started' | 'saved') => Promise<void> }
 const canonicalFiles = (files: ReadonlyMap<string, SourceFile>) => new Map([...files].filter(([path]) => isCanonicalPath(path)));
 const delta = (before: ReadonlyMap<string, SourceFile>, after: ReadonlyMap<string, SourceFile>) => [...new Set([...before.keys(), ...after.keys()])].sort().flatMap(path => before.get(path)?.digest === after.get(path)?.digest ? [] : [{ path, file: after.get(path) ?? null }]);
@@ -33,7 +34,7 @@ export class TaskService {
   constructor(appData: string) { this.appData = resolve(appData); }
   private directory(runId: string): string { if (!/^run_[a-f0-9-]+$/.test(runId)) throw new Error('Invalid run ID'); return join(this.appData, 'runs', runId); }
   private async save(run: Run): Promise<void> { await writeState(this.appData, join(this.directory(run.runId), 'run.json'), 'Run', run); }
-  private writeOptions(run: Run): WriteOptions { return { scopeId: run.runId, allowedPrefixes: [`tasks/${run.taskId}/`, 'entities/'] }; }
+  private writeOptions(run: Run): WriteOptions { return { scopeId: run.runId, allowedPrefixes: [`tasks/${run.taskId}/`, 'entities/', 'baselines/', 'reviews/'] }; }
   private workspace(run: Run, registration: Registration): ScratchWorkspace { return { path: run.path, branch: run.branch, baseCommit: run.basisCommit, sourceRoot: registration.root }; }
   async run(runId: string, requireWorkspace = true): Promise<{ run: Run; registration: Registration }> {
     const run = await readState<Run>(this.appData, join(this.directory(runId), 'run.json'), 'Run');
@@ -61,10 +62,13 @@ export class TaskService {
 
   async start(registrationId: string, options: StartTaskOptions): Promise<Run> {
     const registration = await getRegistration(this.appData, registrationId);
+    await assertIntegrationReady(this.appData, registrationId);
     if (registration.status !== 'ready' || !registration.projectId) throw new Error('PROJECT_NOT_READY');
     if (!options.goal.trim()) throw new Error('Task goal is required');
     return withWorktreeLock(registration.root, async () => {
+      await assertIntegrationReady(this.appData, registrationId);
       const source = await repositoryGuard(registration.root, false);
+      if (options.expectedWorkingFingerprint && hash(canonicalJson(source)) !== options.expectedWorkingFingerprint) throw fileFailure('BASE_CHANGED', 'Selected working files changed before task creation', 'project.yaml');
       const targetRef = options.targetRef ?? await gitText(registration.root, ['symbolic-ref', '--short', 'HEAD']).catch(() => source.commit);
       let basisCommit = await gitText(registration.root, ['rev-parse', '--verify', '--end-of-options', `${targetRef}^{commit}`]);
       let snapshotRef: string | undefined;
@@ -80,6 +84,8 @@ export class TaskService {
   }
   async resume(registrationId: string, taskId: string, ref: string, commit: string): Promise<Run> {
     const registration = await getRegistration(this.appData, registrationId);
+    return withWorktreeLock(registration.root, async () => {
+    await assertIntegrationReady(this.appData, registrationId);
     if (!registration.projectId) throw new Error('PROJECT_NOT_READY');
     if (!/^task_[a-z0-9_-]+$/.test(taskId) || !/^(?:[a-f0-9]{40}|[a-f0-9]{64})$/.test(commit)) throw new Error('Invalid task/checkpoint identity');
     const location = (await discoverTasks(registration.root, registration.projectId)).find(item => item.taskId === taskId && item.ref === ref);
@@ -90,7 +96,9 @@ export class TaskService {
     if (snapshot.project.project_id !== registration.projectId || !snapshot.writable) throw new Error('TASK_CHECKPOINT_NOT_RUNNABLE');
     const immutable = checkImmutability(await loadCommittedProject(registration.root, task.base.commit), snapshot);
     if (immutable.length) throw new ValidationFailure(immutable);
-    return this.prepare(registration, commit, ref, { goal: task.goal }, task, undefined, false, { ref, commit, checkpointId: task.latest_checkpoint });
+    const targetRef = await gitText(registration.root, ['symbolic-ref', '--short', 'HEAD']);
+    return this.prepare(registration, commit, targetRef, { goal: task.goal }, task, undefined, false, { ref, commit, checkpointId: task.latest_checkpoint });
+    });
   }
 
   private async prepare(registration: Registration, basisCommit: string, targetRef: string, options: StartTaskOptions, previous?: Task, selectedSnapshotRef?: string, dirty = false, resumedFrom?: Run['resumedFrom']): Promise<Run> {
@@ -320,6 +328,25 @@ export class TaskService {
     });
     return op;
     } catch (error) { op.status = 'failed'; op.error = String(error); await writeState(this.appData, join(this.appData, 'operations', id + '.json'), 'Operation', op); throw error; }
+  }
+
+  /** Trusted manual commands share the same lease, journal and checkpoint boundary. */
+  async edit<T>(runId: string, expectedSnapshot: string, build: (current: ProjectSnapshot, run: Run) => Promise<{ files: readonly SourceFile[]; result: T }> | { files: readonly SourceFile[]; result: T }): Promise<T> {
+    const { run, registration } = await this.run(runId);
+    return withWorktreeLock(run.path, async lease => {
+      const current = await this.project(runId), value = await build(current, run);
+      if (!value.files.length) return value.result; // Persisted, verified idempotent replay.
+      if (current.fingerprint !== expectedSnapshot) throw fileFailure('BASE_CHANGED', 'Working snapshot changed before manual command', 'project.yaml');
+      const task = rawObject<Task>(current.files, `tasks/${run.taskId}/task.yaml`), id = newId('cp');
+      if (value.files.some(file => file.path === `tasks/${run.taskId}/task.yaml` || !this.writeOptions(run).allowedPrefixes.some(prefix => file.path.startsWith(prefix)))) throw fileFailure('WRITE_SCOPE_FORBIDDEN', 'Manual command is outside its task', 'project.yaml');
+      task.status = 'ready_for_review'; task.latest_checkpoint = id;
+      task.outputs = [...new Set([...task.outputs, ...value.files.map(file => file.path)])];
+      const basis = await loadCommittedProject(registration.root, run.basisCommit);
+      await this.write(run, lease, current, [...value.files, objectFile(`tasks/${task.id}/task.yaml`, task), ...this.checkpointRecords(run, task, basis, id, 'Manual changes preserved for user review.')]);
+      run.headCommit = await this.commit(run, registration, run.headCommit!, 'task: preserve manual changes', lease);
+      run.checkpointId = id; run.status = 'interrupted'; run.validation = { valid: true, codes: [] }; await this.save(run);
+      return value.result;
+    });
   }
 
   async prepareIntegration(registrationId: string, resultCommit: string, targetRef?: string): Promise<Operation> {

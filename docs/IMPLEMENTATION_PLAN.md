@@ -86,7 +86,7 @@ v1.2 추가 요구의 배치는 [ADR-009](adr/009-ui-locales-and-state-planning.
 - 추가 통과 기준: 모든 앱 문구의 ko/en·접근성 설명·오류·형식 표시를 확인하고 locale 전환이 원문·초안·선택·정본 digest를 변경하지 않는다.
 - 추적: FR-003/012/018/020/021, FR-022 편집 기반, AT-12~13/21~22/25/28/44~47/51~53.
 
-- 현재 결과: **진행 중, UI 초안 03 사용자 검토 대기**. 아래는 초안 01부터 이어진 구현 범위다. 사용자가 초안 확인 → 추가 요구 → 수정 방식을 요청했다. 실제 자료 탐색·검색·리비전/참조/diff·진단, ko/en·독립 working 초안의 명시 저장/복원을 연결했다. [실행과 검토 흐름](UI_PREVIEW.md)을 따른다. 새 revision/review/baseline 편집·autosave·proposal/사용자 승인·통합·SSE/전체 scope UI 등은 남아 있다. 현재 초안 검토 지점에서 멈추고 단계 6으로 진행하지 않는다.
+- 현재 결과: **완료, 단계 6 착수 전 대기**. UI 초안 03 승인 후 작업 005에서 새 revision/review/baseline·상태 확장 JSON 편집, 자동 저장/양쪽 보존 충돌, basis/working·Git checkpoint 복원, 멱등 proposal/실제 diff 승인·격리 통합·중단 복구, clone/import·제품 migration 계획/보고서, SSE cursor/watch를 연결했다. 생성 타입·빌드와 192개 Vitest/12개 Chrome E2E를 통과했다. [사용과 복구](MANUAL_WORKFLOW.md)·[ADR-015](adr/015-manual-review-integration-and-events.md)·[구체 검증/한계](IMPLEMENTATION_STATUS.md)를 따른다. 이후 새 UI 요구는 별도 작업이며 실제 모델/전체 상태 평가/제품 전체 인수는 후속 단계다.
 
 - UI 초안 02: FR-023~025/AT-61~66 추가. system/light/dark·분류 설정/언어/글꼴, 한 탐색 트리/대시보드·정확한 graph, 왼쪽 resize/오른쪽 toggle, 요소별 대화/문서·좌우 전환·working 직접 편집/실시간 미리보기를 반영했다. 요청 메모는 파일에 보관하며 실제 AI 실행은 6이다. 고급 graph 장식/범용 폰트 인식은 후순위다. 사용자 검토 후 같은 단계에서 계속한다.
 

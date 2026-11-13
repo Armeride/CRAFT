@@ -14,6 +14,7 @@ import { gitLocations, withKernelLock, withWorktreeLock } from '../../git-worksp
 import { sourceEpochAt } from '../../git-workspace/src/generation.js';
 import { renameWithRetry } from '../../git-workspace/src/fs.js';
 import { getRegistration } from '../../tasks/src/projects.js';
+import { assertIntegrationReady } from '../../tasks/src/integration-state.js';
 import { TaskService } from '../../tasks/src/service.js';
 import { INDEX_FORMAT } from './types.js';
 import { sourceFingerprint } from './fingerprint.js';
@@ -67,6 +68,7 @@ export class ProjectIndex {
   private async binding(): Promise<{ immutableCommit?: string }> {
     const registration = await getRegistration(this.appData, this.scope.registrationId);
     if (registration.projectId !== this.scope.projectId || registration.commonDir !== this.scope.commonDir) throw new IndexError('CONTEXT_FORBIDDEN');
+    if (!this.scope.runId && this.scope.view === 'working') await assertIntegrationReady(this.appData, this.scope.registrationId);
     if (this.scope.runId) {
       const { run, registration: current } = await new TaskService(this.appData).run(this.scope.runId, this.scope.view === 'working');
       if (run.worktreeId !== this.scope.worktreeId || run.taskId !== this.scope.taskId || (this.scope.view === 'working' ? run.path : current.root) !== this.scope.root || (this.scope.view === 'basis' && run.basisCommit !== this.scope.basisCommit)) throw new IndexError('CONTEXT_FORBIDDEN');

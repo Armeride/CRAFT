@@ -23,7 +23,7 @@ async function setup() {
 describe('local UI service boundary', () => {
   it('binds working requests to exact elements, preserves them and rejects conflicts or duplicate identity reuse', async () => {
     const f = await setup(), before = await repositoryGuard(f.root);
-    async function create(entityId: string, revisionId: string) { const source = (await f.query('exact', { entityId, revisionId })).json<QueryEnvelope<EntityDetail>>(); const response = await f.app.inject({ method: 'POST', url: `/api/projects/${f.registration.id}/drafts`, headers: f.headers, payload: { entityId, revisionId, expectedSnapshot: source.snapshotToken, baselineId: 'baseline_main', goal: '요소별 작업' } }); expect(response.statusCode).toBe(200); return response.json<Draft>(); }
+    async function create(entityId: string, revisionId: string) { const source = (await f.query('exact', { entityId, revisionId })).json<QueryEnvelope<EntityDetail>>(); const response = await f.app.inject({ method: 'POST', url: `/api/projects/${f.registration.id}/drafts`, headers: { ...f.headers, 'x-craft-request-id': randomUUID() }, payload: { entityId, revisionId, expectedSnapshot: source.snapshotToken, baselineId: 'baseline_main', goal: '요소별 작업' } }); expect(response.statusCode).toBe(200); return response.json<Draft>(); }
     const a = await create('ent_border', 'rev_border'), b = await create('ent_gate', 'rev_gate');
     expect(a.source?.entityId).toBe('ent_border'); expect(b.source?.entityId).toBe('ent_gate');
     const requestId = randomUUID(), payload = { requestId, text: '국경의 영향 검토 <원문>', expectedDigest: null };
@@ -60,7 +60,7 @@ describe('local UI service boundary', () => {
   it('saves and restores a separate working draft and refuses an outdated content digest', async () => {
     const f = await setup(), before = await repositoryGuard(f.root);
     const source = (await f.query('exact', { entityId: 'ent_border', revisionId: 'rev_border' })).json<QueryEnvelope<EntityDetail>>();
-    const created = await f.app.inject({ method: 'POST', url: `/api/projects/${f.registration.id}/drafts`, headers: f.headers, payload: { entityId: 'ent_border', revisionId: 'rev_border', expectedSnapshot: source.snapshotToken, baselineId: 'baseline_main', goal: 'UI에서 새 지역 초안을 검토한다.' } });
+    const created = await f.app.inject({ method: 'POST', url: `/api/projects/${f.registration.id}/drafts`, headers: { ...f.headers, 'x-craft-request-id': randomUUID() }, payload: { entityId: 'ent_border', revisionId: 'rev_border', expectedSnapshot: source.snapshotToken, baselineId: 'baseline_main', goal: 'UI에서 새 지역 초안을 검토한다.' } });
     expect(created.statusCode).toBe(200); const draft = created.json<Draft>(); expect(draft.text).toBe(source.data.body);
     const text = 'UI에서 보존한 초안\n<script>사용자 원문</script>\n';
     const saved = await f.app.inject({ method: 'PUT', url: `/api/runs/${draft.runId}/draft`, headers: f.headers, payload: { text, expectedDigest: draft.digest } }); expect(saved.statusCode).toBe(200);
@@ -73,7 +73,7 @@ describe('local UI service boundary', () => {
   it('refuses stale source before creating a worktree and keeps invalid registrations from breaking startup', async () => {
     const f = await setup(), source = (await f.query('exact', { entityId: 'ent_border', revisionId: 'rev_border' })).json<QueryEnvelope<EntityDetail>>();
     await writeFile(join(f.root, 'README.md'), '외부 변경\n');
-    const response = await f.app.inject({ method: 'POST', url: `/api/projects/${f.registration.id}/drafts`, headers: f.headers, payload: { entityId: 'ent_border', revisionId: 'rev_border', expectedSnapshot: source.snapshotToken, baselineId: 'baseline_main', goal: '보류해야 한다' } });
+    const response = await f.app.inject({ method: 'POST', url: `/api/projects/${f.registration.id}/drafts`, headers: { ...f.headers, 'x-craft-request-id': randomUUID() }, payload: { entityId: 'ent_border', revisionId: 'rev_border', expectedSnapshot: source.snapshotToken, baselineId: 'baseline_main', goal: '보류해야 한다' } });
     expect(response.statusCode).toBe(409); expect(response.json().code).toBe('BASE_CHANGED');
     const invalid = await indexFixture(); fixtures.push(invalid); await writeFile(join(invalid.root, 'project.yaml'), 'broken: true\n');
     const opened = await f.app.inject({ method: 'POST', url: '/api/projects/open', headers: f.headers, payload: { root: invalid.root } }); expect(opened.statusCode).not.toBe(200);

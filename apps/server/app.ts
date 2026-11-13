@@ -10,6 +10,10 @@ import { ValidationFailure } from '../../packages/domain/src/model.js';
 import type { Catalog, ProjectChoice } from './contracts.js';
 
 import { registerDraftRoutes } from './drafts.js';
+import { registerManualRoutes } from './manual.js';
+import { registerLibraryRoutes } from './library.js';
+import { registerConflictRoutes } from './conflicts.js';
+import { WorkspaceEvents, registerEventRoute } from './events.js';
 
 export interface WebOptions { appData: string; port: number; webRoot?: string; examples?: string[] }
 const secret = () => randomBytes(32).toString('hex');
@@ -17,26 +21,26 @@ const equal = (a: unknown, b: string) => typeof a === 'string' && /^[a-f0-9]{64}
 const idParams = { type: 'object', required: ['id'], additionalProperties: false, properties: { id: { type: 'string', pattern: '^reg_[a-f0-9-]+$' } } };
 export async function createWebApp(options: WebOptions) {
   await mkdir(options.appData, { recursive: true });
-  const app = Fastify({ logger: false, bodyLimit: 512 * 1024, trustProxy: false, ajv: { customOptions: { removeAdditional: false, coerceTypes: false, useDefaults: false } } });
+  const app = Fastify({ logger: false, bodyLimit: 2 * 1024 * 1024, trustProxy: false, ajv: { customOptions: { removeAdditional: false, coerceTypes: false, useDefaults: false } } });
   const csrf = secret(), session = secret(), cookieName = `craft_preview_${options.port}`;
   const hosts = new Set([`127.0.0.1:${options.port}`, `localhost:${options.port}`]);
   const choices = new Map<string, ProjectChoice>(), indexes = new Map<string, ProjectIndex>(), tails = new Map<string, Promise<unknown>>();
-  const tasks = new TaskService(options.appData);
+  const tasks = new TaskService(options.appData), events = new WorkspaceEvents(options.appData); await events.init();
+  const authorize = (id: string) => { if (!choices.has(id)) throw new IndexError('CONTEXT_FORBIDDEN'); };
+  const changed = (id: string, type: string, runId?: string) => events.publish(id, type, runId);
+  async function withProject<T>(id: string, action: () => Promise<T>): Promise<T> {
+    const next = (tails.get(id) ?? Promise.resolve()).catch(() => {}).then(action); tails.set(id, next); return next;
+  }
   async function withIndex<T>(id: string, action: (index: ProjectIndex) => Promise<T>): Promise<T> {
-    if (!choices.has(id)) throw new IndexError('CONTEXT_FORBIDDEN');
-    const next = (tails.get(id) ?? Promise.resolve()).catch(() => {}).then(async () => {
-      let index = indexes.get(id);
-      if (!index) { index = await ProjectIndex.registered(options.appData, id); indexes.set(id, index); }
-      return action(index);
-    });
-    tails.set(id, next); return next;
+    authorize(id); return withProject(id, async () => { let index = indexes.get(id); if (!index) { index = await ProjectIndex.registered(options.appData, id); indexes.set(id, index); } return action(index); });
   }
   async function addProject(id: string) {
     const registration = await getRegistration(options.appData, id);
     if (!registration.projectId || !['ready', 'unsupported'].includes(registration.status)) throw new IndexError('PROJECT_NOT_READY');
+    events.watch(id, registration.root, registration.selectedRef);
     choices.set(id, { id, name: registration.projectId, example: options.examples?.includes(id) ?? false });
     try { const catalog = await withIndex(id, index => index.query<Catalog>('catalog', {}, { scopeToken: index.scopeToken })); choices.get(id)!.name = catalog.data.project.name; }
-    catch (error) { choices.delete(id); await indexes.get(id)?.close(); indexes.delete(id); throw error; }
+    catch (error) { if ((error as { code?: string }).code === 'RECOVERY_REQUIRED' || error instanceof ValidationFailure && error.diagnostics.some(issue => issue.code === 'RECOVERY_REQUIRED')) return; choices.delete(id); await indexes.get(id)?.close(); indexes.delete(id); throw error; }
   }
   try { for (const name of await readdir(join(options.appData, 'registrations'))) if (/^reg_[a-f0-9-]+\.json$/.test(name)) { const registration = await getRegistration(options.appData, name.slice(0, -5)); if (registration.projectId && ['ready', 'unsupported'].includes(registration.status)) { try { await addProject(registration.id); } catch { choices.set(registration.id, { id: registration.id, name: registration.projectId, example: options.examples?.includes(registration.id) ?? false }); } } } }
   catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
@@ -55,14 +59,18 @@ export async function createWebApp(options: WebOptions) {
   app.setErrorHandler((error: Error & { code?: string; validation?: unknown }, request, reply) => {
     const diagnostics = error instanceof ValidationFailure ? error.diagnostics : [];
     const code = diagnostics[0]?.code ?? (error.validation ? 'REQUEST_INVALID' : error.code ?? 'REQUEST_FAILED');
-    const status = ['CONTEXT_FORBIDDEN'].includes(code) ? 403 : ['BASE_CHANGED', 'FILE_CHANGED_EXTERNALLY', 'WORKTREE_BUSY', 'SOURCE_CHANGED'].includes(code) ? 409 : 400;
+    const status = ['CONTEXT_FORBIDDEN'].includes(code) ? 403 : ['BASE_CHANGED', 'FILE_CHANGED_EXTERNALLY', 'WORKTREE_BUSY', 'SOURCE_CHANGED', 'INTEGRATION_CONFLICT', 'REVIEW_TOKEN_INVALID', 'APPROVAL_BLOCKED', 'CHECKPOINT_REQUIRED', 'PROPOSAL_ALREADY_CONSUMED'].includes(code) ? 409 : 400;
     reply.code(status).send({ code, message: 'The request could not be completed', details: { diagnostics }, retryable: ['WORKTREE_BUSY', 'SOURCE_CHANGED'].includes(code), request_id: request.id });
   });
   app.get('/api/session', async (_request, reply) => { reply.header('Set-Cookie', `${cookieName}=${session}; HttpOnly; SameSite=Strict; Path=/`); return { csrf, projects: [...choices.values()], demo: !!options.examples?.length }; });
   app.post<{ Body: { root: string } }>('/api/projects/open', { schema: { body: { type: 'object', additionalProperties: false, required: ['root'], properties: { root: { type: 'string', minLength: 1, maxLength: 4096 } } } } }, async request => { const registration = await registerLocal(options.appData, request.body.root); await addProject(registration.id); return choices.get(registration.id); });
   app.post<{ Params: { id: string }; Body: { operation: 'catalog' | 'exact' | 'search' | 'analyze' | 'reverse' | 'diff' | 'tasks' | 'state'; args?: Record<string, unknown>; baselineId?: string } }>('/api/projects/:id/query', { schema: { params: idParams, body: { type: 'object', additionalProperties: false, required: ['operation'], properties: { operation: { enum: ['catalog', 'exact', 'search', 'analyze', 'reverse', 'diff', 'tasks', 'state'] }, args: { type: 'object', maxProperties: 12 }, baselineId: { type: 'string', minLength: 1, maxLength: 256 } } } } }, request => withIndex(request.params.id, index => index.query(request.body.operation, request.body.args ?? {}, { scopeToken: index.scopeToken, ...(request.body.baselineId ? { baselineId: request.body.baselineId } : {}) })));
-  await registerDraftRoutes(app, { appData: options.appData, tasks, withIndex, authorize: id => { if (!choices.has(id)) throw new IndexError('CONTEXT_FORBIDDEN'); } });
+  await registerDraftRoutes(app, { appData: options.appData, tasks, withIndex, authorize, changed });
+  await registerManualRoutes(app, { appData: options.appData, authorize, changed, withProject });
+  registerEventRoute(app, events, authorize);
+  await registerConflictRoutes(app, { appData: options.appData, authorize, withProject });
+  await registerLibraryRoutes(app, { appData: options.appData, authorize, changed, withProject, attach: async id => { await addProject(id); return choices.get(id)!; } });
   if (options.webRoot) { await app.register(staticFiles, { root: options.webRoot, index: ['index.html'], cacheControl: false }); }
-  app.addHook('onClose', async () => { await Promise.allSettled(tails.values()); await Promise.all([...indexes.values()].map(index => index.close())); });
+  app.addHook('onClose', async () => { await events.close(); await Promise.allSettled(tails.values()); await Promise.all([...indexes.values()].map(index => index.close())); });
   return app;
 }

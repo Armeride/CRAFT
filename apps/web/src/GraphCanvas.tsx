@@ -10,11 +10,12 @@ const limitScale = (scale: number) => Math.max(minimumScale, Math.min(2.5, scale
 export function GraphCanvas({ model, language, choose, layoutEngine }: GraphEngineProps & { layoutEngine: (model: GraphEngineProps['model']) => GraphLayout }) {
   const { t } = useTranslation(), id = useId().replaceAll(':', ''), ref = useRef<HTMLDivElement>(null);
   const layout = useMemo(() => layoutEngine(model), [layoutEngine, model]);
+  const layoutKey = JSON.stringify([layout.width, layout.height, [...layout.positions].sort(([a], [b]) => a.localeCompare(b))]);
   const [size, setSize] = useState({ width: 600, height: 440 }), [view, setView] = useState<Viewport>({ x: 0, y: 0, scale: 1 }), [dragging, setDragging] = useState(false);
   const drag = useRef<{ pointer: number; clientX: number; clientY: number; x: number; y: number } | null>(null);
   const fit = () => { const scale = limitScale(Math.min((size.width - 32) / layout.width, (size.height - 32) / layout.height)); setView({ scale, x: (size.width - layout.width * scale) / 2, y: (size.height - layout.height * scale) / 2 }); };
   useLayoutEffect(() => { const element = ref.current; if (!element) return; const observer = new ResizeObserver(() => setSize({ width: element.clientWidth, height: element.clientHeight })); observer.observe(element); setSize({ width: element.clientWidth, height: element.clientHeight }); return () => observer.disconnect(); }, []);
-  useLayoutEffect(fit, [layout, size.width, size.height]);
+  useLayoutEffect(fit, [layoutKey, size.width, size.height]);
   function zoom(factor: number, point: Point = { x: size.width / 2, y: size.height / 2 }) { setView(previous => { const scale = limitScale(previous.scale * factor), ratio = scale / previous.scale; return { scale, x: point.x - (point.x - previous.x) * ratio, y: point.y - (point.y - previous.y) * ratio }; }); }
   useEffect(() => { const element = ref.current; if (!element) return; const wheel = (event: WheelEvent) => { if (!event.ctrlKey && !event.metaKey) return; event.preventDefault(); const rect = element.getBoundingClientRect(); zoom(event.deltaY < 0 ? 1.15 : 1 / 1.15, { x: event.clientX - rect.left, y: event.clientY - rect.top }); }; element.addEventListener('wheel', wheel, { passive: false }); return () => element.removeEventListener('wheel', wheel); }, []);
   function reveal(key: string) { const p = layout.positions.get(key)!; setView(previous => { const x = p.x * previous.scale + previous.x, y = p.y * previous.scale + previous.y; return x < 0 || y < 0 || x + nodeWidth * previous.scale > size.width || y + nodeHeight * previous.scale > size.height ? { ...previous, x: size.width / 2 - (p.x + nodeWidth / 2) * previous.scale, y: size.height / 2 - (p.y + nodeHeight / 2) * previous.scale } : previous; }); }

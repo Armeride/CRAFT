@@ -12,7 +12,7 @@
 
 ## 기능 요구 추적
 
-아래 단계는 명세 18절의 번호다. 현재 단계 1의 파일·검증·정확 조회, 단계 2의 migration, 단계 3의 Git 프로젝트·작업 격리·보존, 단계 4의 재구축 색인·참조 진단·검색과 상태 계약 기반을 구현했다. 단계 5는 ko/en UI 초안 03에 테마·설정·탐색·대화/문서와 교체형 관계 그래프 피드백을 반영하고 검토 대기 중이다. FR 전체 기능의 완료 선언은 아니며 구체 범위는 IMPLEMENTATION_STATUS.md를 따른다.
+아래 단계는 명세 18절의 번호다. 현재 단계 1의 파일·검증·정확 조회, 단계 2의 migration, 단계 3의 Git 프로젝트·작업 격리·보존, 단계 4의 재구축 색인·참조 진단·검색과 상태 계약 기반을 구현했다. 단계 5는 UI 초안 03 승인 후 작업 005의 수동 작성·검토·승인 통합·자동 저장/충돌·관리/SSE를 완료했고 단계 6 착수 전 대기 중이다. FR 전체 기능의 완료 선언은 아니며 구체 범위는 IMPLEMENTATION_STATUS.md를 따른다.
 
 | ID | 구분 | 구현할 행동 | 주 단계 |
 |---|---|---|---|
@@ -97,7 +97,7 @@
 | 동적 상태 | 모든 상태 보유 요소에 초기 상태·trigger/조건/효과·발생/가정·actor·시점/근거를 구분. missing은 unknown, 모호성·중복/연쇄는 명시 정책. scope/문서 status와 혼합 금지. R-26 |
 | 실행기·스킬·MCP | provider capability별 지원 표시. 공통 domain service 사용. 버전/digest 고정 스킬, run overlay, 시크릿 분리. 직접 shell/API 부작용 전체를 관리 MCP와 같은 수준으로 보장하지 않는다. |
 
-R-01~R-24는 기존 검토 식별자, R-25/26은 추가 사용자 요구의 설계 반영 식별자이며 제품 테스트 통과를 뜻하지 않는다. R-22는 범위가 제한되지 않은 세션의 지속 원칙이다. 현재는 사용자의 명시 요청에 따라 각 단계 완료 후 멈춘다. 사용자의 단계 4 요청에 따라 해당 범위를 완료했고 단계 5는 UI 초안 제시 후 사용자 피드백을 받아 수정하는 방식이며 현재 첫 검토 지점에서 대기한다.
+R-01~R-24는 기존 검토 식별자, R-25/26은 추가 사용자 요구의 설계 반영 식별자이며 제품 테스트 통과를 뜻하지 않는다. R-22는 범위가 제한되지 않은 세션의 지속 원칙이다. 현재는 사용자의 명시 요청에 따라 각 단계 완료 후 멈춘다. 사용자의 단계 4/5 요청과 UI 초안 승인 후 잔여 기능 구현 확정에 따라 단계 5를 완료했고 단계 6 착수 전 대기한다. 새 UI 요구는 별도 작업으로 관리한다.
 
 ## 결정한 기술 사항과 남은 판단
 
@@ -109,8 +109,8 @@ R-01~R-24는 기존 검토 식별자, R-25/26은 추가 사용자 요구의 설�
 | SQLite | better-sqlite3 13.0.3, FTS5 사용 가능 확인 | 단계 4: worker·한국어 실원고·증분/복원 검증 완료, 대규모 성능은 9 |
 | writer | node:fs 임시 파일+sync+close+rename, OS lease·expected hash·forward journal 복구 | 단계 3에서 프로세스 사망/부분 쓰기·외부 충돌 검증, 단계 9에서 전원/디스크·전체 장애 확대 |
 | Git 작업 | task/run별 worktree·초기 checkpoint·선택 snapshot, 로컬/remote-tracking 보존 구분 | 단계 3 완료. UI 검토·통합은 단계 5/9, 실제 provider 재개는 단계 7 |
-| UI·서버 | React/Vite + Fastify, SSE/HTTP, 기능 중심 UI | 단계 5 초안에서 React 19.3.1/Vite 8.3.8/Fastify 5.12.8와 Playwright/axe를 고정(ADR-012), SSE/전체 흐름은 진행 중 |
-| UI 언어 | 확정: 초기 ko/en, 모든 앱 문구와 접근성·오류·형식화, locale 전환 시 초안/정본 유지 | i18next 27.1.1/react-i18next 18.0.1·ko/en catalog 고정(ADR-012), 전체 화면 인수는 단계 5 진행 중 |
+| UI·서버 | React/Vite + Fastify, SSE/HTTP, 기능 중심 UI | 단계 5 초안에서 React 19.3.1/Vite 8.3.8/Fastify 5.12.8와 Playwright/axe를 고정(ADR-012), SSE/수동 전체 흐름 완료(ADR-015), 실제 AI는 단계 6 |
+| UI 언어 | 확정: 초기 ko/en, 모든 앱 문구와 접근성·오류·형식화, locale 전환 시 초안/정본 유지 | i18next 27.1.1/react-i18next 18.0.1·ko/en catalog 고정(ADR-012), 현재 웹 화면 인수 완료, 단계 6~8 새 화면에도 같은 gate 적용 |
 | 동적 상태 | 확정: 일반 요소의 시간·조건·trigger 상태와 가정 비교. 설계: 공통 의미 모델·3값 조건·근거·비정본 평가 | 단계 4에서 state_model@1/AST/효과/한도·내장 reader pin·legacy adapter 고정(ADR-010). 전체 평가기 8 |
 | CLI | 두 실행기 설치·버전만 확인, 인증 unknown | 단계 6: protocol/capability·취소·실제 smoke, 필요 시 Claude SDK |
 | 타입 생성 | JSON Schema → json-schema-to-typescript 16.0.0, drift 검사 | 단계 1에서 선택·검증 완료 |

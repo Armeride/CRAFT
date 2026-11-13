@@ -1,17 +1,41 @@
 # 구현 상태
 
-갱신: 2026-11-13, Asia/Seoul. **단계 0~4 완료, 단계 5 진행 중(UI 초안 03 사용자 검토 대기)**. 단계 6~9는 미착수, 10은 선택 확장이다. 사용자가 UI 초안 확인 → 추가 요구 → 수정 방식을 요청했다. 세 번째 검토 지점에서 멈추며 단계 5 전체 완료로 처리하거나 단계 6에 착수하지 않는다.
+갱신: 2026-11-13, Asia/Seoul. **단계 0~5 완료, 단계 6 착수 전 대기**. 사용자가 UI 초안 03을 승인하고 단계 5 잔여 기능까지 이번에 구현하도록 확정했다. [작업 005](tasks/005-manual-workflow.md)를 완료했다. 이후 새 UI 요구는 [별도 작업](tasks/README.md)으로 관리한다. 단계 6~9는 미착수, 10은 선택 확장이다.
 
 ## 기준과 범위 구분
 
 - 목표: PROJECT_SPEC.md v1.4 전체, REVIEW_NOTES.md. [확정 요구·설계 기준·미결정](REQUIREMENTS.md)을 구분한다. FR 26개·AT 68개는 제품 전체 기준이며 아래 테스트 수와 다르다.
 - 앱 소스: main(이전 master). 단계 0·1은 3847002, 2는 6a83094, 3은 906e996, 추가 기획은 2220dc5이며 단계 4는 1fe44d2이며 UI 초안 01은 2bbd8cf, 초안 02는 6391781이며 초안 03도 로컬 commit으로 보존한다. 현재 origin=https://github.com/Armeride/CRAFT.git. 사용자가 main으로 push했고 2026-11-13 원격 HEAD/main과 로컬 6391781 일치를 확인했다. 이번 그래프 변경은 별도 로컬 commit으로 보존한다.
 - 실행 기준: Windows x64, Node 24.21.0/npm 11.19.0과 exact lockfile. 전역 설정·소유권·인증을 변경하지 않는다.
-- FR-021: 진단 code/messageKey/params와 fallback 문구를 분리했다. 단계 5 초안 01에서 ko/en catalog·언어 전환/선호·폼 상태 보존을 연결했다. 전체 화면 인수는 진행 중이다.
+- FR-021: 진단 code/messageKey/params와 fallback 문구를 분리했다. 단계 5 초안 01에서 ko/en catalog·언어 전환/선호·폼 상태 보존을 연결했다. 현재 구현한 웹 화면 인수는 작업 005에서 검증했으며 후속 화면도 같은 gate를 유지한다.
 - FR-022: state_model@1 파일·호환성·참조·입력 digest/색인까지 구현했다. 평가기·상태 결과·시점/actor 전후 비교는 단계 8이다. 현재 state/state-input은 evaluatorAvailable:false다.
 - 공개 core/narrative/game_design v1·core 생성 타입·기존 fixture/semantic model 1은 유지했다. 새 상태 확장과 fixture만 별도로 추가했다. 문서 v1.4도 제품 core v2가 아니다.
 
-## 단계 5 — UI 초안 03 검토 지점
+## 단계 5 — 수동 작업 흐름 완료
+
+2026-11-13 작업 005 완료. [사용법·복구·API 한도](MANUAL_WORKFLOW.md), [ADR-015](adr/015-manual-review-integration-and-events.md)를 따른다. UI 초안 03의 구조를 유지하고 실제 남은 기능을 연결했다. 외부 그래프 후보는 문서 기록만 유지하며 의존성/lockfile을 변경하지 않았다.
+
+- ManualService/TaskService.edit: 불변 새 요소/revision, scope/reference/state 확장 편집, 사용자 review·baseline 생성/채택, 예상 snapshot·UUID receipt와 checkpoint 동시 보존. 참조만 바뀐 새 revision은 기존 본문/검토를 보존하고 재검토한다.
+- 본문/속성 자동 저장·digest CAS·화면 전환 뒤 속성 저장 지속, locale/배치/재접속 복원, 충돌 시 양쪽 원문/백업·별도 run 분기와 백업 열람. 새 작업은 HEAD 또는 명시 선택 dirty snapshot이며 원래 index/파일은 보존한다.
+- IntegrationService: 별도 candidate worktree·전체 실제 diff·source/target/diff/review token, 입력/HEAD/index/branch 재검증·원자 ref 검증/갱신, approved/release 사용자 검토 gate, 결과와 consumed_proposals 같은 commit. 적용 전/후 중단 guard·완료/원복, 외부 편집 보존, 중복/불명 결과의 자동 재실행 차단.
+- 관리 REST/UI: 로컬/안전 transport clone·명시 문서 import와 별도 기준, Git exact checkpoint 새 run 복원, 제품 v1 migration 지원표/계획/no-op·committed attestation 보고서. 실제 제품 v2나 자동 migration 통합을 만들지 않았다.
+- SSE: 인증된 프로젝트 scope, durable 단조 cursor/200개 replay·범위 초과 동기화, writer/실제 파일 watcher·재접속·heartbeat·느린 client 종료. query 검증을 대체하지 않는다. working/basis/source scope 비혼합과 stale 차단을 유지한다.
+
+최종 검증: **npm run check — 18파일 192개 Vitest 통과(301.47초)**, 생성 타입·core/web typecheck·서버/worker/Vite build 통과. 이후 UI의 기준 복원/SSE/viewport 보강은 typecheck·graph/locale 7개 단위 검사와 최종 전체 E2E로 재검증했다. **npm run test:ui — 12개 Chrome E2E 통과(약 4분)**. 모델 없이 본문 자동 저장→새 approved revision→전파/사용자 review→실제 diff 승인·정본 통합→reload, 즉시 화면 이동/미완성 JSON 복원·언어 전환·작업별 baseline 복원/외부 변경 SSE 반영, CAS 충돌/두 원문 보존·새 run, 관리/migration/no-op·명시 checkpoint 복원, 기존 탐색/graph/settings·ko/en/라이트/다크/390px·WCAG A/AA 자동 검사 회귀를 검증했다. 서비스 검증은 참조만 변경 후 재검토, stale snapshot/target/source 변경·중복 UUID/token, 통합 파일 적용/commit 후 중단·복원·외부 편집 보존, HTTP 범위·선택 dirty 원본 보존, 실제 HTTP SSE·fs.watch/프로젝트 비혼합·cursor 재시작·다중 publisher를 포함한다.
+
+추가 실행 검증: 빌드한 서버의 중단 상태 재시작→인증된 pending/restore API→정본 조회 회복 smoke 통과. native 환경 CLI는 Node v24.21.0/win32/x64. 공개 core/extension schema·생성 타입·기존 fixture·package/lockfile은 50b5b6c와 동일하다. 명세 FR 26/AT 68·기존 불변 조건/예시 의미는 유지한다.
+
+첫 전체 회귀에서는 192개 중 migration 기존 파일 교체 1개가 Windows EPERM으로 실패했다. 실제 실패 경로의 단발 rename을 기존 제한된 renameWithRetry로 바꿨다. 대상 파일 삭제 없이 같은 atomic rename만 재시도하며 최종 전체 회귀에서 검증했다. 기존 UI의 명시 Save 전제 시험은 자동 저장 완료와 요청 보관의 session 갱신으로 갱신했다. 충돌 시험은 빈 초안의 실제 digest를 사용한다.
+
+실시간 초기 동기화/재조회에서 동일한 graph model 객체가 다시 만들어져 이동·확대 상태가 초기화되는 문제도 발견했다. 실제 배치 기하가 바뀔 때만 자동 fit하도록 수정하고 drag 후 조회 갱신에도 viewport가 유지되는 Chrome 회귀를 추가했다. 관리 화면 복원 시험은 실행 불가능한 옛 fixture가 아니라 방금 보존한 runnable checkpoint를 명시 선택한다.
+
+현재 main의 로컬 commit으로 보존하며 자동 push하지 않는다. 검토 서버는 http://127.0.0.1:4174, 기존 .tmp/ui-preview를 보존해 최신 빌드로 재시작했고 HTTP/인증된 새 복구 API를 확인했다. 격리된 인수 프로젝트에서 복원된 수동 속성 화면도 시각 확인했다. E2E/smoke는 별도 임시 프로젝트만 사용한다. 단계 5 종료 후 대기한다.
+
+실제 AI/내부 MCP는 6, 공급자 재개는 7, 상태 조건 평가/시점·actor 비교는 8이다. 다른 schema/일반 텍스트 자동 3-way merge, 운영 상태 전체 손실·전원/디스크 장애/규모·타 OS/브라우저와 전체 AT 인수는 9에서 검증한다. 자동 접근성 검사는 수동 스크린리더/모든 환경 인수를 뜻하지 않는다. 새 UI 요청·그래프 외부 도입은 별도 작업이다.
+
+## 단계 5 — UI 초안 03 승인 기준선
+
+아래는 50b5b6c 당시의 검증 이력이다. 현재 단계 5 완료 범위는 위 작업 005를 따른다.
 
 2026-11-13 사용자 그래프 요청을 FR-026/AT-67~68로 기록했다. [후보 비교/확장 계약](GRAPH_ENGINES.md), [ADR-014](adr/014-pluggable-relationship-graph.md)을 따른다. 외부 후보 Cytoscape/fCoSE, Sigma/Graphology/ForceAtlas2/Louvain, react-force-graph-2d는 공식 자료 검토만 했고 설치·실행 비교·채택은 하지 않았다. 의존성과 lockfile은 유지한다.
 

@@ -1,4 +1,5 @@
-import { mkdir, open, readFile, rename, unlink } from 'node:fs/promises';
+import { mkdir, open, readFile, unlink } from 'node:fs/promises';
+import { renameWithRetry } from '../../git-workspace/src/fs.js';
 import { dirname, join, resolve } from 'node:path';
 import { Ajv2020 } from 'ajv/dist/2020.js';
 import { canonicalJson } from '../../domain/src/canonical.js';
@@ -52,7 +53,7 @@ async function writeAtomic(root: string, path: string, text: string): Promise<vo
   const temporary = path + `.${newId('tmp')}`;
   const handle = await open(temporary, 'wx');
   try { await handle.writeFile(text, 'utf8'); await handle.sync(); } finally { await handle.close(); }
-  await rename(temporary, path);
+  await renameWithRetry(temporary, path);
 }
 async function writeAudit(root: string, path: string, definition: string, value: unknown): Promise<void> {
   validateAudit(definition, value, path);

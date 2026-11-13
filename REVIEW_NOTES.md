@@ -175,3 +175,8 @@ worker SQLite/증분·복원·scope·SCC·검토/갱신 경고·NFC/FTS5·입력
 | R-31 | 오픈소스 검토·교체형 엔진/설정·연결 중심/군집·zoom/pan 캔버스 | 15.6절, 공통 모델/registry/View·내장 2종·캔버스. 외부 패키지 도입 보류 | AT-67~68 |
 
 [후보 비교](docs/GRAPH_ENGINES.md)와 [ADR-014](docs/adr/014-pluggable-relationship-graph.md)에 공식 근거·적합성 추론·미검증 도입 경계를 남겼다. 표시 범위의 연결 수/시각 군집과 정본 분류/차단 진단은 분리한다. core/extension v1·fixture·기존 불변 조건은 유지하며 단계 5 초안 03에서 사용자 검토를 기다린다.
+
+
+## 2026-11-13 — UI 기준선 승인·단계 5 완료
+
+사용자는 초안 03을 승인하고 단계 5의 남은 수동 기능까지 이번에 구현하도록 확정했다. [작업 005](docs/tasks/005-manual-workflow.md)의 수동 작성/사용자 검토·실제 diff 승인 통합·자동 저장/충돌/복구·관리/SSE를 완료했다. [ADR-015](docs/adr/015-manual-review-integration-and-events.md)와 [검증/한계](docs/IMPLEMENTATION_STATUS.md)를 따른다. 위 초안 검토 대기 문구는 당시 이력이다. 새 UI 요구는 새 작업으로 관리하며 외부 graph 후보는 기록만 유지한다. 단계 6은 착수 전 대기, 실제 AI·상태 평가·전체 제품 인수는 후속 단계다. 기존 요구/불변 조건/공개 v1 의미는 바꾸지 않는다.

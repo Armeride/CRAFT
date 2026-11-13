@@ -6,11 +6,24 @@ import { workingKey } from './workspace-model.js';
 export interface WorkingDraft { data: Draft; savedText: string }
 export function useDrafts(projectId: string, baselineId: string | undefined, report: (error: unknown) => void) {
   const [sessions, setSessions] = useState<Record<string, WorkingDraft>>({}), [summaries, setSummaries] = useState<DraftSummary[]>([]), [busy, setBusy] = useState(false), [notice, setNotice] = useState(false);
+  const [conflicts, setConflicts] = useState<Record<string, Draft>>({});
   const [selectedRuns, setSelectedRuns] = useState<Record<string, string>>({});
-  const preparing = useRef(new Map<string, Promise<Draft | null>>());
+  const latestSessions = useRef(sessions); latestSessions.current = sessions;
+  const preparing = useRef(new Map<string, Promise<Draft | null>>()), autosaveAttempts = useRef(new Map<string, string>());
+  useEffect(() => { if (busy) return; const dirty = Object.values(sessions).find(value => !conflicts[value.data.runId] && value.data.text !== value.savedText && autosaveAttempts.current.get(value.data.runId) !== value.data.digest + ':' + value.data.text); if (!dirty) return; const timer = setTimeout(() => { autosaveAttempts.current.set(dirty.data.runId, dirty.data.digest + ':' + dirty.data.text); void save(dirty.data.runId); }, 700); return () => clearTimeout(timer); }, [sessions, busy, conflicts]);
   function activate(value: Draft) { if (!value.source) return; const key = workingKey(value.registrationId, value.source.baselineId, value.source.entityId, value.source.revisionId); setSelectedRuns(previous => ({ ...previous, [key]: value.runId })); remember('craft.work:' + key, value.runId); }
   function accept(value: Draft, preserveInput = false, select = true) { setSessions(previous => ({ ...previous, [value.runId]: { data: preserveInput && previous[value.runId] ? { ...value, text: previous[value.runId]!.data.text } : value, savedText: preserveInput && previous[value.runId] ? previous[value.runId]!.savedText : value.text } })); setSummaries(previous => [...previous.filter(summary => summary.runId !== value.runId), value]); if (select) activate(value); remember('craft.lastRun', value.runId); return value; }
   useEffect(() => { if (!projectId) return; let active = true; void api<{ drafts: DraftSummary[]; truncated: boolean; unavailable: number }>(`/api/projects/${projectId}/drafts`).then(result => { if (active) { setSummaries(result.drafts); setNotice(result.truncated || result.unavailable > 0); } }).catch(error => { if (active) report(error); }); return () => { active = false; }; }, [projectId]);
+  useEffect(() => {
+    if (!projectId) return; let active = true;
+    const changed = (event: Event) => { const runId = (event as CustomEvent<string>).detail;
+      void api<{ drafts: DraftSummary[]; truncated: boolean; unavailable: number }>(`/api/projects/${projectId}/drafts`).then(value => { if (active) { setSummaries(value.drafts); setNotice(value.truncated || value.unavailable > 0); } }).catch(() => {});
+      const runIds = runId ? [runId] : Object.values(latestSessions.current).filter(value => value.data.registrationId === projectId).map(value => value.data.runId);
+      for (const runId of runIds) { if (!latestSessions.current[runId]) continue;
+      void api<Draft>(`/api/runs/${runId}/draft`).then(remote => { if (!active) return; const current = latestSessions.current[runId]; if (current && current.data.text !== current.savedText && remote.text !== current.savedText && remote.text !== current.data.text) setConflicts(previous => ({ ...previous, [runId]: remote })); setSessions(previous => { const local = previous[runId]; if (!local) return previous; if (local.data.text !== local.savedText && local.data.text !== remote.text) return { ...previous, [runId]: { ...local, data: { ...local.data, requests: remote.requests, requestsDigest: remote.requestsDigest } } }; return { ...previous, [runId]: { data: remote, savedText: remote.text } }; }); }).catch(() => {});
+      }
+    }; window.addEventListener('craft:task-change', changed); return () => { active = false; window.removeEventListener('craft:task-change', changed); };
+  }, [projectId]);
   function forSource(entityId: string, revisionId: string) { const key = workingKey(projectId, baselineId ?? '', entityId, revisionId), id = selectedRuns[key]; return id ? sessions[id] : undefined; }
   async function open(runId: string) { const existing = sessions[runId]; if (existing) { activate(existing.data); return existing.data; } setBusy(true); try { return accept(await api<Draft>(`/api/runs/${runId}/draft`)); } catch (error) { report(error); return null; } finally { setBusy(false); } }
   async function ensure(detail: QueryEnvelope<EntityDetail>, goal: string): Promise<Draft | null> {
@@ -32,7 +45,18 @@ export function useDrafts(projectId: string, baselineId: string | undefined, rep
     preparing.current.set(key, operation); return operation;
   }
   function edit(runId: string, text: string) { setSessions(previous => { const value = previous[runId]; return value ? { ...previous, [runId]: { ...value, data: { ...value.data, text } } } : previous; }); }
-  async function save(runId: string) { const current = sessions[runId]; if (!current) return; setBusy(true); try { const text = current.data.text, result = await api<Draft>(`/api/runs/${runId}/draft`, { text, expectedDigest: current.data.digest }, 'PUT'); setSessions(previous => ({ ...previous, [runId]: { data: { ...result, text: previous[runId]?.data.text ?? text }, savedText: text } })); } catch (error) { report(error); } finally { setBusy(false); } }
+  async function save(runId: string) {
+    const current = sessions[runId]; if (!current) return; const text = current.data.text; setBusy(true);
+    const saved = (result: Draft) => { setSessions(previous => ({ ...previous, [runId]: { data: { ...result, text: previous[runId]?.data.text ?? text }, savedText: text } })); setConflicts(previous => { const next = { ...previous }; delete next[runId]; return next; }); };
+    try { saved(await api<Draft>(`/api/runs/${runId}/draft`, { text, expectedDigest: current.data.digest }, 'PUT')); }
+    catch (error) { try { const remote = await api<Draft>(`/api/runs/${runId}/draft`); if (remote.text === text) { saved(remote); return; } setConflicts(previous => ({ ...previous, [runId]: remote })); } catch {} report(error); }
+    finally { setBusy(false); }
+  }
+  async function resolve(runId: string, mode: 'server' | 'fork') {
+    const current = sessions[runId], remote = conflicts[runId]; if (!current || !remote) return; setBusy(true);
+    try { const result = await api<{ runId: string }>(`/api/runs/${runId}/conflict-resolution`, { localText: current.data.text, expectedDigest: remote.digest, resource: 'body', mode }); const value = await api<Draft>(`/api/runs/${result.runId}/draft`); accept(value); if (result.runId !== runId) accept(await api<Draft>(`/api/runs/${runId}/draft`), false, false); setConflicts(previous => { const next = { ...previous }; delete next[runId]; return next; }); remember('craft.lastRun', result.runId); report(null); return result.runId; }
+    catch (error) { try { const remote = await api<Draft>(`/api/runs/${runId}/draft`); setConflicts(previous => ({ ...previous, [runId]: remote })); } catch {} report(error); } finally { setBusy(false); }
+  }
   async function request(runId: string, text: string, requestId: string) { const current = sessions[runId]; if (!current) return false; setBusy(true); try { accept(await api<Draft>(`/api/runs/${runId}/requests`, { text, requestId, expectedDigest: current.data.requestsDigest }), true, false); return true; } catch (error) { report(error); return false; } finally { setBusy(false); } }
-  return { sessions, summaries: summaries.filter(value => value.registrationId === projectId), busy, notice, forSource, open, ensure, edit, save, request, lastRun: stored('craft.lastRun'), dirty: Object.values(sessions).some(value => value.data.text !== value.savedText) };
+  return { sessions, conflicts, resolve, summaries: summaries.filter(value => value.registrationId === projectId), busy, notice, forSource, open, ensure, edit, save, request, lastRun: stored('craft.lastRun'), dirty: Object.values(sessions).some(value => value.data.text !== value.savedText) };
 }

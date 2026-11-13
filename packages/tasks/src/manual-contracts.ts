@@ -1,0 +1,9 @@
+import type { Revision, Baseline, Proposal, Task, Review } from '../../schema/src/generated.js';
+import type { Run } from '../../workspace-runtime/src/generated.js';
+import type { BaselineAnalysis } from '../../domain/src/analysis.js';
+export interface ManualRevision { entityId?: string; parentRevision?: string; kind?: string; title: string; status: Revision['status']; scope: Revision['scope']; references: Revision['references']; extensions: Revision['extensions']; tags: string[]; body: string; baselineId: string; select: boolean }
+export type ManualCommand = { type: 'revision'; value: ManualRevision } | { type: 'baseline'; value: Baseline } | { type: 'review'; entityId: string; revisionId: string; outcome: Review['outcome'] } | { type: 'select'; baselineId: string; entityId: string; revisionId: string };
+export interface ManualResult { entityId?: string; revisionId?: string; proposalId?: string; baselineId?: string; reviewId?: string }
+export interface ManualInspection { integrated: boolean; editor: { text: string; digest: string | null }; run: Run; snapshot: string; task: Task; baselines: Baseline[]; proposals: Proposal[]; reviews: Review[]; analysis: BaselineAnalysis }
+export interface IntegrationRecord { version: 1; id: string; registrationId: string; runId: string; requestId: string; requestDigest: string; state: 'prepared' | 'applying' | 'applied' | 'cancelled'; sourceCommit: string; sourceSnapshot: string; targetRef: string; target: { root: string; commonDir: string; commit: string; indexDigest: string | null; status: string; fingerprint: string }; candidateCommit: string; candidateSnapshot: string; candidateFilesFingerprint: string; reviewId: string; diffDigest: string; token: string; proposalIds: string[]; diff: string }
+export interface CheckpointChoice { taskId: string; ref: string; commit: string; runnable: boolean; task: { title: string }; checkpoint: { summary: string } }
