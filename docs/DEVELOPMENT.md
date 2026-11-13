@@ -52,13 +52,13 @@ node dist/tools/environment.js
 | `npm run schema:check` | 생성 타입과 schema 일치 확인, 파일 쓰기 없음 |
 | `npm run typecheck` | packages/tools 및 Vitest 설정 strict 타입 검사 |
 | `npm run build` | 제품 기반 모듈과 도구를 dist에 컴파일 |
-| `npm test` | 12파일 174개 Vitest 테스트: 이전 166개 + API 2개/설정 3개/graph 3개. worker/별도 프로세스 시험은 먼저 build 필요 |
+| `npm test` | 13파일 178개 Vitest 테스트: 이전 174개 + 그래프 배치 3개/엔진 설정 1개. worker/별도 프로세스 시험은 먼저 build 필요 |
 | `npm run test:watch` | 테스트 감시 모드 |
 | `npm run check` | schema 타입 일치 → core/web 타입 검사 → 서버/worker·UI 빌드 → 전체 Vitest 테스트 |
 | `npm run migration -- support` | 제품 registry의 지원표, fixture는 명시 --registry fixture |
 | `npm run workspace -- open ...` | 단계 3 로컬 등록·task/run·fake·복구·clone·import CLI, [계약](WORKSPACES.md) 참조 |
 
-`npm run index -- support`와 색인 CLI는 [INDEXING.md](INDEXING.md)를 따른다. 첫 UI는 npm run ui:preview로 빌드·실행하며 주소는 http://127.0.0.1:4173이다. npm run test:ui는 설치된 Chrome과 별도 예시 서버로 7개 E2E를 실행한다. UI 변경은 npm run ui:build 후 새로고침, API 변경은 서버 재시작으로 확인한다. 초안 02의 현재 검토용 주소는 http://127.0.0.1:4174다. [UI_PREVIEW.md](UI_PREVIEW.md)를 따른다.
+`npm run index -- support`와 색인 CLI는 [INDEXING.md](INDEXING.md)를 따른다. 첫 UI는 npm run ui:preview로 빌드·실행하며 주소는 http://127.0.0.1:4173이다. npm run test:ui는 설치된 Chrome과 별도 예시 서버로 8개 E2E를 실행한다. UI 변경은 npm run ui:build 후 새로고침, API 변경은 서버 재시작으로 확인한다. 초안 03의 현재 검토용 주소는 http://127.0.0.1:4174다. [UI_PREVIEW.md](UI_PREVIEW.md)를 따른다.
 
 ## 단계 0 환경 probe 기록과 후속 검증
 
@@ -77,7 +77,7 @@ node dist/tools/environment.js
 
 ## Git 및 실행 환경 제약
 
-앱 소스의 기본 브랜치는 master다. 단계 0·1 기준 3847002와 단계 2 결과 6a83094를 로컬에 보존했다. 단계 3 결과 906e996, 추가 기획 2220dc5와 단계 4 결과도 로컬 commit으로 보존하며 remote/push는 없다. 테스트는 .tmp 아래 독립 Git repo/worktree를 만들고 전체 소유 경로를 확인해 정리한다. 단계 2·3·4 실제 CLI smoke 결과는 별도 .tmp 폴더에 보존한다. 앱 소스 branch와 사용자 프로젝트 branch는 별개다.
+앱 소스의 현재 기본 브랜치는 main이며 origin은 https://github.com/Armeride/CRAFT.git다. 2026-11-13 원격 HEAD/main과 로컬 6391781 일치·쓰기 권한·push dry-run을 확인했다. 초기 단계의 브랜치는 master였다. 단계 0·1 기준 3847002와 단계 2 결과 6a83094를 로컬에 보존했다. 단계 3 결과 906e996, 추가 기획 2220dc5와 단계 4 결과도 로컬 commit으로 보존했다. 당시 remote/push는 없었고 이후 사용자가 origin/main에 push했다. 테스트는 .tmp 아래 독립 Git repo/worktree를 만들고 전체 소유 경로를 확인해 정리한다. 단계 2·3·4 실제 CLI smoke 결과는 별도 .tmp 폴더에 보존한다. 앱 소스 branch와 사용자 프로젝트 branch는 별개다.
 
 초기화 이후 자동화 샌드박스에서 `setup refresh had errors`가 발생했다. 읽기·설치·검증 명령은 일반 권한 실행으로 진행했다. 초기 `.git` 소유자는 CodexSandboxOffline, 일반 실행 계정은 Jun이므로 Git의 dubious ownership 검사가 발생한다. 이번에는 전역 safe.directory를 추가하지 않고 각 자동화 명령에 이 저장소만 지정했다.
 

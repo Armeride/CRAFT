@@ -165,3 +165,13 @@ worker SQLite/증분·복원·scope·SCC·검토/갱신 경고·NFC/FTS5·입력
 | R-30 | 요소별 대화/문서 나란히·직접 편집·좌우 전환 | FR-025, 독립 working preview/명시 저장·사용자 요청 메모 보관 | AT-65~66 |
 
 확정 요구와 설계 선택/후순위는 [ADR-013](docs/adr/013-workspace-navigation-and-preferences.md)을 따른다. 기본 theme는 system, 밝은 모드는 라이트/기본으로 해석했다. 실제 AI는 6에 연결하며 현재 UI는 미연결을 표시한다. 고급 graph 장식/위치 저장·범용 OS font 인식은 독립 확장으로 남겼다. 공개 schema v1·기존 fixture/불변 조건은 유지한다. [초안 02](docs/UI_PREVIEW.md)를 제시하고 피드백을 기다리며 단계 5 전체 완료로 표시하지 않는다.
+
+## 10. v1.4 — 교체형 관계 그래프
+
+2026-11-13. 사용자 요청으로 FR-026/AT-67~68을 추가했다. 현재 요구는 FR 26개/AT 68개다.
+
+| ID | 추가 요구 | 반영 | 검증 |
+|---|---|---|---|
+| R-31 | 오픈소스 검토·교체형 엔진/설정·연결 중심/군집·zoom/pan 캔버스 | 15.6절, 공통 모델/registry/View·내장 2종·캔버스. 외부 패키지 도입 보류 | AT-67~68 |
+
+[후보 비교](docs/GRAPH_ENGINES.md)와 [ADR-014](docs/adr/014-pluggable-relationship-graph.md)에 공식 근거·적합성 추론·미검증 도입 경계를 남겼다. 표시 범위의 연결 수/시각 군집과 정본 분류/차단 진단은 분리한다. core/extension v1·fixture·기존 불변 조건은 유지하며 단계 5 초안 03에서 사용자 검토를 기다린다.

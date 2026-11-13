@@ -1,6 +1,6 @@
-# 단계 5 — UI 초안 02
+# 단계 5 — UI 초안 03
 
-첫 초안에 대한 사용자 피드백을 반영했다. **단계 5는 진행 중이며 UI 확인 → 추가 요구 → 수정** 방식을 유지한다. 이 검토 지점에서 멈추고 단계 6을 시작하지 않는다. 설계는 [ADR-013](adr/013-workspace-navigation-and-preferences.md), 검증 결과는 [구현 상태](IMPLEMENTATION_STATUS.md)를 따른다.
+앞선 피드백과 교체 가능한 관계 그래프·중심 배치/군집·확대/이동 요구를 반영했다. **단계 5는 진행 중이며 UI 확인 → 추가 요구 → 수정** 방식을 유지한다. 이 검토 지점에서 멈추고 단계 6을 시작하지 않는다. 그래프는 [후보 비교와 확장 계약](GRAPH_ENGINES.md)·[ADR-014](adr/014-pluggable-relationship-graph.md), 기존 작업 공간 설계는 [ADR-013](adr/013-workspace-navigation-and-preferences.md), 검증 결과는 [구현 상태](IMPLEMENTATION_STATUS.md)를 따른다.
 
 ## 실행
 
@@ -35,7 +35,9 @@ npm run ui:preview -- --port 4174
 
 문서 편집은 ui-draft.md, 문맥은 ui-context.json, 사용자 요청은 ui-requests.json에 보존한다. source의 entity/revision/baseline·원본 digest를 고정하며 로컬 경로/권한 token을 정본에 넣지 않는다. 저장은 기존 lease/journal·expectedDigest를 사용한다. 요청은 100개/각 12,000자/전체 1MiB 한도이며 requestId 재사용·충돌을 검증한다. 자동 재시도는 실행 전 거부된 로컬 session 401 한 번에만 한정한다.
 
-대시보드 그래프는 실제 Reference의 정확한 리비전을 사용한다. 현재 분류의 직접 이웃과 과거 고정본을 구분하고 최대 48개 요소/120개 관계의 잘림을 알린다. 전체 정보는 요소 상세에서 확인한다. layout/위치 저장·내보내기·고급 그래프 편집은 후순위다.
+설정 → 관계 그래프 → 그래프 엔진에서 관계 중심(기본)/열 배치를 전환한다. 엔진 선택은 재접속 후 보존하며 분류 기본값 복원은 다른 설정을 유지한다. 빈 공간 drag/방향키로 이동, 버튼·Ctrl/Cmd+wheel·+/−로 확대/축소, 전체 맞춤/100% 보기로 재정렬한다. 일반 wheel은 페이지 스크롤을 유지한다. 관계 중심은 표시된 관계의 고유 이웃 수를 사용해 펼쳐지고 시각 군집을 표시한다. 고립 노드는 외곽에 정리한다. 군집은 프로젝트 분류가 아니며 모든 요소의 최적 위치/무겹침을 보장하지 않는다.
+
+대시보드 그래프는 실제 Reference의 정확한 리비전을 사용한다. 현재 분류의 직접 이웃과 과거 고정본을 구분하고 최대 48개 요소/120개 관계의 잘림을 알린다. 전체 정보는 요소 상세에서 확인한다. 외부 라이브러리는 검토만 했으며 설치/실행/설정 노출하지 않았다. 고급 layout/위치 저장·내보내기·수동 고정·pinch는 후순위다.
 
 실제 AI 실행/도구/자동 수정은 6, 상태 조건 평가/시점·actor 비교는 8이다. 본문 외 구조화 metadata/새 revision/review/baseline 편집, autosave, proposal 영속 idempotency·사용자 diff/HEAD 승인·정본 통합, clone/import/migration 화면·SSE는 단계 5의 나머지 범위다. 폰트 인식의 실제 OS/브라우저 확대와 추가 세부 설정은 독립 확장으로 남긴다.
 

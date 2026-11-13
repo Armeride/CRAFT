@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { defaults, fontName, normalizePreferences, settingsRegistry } from './preferences.js';
 import { ko, en } from './i18n.js';
+import { graphEngines, resolveGraphEngine } from './graph-engines.js';
 describe('local preference contract', () => {
   it('follows system by default and rejects unsafe or future stored settings without touching content', () => {
     expect(normalizePreferences(null, 'en')).toMatchObject({ theme: 'system', locale: 'en', documentSize: 16 });
@@ -9,6 +10,14 @@ describe('local preference contract', () => {
   });
   it('bounds sizes and preserves independent language font choices', () => {
     expect(normalizePreferences({ sidebarWidth: 9000, uiSize: -100, documentSize: NaN, lineHeight: Infinity, fontKo: '맑은 고딕', fontEn: 'Arial', theme: 'dark', chatSide: 'right' })).toMatchObject({ sidebarWidth: 440, uiSize: 13, documentSize: 16, lineHeight: 1.85, fontKo: '맑은 고딕', fontEn: 'Arial', theme: 'dark', chatSide: 'right' });
+  });
+  it('adds a backward-compatible graph choice and recovers removed or unknown engines', () => {
+    expect(normalizePreferences({ version: 1, theme: 'dark' })).toMatchObject({ theme: 'dark', graphEngine: 'network' });
+    expect(normalizePreferences({ version: 1, graphEngine: 'columns' }).graphEngine).toBe('columns');
+    expect(normalizePreferences({ version: 1, graphEngine: 'not-installed' }).graphEngine).toBe('network');
+    expect(resolveGraphEngine('__proto__').id).toBe('network');
+    expect(settingsRegistry.find(field => field.key === 'graphEngine')?.options).toEqual(graphEngines.map(engine => engine.id));
+    for (const engine of graphEngines) for (const catalog of [ko, en]) expect(Object.hasOwn(catalog, engine.helpKey)).toBe(true);
   });
   it('exposes each editable field once with complete bilingual labels, help and options', () => {
     expect(new Set(settingsRegistry.map(field => field.key)).size).toBe(settingsRegistry.length);

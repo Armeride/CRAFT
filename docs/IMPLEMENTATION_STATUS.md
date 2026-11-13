@@ -1,17 +1,34 @@
 # 구현 상태
 
-갱신: 2026-11-11, Asia/Seoul. **단계 0~4 완료, 단계 5 진행 중(UI 초안 02 사용자 검토 대기)**. 단계 6~9는 미착수, 10은 선택 확장이다. 사용자가 UI 초안 확인 → 추가 요구 → 수정 방식을 요청했다. 두 번째 검토 지점에서 멈추며 단계 5 전체 완료로 처리하거나 단계 6에 착수하지 않는다.
+갱신: 2026-11-13, Asia/Seoul. **단계 0~4 완료, 단계 5 진행 중(UI 초안 03 사용자 검토 대기)**. 단계 6~9는 미착수, 10은 선택 확장이다. 사용자가 UI 초안 확인 → 추가 요구 → 수정 방식을 요청했다. 세 번째 검토 지점에서 멈추며 단계 5 전체 완료로 처리하거나 단계 6에 착수하지 않는다.
 
 ## 기준과 범위 구분
 
-- 목표: PROJECT_SPEC.md v1.3 전체, REVIEW_NOTES.md. [확정 요구·설계 기준·미결정](REQUIREMENTS.md)을 구분한다. FR 25개·AT 66개는 제품 전체 기준이며 아래 테스트 수와 다르다.
-- 앱 소스: master. 단계 0·1은 3847002, 2는 6a83094, 3은 906e996, 추가 기획은 2220dc5이며 단계 4는 1fe44d2이며 UI 초안 01은 2bbd8cf, 초안 02는 후속 로컬 commit으로 보존한다. 앱 remote/push 없음.
+- 목표: PROJECT_SPEC.md v1.4 전체, REVIEW_NOTES.md. [확정 요구·설계 기준·미결정](REQUIREMENTS.md)을 구분한다. FR 26개·AT 68개는 제품 전체 기준이며 아래 테스트 수와 다르다.
+- 앱 소스: main(이전 master). 단계 0·1은 3847002, 2는 6a83094, 3은 906e996, 추가 기획은 2220dc5이며 단계 4는 1fe44d2이며 UI 초안 01은 2bbd8cf, 초안 02는 6391781이며 초안 03도 로컬 commit으로 보존한다. 현재 origin=https://github.com/Armeride/CRAFT.git. 사용자가 main으로 push했고 2026-11-13 원격 HEAD/main과 로컬 6391781 일치를 확인했다. 이번 그래프 변경은 별도 로컬 commit으로 보존한다.
 - 실행 기준: Windows x64, Node 24.21.0/npm 11.19.0과 exact lockfile. 전역 설정·소유권·인증을 변경하지 않는다.
 - FR-021: 진단 code/messageKey/params와 fallback 문구를 분리했다. 단계 5 초안 01에서 ko/en catalog·언어 전환/선호·폼 상태 보존을 연결했다. 전체 화면 인수는 진행 중이다.
 - FR-022: state_model@1 파일·호환성·참조·입력 digest/색인까지 구현했다. 평가기·상태 결과·시점/actor 전후 비교는 단계 8이다. 현재 state/state-input은 evaluatorAvailable:false다.
-- 공개 core/narrative/game_design v1·core 생성 타입·기존 fixture/semantic model 1은 유지했다. 새 상태 확장과 fixture만 별도로 추가했다. 문서 v1.3도 제품 core v2가 아니다.
+- 공개 core/narrative/game_design v1·core 생성 타입·기존 fixture/semantic model 1은 유지했다. 새 상태 확장과 fixture만 별도로 추가했다. 문서 v1.4도 제품 core v2가 아니다.
 
-## 단계 5 — UI 초안 02 검토 지점
+## 단계 5 — UI 초안 03 검토 지점
+
+2026-11-13 사용자 그래프 요청을 FR-026/AT-67~68로 기록했다. [후보 비교/확장 계약](GRAPH_ENGINES.md), [ADR-014](adr/014-pluggable-relationship-graph.md)을 따른다. 외부 후보 Cytoscape/fCoSE, Sigma/Graphology/ForceAtlas2/Louvain, react-force-graph-2d는 공식 자료 검토만 했고 설치·실행 비교·채택은 하지 않았다. 의존성과 lockfile은 유지한다.
+
+- 공통 pinned GraphModel·엔진 registry/View·순수 layout·viewport를 분리했다. 설정에 관계 그래프 분류/엔진을 추가하고 구현된 관계 중심/열 배치만 전환·보존한다. 기존 preferences v1·알 수 없는 ID는 기본 내장 엔진으로 복구한다.
+- 관계 중심 배치는 표시 범위/필터의 고유 이웃 수·유한 force 휴리스틱과 양의 modularity 병합으로 중심/주변·시각 군집을 배치한다. self/parallel edge는 배치 계산에서만 단순화하고 원래 방향/pin/propagation은 보존한다. 고립 노드는 외곽에 정리해 fit 시 불필요한 축소를 줄였다.
+- SVG/HTML 캔버스 viewport에서 drag/방향키 이동, 버튼·Ctrl/Cmd+wheel·+/− 확대/축소, fit/100% 보기, 포커스 노드의 화면 복귀를 제공한다. 관계 목록·한도/과거 pin/외부 분류·ko/en·라이트/다크를 유지한다. 일반 wheel은 페이지 scroll이다.
+- core/extension schema v1·생성 타입·fixture·기존 불변 조건·예시는 바꾸지 않았다. 원격/DB/정본에 엔진·좌표·자동 군집을 기록하지 않는다.
+
+검증 완료: npm run check의 생성 타입·전체 typecheck·서버/UI build와 **13파일 178개 Vitest**가 통과했다(206.02초). 시각 검토 후 고립 노드/포커스 수정은 typecheck·웹 14개 단위 테스트로 재검증했다. npm run test:ui의 **8개 Chrome E2E**도 모두 통과했다(44.6초). 중심 star·두 밀집군/bridge·순환/self/parallel/고립/빈 그래프의 유한·결정적 배치, 설정 복구·보존, zoom/pan/fit/정확 선택과 기존 UI/접근성 회귀를 검증한다. 1,000요소/10,000리비전 성능 인수는 아니며 표시 한도는 48노드/120관계다.
+
+UI 검토 중 고립 노드가 전체 fit을 과도하게 축소하는 문제를 발견해 외곽에 정리했다. 포인터 노드 클릭은 키보드용 화면 보정과 분리했고 drag 테스트는 실제 빈 공간을 확인한다. 브라우저 테스트의 초기화 버튼 label 오기도 현재 UI 문구로 수정했다. 검토 서버는 http://127.0.0.1:4174, .tmp/ui-preview 재사용이며 사용자 working 파일을 지우지 않는다. draft-03-graph-light/dark/mobile.png를 로컬 시각 검토용으로 보존한다. 여기서 사용자 UI 피드백을 기다리며 단계 5 전체 완료나 단계 6 착수로 처리하지 않는다.
+
+후순위는 외부 실제 도입/정확 버전·성능/OS·GPU/worker/접근성 실측, 노드 고정/수동 배치·위치 저장/export·pinch·대규모 최적화다. 기존 AI 실행은 6, 상태 평가/시점·actor 비교는 8 경계를 유지한다.
+
+## 단계 5 — UI 초안 02 검증 이력
+
+아래는 6391781 당시 기록이며 현재 실행/지원 범위는 초안 03을 따른다.
 
 사용자 피드백 8개와 추가 답변을 FR-023~025/AT-61~66으로 기록했다. 확정 요구는 설정/시스템 테마/글꼴, 통합 탐색·대시보드/graph, resize·정보 제어, 요소별 대화/문서·직접 편집이다. 기본 왼쪽 대화/오른쪽 문서와 좌우 전환을 적용했다. [실행/검토](UI_PREVIEW.md), [ADR-013](adr/013-workspace-navigation-and-preferences.md)을 따른다. 단계 6은 시작하지 않았다.
 
@@ -183,7 +200,7 @@ npm run workspace -- start --app-data <관리-경로> --registration <등록-ID>
 3. 프로젝트/요소/검색/진단·working autosave·새 revision/review/baseline 선택의 수동 흐름을 만든다. 상태 파일 편집은 새 revision 규칙을 지킨다.
 4. proposal idempotency·diff/HEAD 검토 token·별도 integration 검증을 연결하고 모델 없는 실제 UI 흐름을 검증한다.
 5. 모든 앱 소유 문구·접근성/오류/형식화를 ko/en catalog로 제공하고 locale 전환 중 원문·초안·정본 digest 보존을 확인한다.
-6. 초안 확인 → 추가 요구 → 수정 방식을 유지한다. 현재는 첫 UI 검토 대기다. 단계 5 전체 검증/인계 뒤에도 멈추며 단계 6에 자동 착수하지 않는다.
+6. 초안 확인 → 추가 요구 → 수정 방식을 유지한다. 현재는 UI 초안 03 검토 대기다. 단계 5 전체 검증/인계 뒤에도 멈추며 단계 6에 자동 착수하지 않는다.
 
 ## 보존 상태
 

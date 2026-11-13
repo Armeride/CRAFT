@@ -4,7 +4,7 @@ import { initReactI18next } from 'react-i18next';
 
 export const ko = {
   ...uiKo,
-  'app.workspace': '창작 작업실', 'app.preview': 'UI 초안 02', 'app.local': '로컬 작업 공간',
+  'app.workspace': '창작 작업실', 'app.preview': 'UI 초안 03', 'app.local': '로컬 작업 공간',
   'nav.library': '지식 탐색', 'nav.all': '모든 요소', 'nav.world': '세계와 설정', 'nav.changes': '사건과 변화', 'nav.scenarios': '조건과 가정', 'nav.work': '작업', 'nav.tasks': '작업 초안', 'nav.diagnostics': '검토할 항목',
   'project.open': '프로젝트 열기', 'project.select': '프로젝트 선택', 'project.example': '예시 프로젝트', 'project.dialog': '로컬 프로젝트 열기', 'project.path': 'Git 프로젝트 폴더', 'project.pathHint': 'project.yaml이 있는 Git 저장소의 전체 경로를 입력하세요.', 'project.opening': '프로젝트를 여는 중…',
   'baseline.label': '채택 기준', 'baseline.selected': '채택본', 'baseline.unselected': '미채택 초안',
@@ -26,7 +26,7 @@ export const ko = {
 } as const;
 export const en: Record<keyof typeof ko, string> = {
   ...uiEn,
-  'app.workspace': 'Creative workspace', 'app.preview': 'UI draft 02', 'app.local': 'Local workspace',
+  'app.workspace': 'Creative workspace', 'app.preview': 'UI draft 03', 'app.local': 'Local workspace',
   'nav.library': 'LIBRARY', 'nav.all': 'All elements', 'nav.world': 'World & setting', 'nav.changes': 'Events & changes', 'nav.scenarios': 'Rules & assumptions', 'nav.work': 'WORK', 'nav.tasks': 'Working drafts', 'nav.diagnostics': 'Needs attention',
   'project.open': 'Open project', 'project.select': 'Select project', 'project.example': 'Example project', 'project.dialog': 'Open a local project', 'project.path': 'Git project folder', 'project.pathHint': 'Enter the full path to a Git repository containing project.yaml.', 'project.opening': 'Opening project…',
   'baseline.label': 'Baseline', 'baseline.selected': 'Selected', 'baseline.unselected': 'Unselected draft',

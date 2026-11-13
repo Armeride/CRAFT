@@ -3,7 +3,7 @@ import { captureFiles } from '../../../packages/project-fs/src/files.js';
 import { parseProject } from '../../../packages/project-fs/src/project.js';
 import { graphEdges } from '../../../packages/domain/src/analysis.js';
 import type { Catalog } from '../../server/contracts.js';
-import { graphModel } from './Graph.js';
+import { graphModel } from './graph-model.js';
 import { categories, categoryOf } from './workspace-model.js';
 async function catalog(): Promise<Catalog> { const s = parseProject(await captureFiles('fixtures/state-model')); const baseline = s.baselines.get(s.project.default_baseline_id)!.value; return { project: s.project, baselines: [baseline], edges: graphEdges(s), entities: [...s.entities.values()].map(entity => ({ entityId: entity.value.id, kind: entity.value.kind, selectedRevision: baseline.selected[entity.value.id] ?? null, revisions: [...entity.revisions.values()].map(record => ({ revisionId: record.meta.revision_id, title: record.meta.title, status: record.meta.status, tags: record.meta.tags ?? [], scope: record.meta.scope, parents: record.meta.parents, references: record.references.length, createdAt: record.meta.created_at })) })) }; }
 describe('dashboard reference model', () => {

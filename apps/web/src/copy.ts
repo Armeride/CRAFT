@@ -1,4 +1,10 @@
 export const uiKo = {
+  'settings.graphs': '관계 그래프', 'setting.graphEngine': '그래프 엔진', 'setting.graphEngine.help': '관계 중심 배치와 열 배치를 선택합니다. 선택은 이 브라우저에 저장되며 프로젝트 내용은 바뀌지 않습니다.',
+  'option.network': '관계 중심 배치', 'option.columns': '열 배치',
+  'graph.controls': '그래프 보기 조절', 'graph.canvas': '관계 그래프 캔버스', 'graph.zoomIn': '그래프 확대', 'graph.zoomOut': '그래프 축소', 'graph.zoom': '확대 비율', 'graph.fit': '전체 맞춤', 'graph.actualSize': '100% 보기',
+  'graph.navigation': '빈 공간을 끌어 이동 · Ctrl/Cmd+휠로 확대/축소. 키보드: 캔버스에서 방향키로 이동, +/−로 확대/축소, 0으로 전체 맞춤. 요소는 Tab과 Enter로 열 수 있습니다.',
+  'graph.networkHelp': '표시된 관계의 고유 연결 수가 많은 요소를 중심으로, 가까운 관계끼리 모읍니다. 점선 군집은 시각적 추정이며 프로젝트 분류가 아닙니다.', 'graph.columnsHelp': '요소 종류별 열에 배치합니다. 확대·이동과 관계 목록을 함께 사용할 수 있습니다.',
+  'graph.cluster': '연결 군집 {{count}}', 'graph.degree': '연결 {{count}}',
   'errors.WORKING_CHOICE_REQUIRED': '같은 요소에 여러 작업이 있습니다. 작업 초안 목록에서 이어갈 작업을 선택하세요.',
   'errors.WORKING_REQUEST_LIMIT': '이 작업의 요청 보관 용량을 넘었습니다. 입력은 유지되며 기존 메모를 덮어쓰지 않았습니다.',
   'nav.documents': '문서와 장면', 'nav.expand': '{{name}} 펼치기', 'nav.collapse': '{{name}} 접기', 'nav.dashboard': '{{name}} 현황 열기',
@@ -19,6 +25,12 @@ export const uiKo = {
   'chat.title': 'AI 대화', 'chat.notConnected': 'AI 실행기 미연결', 'chat.welcome': '이 요소에 대해 함께 생각할 내용을 적어보세요.', 'chat.hint': '이번 초안에서는 요청을 작업 메모로 보관합니다. 실제 AI 응답과 자동 수정은 실행기를 연결한 뒤 제공됩니다.', 'chat.prompt': '이 요소에 대한 작업 요청', 'chat.placeholder': '설정을 검토하거나, 수정하고 싶은 내용을 적어보세요…', 'chat.store': '요청 보관', 'chat.storing': '요청을 보관하는 중…', 'chat.stored': '작업 메모로 보관됨', 'chat.you': '나의 요청', 'chat.limit': '한 작업에 최대 100개 요청을 보관할 수 있습니다.', 'errors.WORKING_CONTEXT_INVALID': '작업 문맥 파일의 형식을 확인해야 합니다. 기존 자료는 보존되어 있습니다.', 'errors.REQUEST_ID_REUSED': '같은 요청 식별자로 다른 내용을 보관할 수 없습니다.',
 } as const;
 export const uiEn: Record<keyof typeof uiKo, string> = {
+  'settings.graphs': 'Relationship graph', 'setting.graphEngine': 'Graph engine', 'setting.graphEngine.help': 'Choose relationship-centered or column layout. The choice is stored in this browser and does not change project content.',
+  'option.network': 'Relationship-centered', 'option.columns': 'Columns',
+  'graph.controls': 'Graph view controls', 'graph.canvas': 'Relationship graph canvas', 'graph.zoomIn': 'Zoom graph in', 'graph.zoomOut': 'Zoom graph out', 'graph.zoom': 'Zoom level', 'graph.fit': 'Fit all', 'graph.actualSize': 'View at 100%',
+  'graph.navigation': 'Drag empty space to pan · Ctrl/Cmd+wheel to zoom. Keyboard: arrow keys to pan, +/− to zoom, 0 to fit all. Use Tab and Enter to open elements.',
+  'graph.networkHelp': 'Elements with more unique connections in the displayed graph form the center, with related elements drawn together. Dashed clusters are visual estimates, not project categories.', 'graph.columnsHelp': 'Arrange elements in columns by kind. Zoom, pan, and the relationship list remain available.',
+  'graph.cluster': 'Connection cluster {{count}}', 'graph.degree': 'Links {{count}}',
   'errors.WORKING_CHOICE_REQUIRED': 'Several tasks use this element. Choose one from the preserved working drafts.',
   'errors.WORKING_REQUEST_LIMIT': 'This task reached its request storage limit. Your input is preserved and existing notes were not overwritten.',
   'nav.documents': 'Documents & scenes', 'nav.expand': 'Expand {{name}}', 'nav.collapse': 'Collapse {{name}}', 'nav.dashboard': 'Open {{name}} dashboard',

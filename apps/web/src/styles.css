@@ -115,9 +115,18 @@ details summary{cursor:pointer;line-height:1.8;font-size:.85em;color:var(--muted
 .dashboard-elements strong{flex:1;min-width:0;font-size:.94em;overflow-wrap:anywhere}
 .dashboard-elements>button>svg{color:var(--muted)}
 .dashboard-elements>button>span:not(.badge){font-size:11px;color:var(--muted)}
-.graph-scroll{overflow:auto;max-height:370px;border:1px solid var(--line);background:var(--subtle);border-radius:8px;scrollbar-width:thin}
-.graph-canvas{position:relative}
-.graph-canvas>svg{position:absolute;top:0;left:0;color:var(--graph-line)}
+.graph-viewport{position:relative;overflow:hidden;height:440px;min-width:0;border:1px solid var(--line);background:var(--subtle);border-radius:8px;touch-action:none;cursor:grab}
+.graph-viewport.dragging{cursor:grabbing;user-select:none}
+.graph-viewport:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.graph-scene{position:absolute;top:0;left:0;transform-origin:0 0}
+.graph-scene>svg{position:absolute;top:0;left:0;color:var(--graph-line);overflow:visible}
+.graph-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0 6px}
+.graph-toolbar output{min-width:45px;text-align:center;font-variant-numeric:tabular-nums;color:var(--muted)}
+.graph-toolbar .secondary-button{padding:6px 12px;min-width:34px;min-height:34px}
+.graph-help,.graph-layout-note{font-size:11px;line-height:1.7;color:var(--muted);margin:8px 0}
+.graph-cluster rect{fill:var(--selected);fill-opacity:.35;stroke:var(--line);stroke-dasharray:5 7}
+.graph-cluster text{fill:var(--muted);font-size:10px}
+.graph-degree{margin-left:6px;font-variant-numeric:tabular-nums}
 .graph-edge{stroke:var(--graph-line);stroke-width:1.8;fill:none}
 .graph-edge.advisory{stroke-dasharray:5 4;stroke-width:1.4}
 .graph-node{position:absolute;width:184px;min-height:55px;border:1px solid var(--line);border-radius:7px;padding:10px 12px;background:var(--surface);box-shadow:0 2px 4px #00000008;text-align:left}
@@ -379,7 +388,7 @@ dialog::backdrop{background:#0c1b1655;backdrop-filter:blur(3px)}
 .dashboard-card{padding:17px}
 .category-grid{grid-template-columns:minmax(0,1fr)}
 .graph-card .section-heading{align-items:flex-start;flex-direction:column}
-.graph-scroll{max-height:320px}
+.graph-viewport{height:320px}
 .dashboard-elements>button{gap:8px}
 .dashboard-elements>button>.badge{font-size:10px}
 .dashboard-elements strong{font-size:12px}
