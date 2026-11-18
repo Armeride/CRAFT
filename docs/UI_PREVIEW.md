@@ -1,6 +1,6 @@
 # 단계 5 — 수동 흐름 완료 UI
 
-UI 초안 03을 승인 기준선으로 단계 5 잔여 기능을 완성했다. **단계 6 착수 전 대기**하며 이후 새로운 UI 변경은 [별도 작업](tasks/README.md)으로 진행한다. [수동 작성·통합·복구 사용법](MANUAL_WORKFLOW.md)·[ADR-015](adr/015-manual-review-integration-and-events.md)·[검증 결과](IMPLEMENTATION_STATUS.md)를 따른다. 그래프 후보는 [검토 문서](GRAPH_ENGINES.md)에만 유지한다.
+UI 초안 03을 승인 기준선으로 단계 5 잔여 기능을 완성했다. **단계 6 실행기 UI는 [AI 안내](AGENT_WORKFLOW.md)에 추가**했으며 이후 새로운 UI 변경은 [별도 작업](tasks/README.md)으로 진행한다. [수동 작성·통합·복구 사용법](MANUAL_WORKFLOW.md)·[ADR-015](adr/015-manual-review-integration-and-events.md)·[검증 결과](IMPLEMENTATION_STATUS.md)를 따른다. 그래프 후보는 [검토 문서](GRAPH_ENGINES.md)에만 유지한다.
 
 ## 실행
 

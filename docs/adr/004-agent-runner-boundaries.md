@@ -13,3 +13,5 @@ worktree는 작업 격리이며 OS sandbox가 아니다. 일반 POV 필터와 �
 공급자 성공 메시지·exit 0 대신 파일 diff/도메인 검사/유효 사용자 review로 반영한다. 스킬·MCP 설정은 run overlay에 생성하고 사용자 전역 설정·인증을 덮어쓰지 않는다. clone 프로젝트 코드를 자동 실행하지 않는다. 외부 결과 불명은 재전송하지 않는다.
 
 검증 계획: 단계 3 Git/fake, 단계 6 실제 두 공급자 opt-in smoke·capability·취소·내부 MCP, 단계 7 재개/외부 fixture. AT-11/20/25/27/28/37/38/44/49. 현재는 CLI --version과 native Node 인수 전달만 확인했다.
+
+2026-11-18 갱신: 단계 6 연결의 구체 선택과 검증은 [ADR-016](016-isolated-agent-runners-and-internal-mcp.md)에 기록했다. 설치 프로토콜/네이티브 초기화·fake/MCP 검증과 실제 모델 opt-in을 구분한다.

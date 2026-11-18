@@ -17,6 +17,6 @@ describe('UI locale contract', () => {
   });
   it('has translations for every literal UI key used in components', async () => {
     const text = (await Promise.all((await readdir('apps/web/src')).filter(path => path.endsWith('.tsx')).map(path => readFile('apps/web/src/' + path, 'utf8')))).join('\n');
-    for (const match of text.matchAll(/\bt\('([a-zA-Z.]+)'\s*[,)]/g)) expect(Object.hasOwn(ko, match[1]!) || Object.hasOwn(ko, match[1]! + '_other'), match[1]).toBe(true);
+    for (const match of text.matchAll(/\bt\((['"])([a-zA-Z.]+)\1\s*[,)]/g)) expect(Object.hasOwn(ko, match[2]!) || Object.hasOwn(ko, match[2]! + '_other'), match[2]).toBe(true);
   });
 });

@@ -4,7 +4,7 @@ let csrf = '';
 let renewal: Promise<void> | undefined;
 export class ApiError extends Error { constructor(readonly code: string, readonly details: unknown) { super(code); } }
 async function request<T>(path: string, body?: unknown, method = body === undefined ? 'GET' : 'POST'): Promise<T> {
-  const tracked = method === 'POST' && /^\/api\/(?:library\/(?:clone|import)|projects\/[^/]+\/(?:drafts|tasks|resume|migration)|runs\/[^/]+\/conflict-resolution)$/.test(path);
+  const tracked = method === 'POST' && /^\/api\/(?:library\/(?:clone|import)|projects\/[^/]+\/(?:drafts|tasks|resume|migration)|runs\/[^/]+\/(?:conflict-resolution|agents)|agent-executions\/[^/]+\/fork)$/.test(path);
   const identityKey = tracked ? 'craft.pending-command:' + Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(method + path + JSON.stringify(body))))).map(value => value.toString(16).padStart(2, '0')).join('') : '';
   const identity = identityKey ? stored(identityKey) ?? crypto.randomUUID() : '';
   if (identityKey) remember(identityKey, identity);

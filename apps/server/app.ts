@@ -14,8 +14,10 @@ import { registerManualRoutes } from './manual.js';
 import { registerLibraryRoutes } from './library.js';
 import { registerConflictRoutes } from './conflicts.js';
 import { WorkspaceEvents, registerEventRoute } from './events.js';
+import { registerAgentRoutes } from './agents.js';
+import type { AgentServiceOptions } from '../../packages/agent-core/src/service.js';
 
-export interface WebOptions { appData: string; port: number; webRoot?: string; examples?: string[] }
+export interface WebOptions { appData: string; port: number; webRoot?: string; examples?: string[]; agentAdapters?: AgentServiceOptions['adapters'] }
 const secret = () => randomBytes(32).toString('hex');
 const equal = (a: unknown, b: string) => typeof a === 'string' && /^[a-f0-9]{64}$/.test(a) && timingSafeEqual(Buffer.from(a), Buffer.from(b));
 const idParams = { type: 'object', required: ['id'], additionalProperties: false, properties: { id: { type: 'string', pattern: '^reg_[a-f0-9-]+$' } } };
@@ -70,6 +72,7 @@ export async function createWebApp(options: WebOptions) {
   registerEventRoute(app, events, authorize);
   await registerConflictRoutes(app, { appData: options.appData, authorize, withProject });
   await registerLibraryRoutes(app, { appData: options.appData, authorize, changed, withProject, attach: async id => { await addProject(id); return choices.get(id)!; } });
+  await registerAgentRoutes(app, { appData: options.appData, port: options.port, authorize, changed, ...(options.agentAdapters ? { adapters: options.agentAdapters } : {}) });
   if (options.webRoot) { await app.register(staticFiles, { root: options.webRoot, index: ['index.html'], cacheControl: false }); }
   app.addHook('onClose', async () => { await events.close(); await Promise.allSettled(tails.values()); await Promise.all([...indexes.values()].map(index => index.close())); });
   return app;

@@ -31,6 +31,7 @@ export class IntegrationService {
   private async save(record: IntegrationRecord) { await atomicText(this.appData, this.path(record.id), JSON.stringify(record, null, 2)); }
   async read(id: string): Promise<IntegrationRecord> { const path = this.path(id); await assertOwnedPath(this.appData, path); const value = parseYaml(await readFile(path, 'utf8'), path).value as unknown as IntegrationRecord; if (value.version !== 1 || value.id !== id || !['prepared', 'applying', 'applied', 'cancelled'].includes(value.state) || !/^[a-f0-9]{64}$/.test(value.token)) throw fileFailure('INTEGRATION_INVALID', 'Invalid integration record', 'project.yaml'); return value; }
   async prepare(runId: string, requestId: string, proposalIds: string[]): Promise<IntegrationRecord> {
+    await this.tasks.assertExecutionIdle(runId);
     if (!/^[a-f0-9-]{36}$/.test(requestId) || !proposalIds.length || new Set(proposalIds).size !== proposalIds.length) throw fileFailure('REQUEST_INVALID', 'Select preserved proposals with a request UUID', 'project.yaml');
     const id = 'op_' + requestId, requestDigest = hash(canonicalJson({ runId, proposalIds: [...proposalIds].sort() }));
     return withKernelLock(this.path(id) + '.lock', `integration:${id}`, async () => {
@@ -92,6 +93,7 @@ export class IntegrationService {
       if (record.target.root !== registration.root || record.target.commonDir !== registration.commonDir) throw fileFailure('CONTEXT_FORBIDDEN', 'Integration target identity changed', 'project.yaml');
       if (record.state === 'applied' || record.state === 'cancelled') return withWorktreeLock(registration.root, () => withMetadataLock(registration.root, async () => { if (record.state === 'applied') await runGit(registration.root, ['merge-base', '--is-ancestor', record.candidateCommit, record.targetRef]); await this.release(record); return record; }));
       const { run } = await this.tasks.run(record.runId);
+      await this.tasks.assertExecutionIdle(run.runId);
       return withWorktreeLock(run.path, () => withWorktreeLock(registration.root, lease => withMetadataLock(registration.root, async () => {
         if (await gitText(registration.root, ['symbolic-ref', 'HEAD']) !== record.targetRef) throw fileFailure('BASE_CHANGED', 'Target branch changed after review', 'project.yaml');
         const currentHead = await gitText(registration.root, ['rev-parse', record.targetRef]), currentFiles = fingerprint(await captureFiles(registration.root));

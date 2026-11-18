@@ -49,6 +49,8 @@ export class TaskService {
   }
   async project(runId: string): Promise<ProjectSnapshot> {
     const { run } = await this.run(runId);
+    const agentBlock = run.validation?.codes.find(code => ['AGENT_RESULT_INVALID', 'AGENT_TERMINATION_UNCONFIRMED'].includes(code));
+    if (agentBlock) throw fileFailure(agentBlock, 'Resume a preserved checkpoint to inspect a quarantined agent result', 'project.yaml');
     await assertNoPending(this.directory(runId));
     const snapshot = await loadProject(run.path);
     if (snapshot.project.project_id !== run.projectId) throw new Error('RUN_PROJECT_CHANGED');
@@ -134,7 +136,7 @@ export class TaskService {
     }
   }
 
-  private checkpointRecords(run: Run, task: Task, basis: ProjectSnapshot, id: string, summary: string): SourceFile[] {
+  private checkpointRecords(run: Run, task: Task, basis: ProjectSnapshot, id: string, summary: string, provider: NonNullable<Checkpoint['provider_hint']>['type'] = 'fake'): SourceFile[] {
     const inputPath = `tasks/${task.id}/checkpoints/${id}-inputs.yaml`;
     const selected = basis.baselines.get(task.base.baseline_id)!;
     const inputs: ContextManifest['inputs'] = Object.entries(selected.value.selected).map(([entityId, revisionId]) => {
@@ -143,7 +145,7 @@ export class TaskService {
       return { target: { entity_id: entityId, revision_id: revisionId }, source_path: record.bodyPath, source_digest: basis.files.get(record.bodyPath)!.digest, semantic_digest: semanticDigest(basis, entityId, revisionId) };
     });
     const manifest: ContextManifest = { snapshot_token: `git:${run.basisCommit}`, view: 'basis', baseline_id: task.base.baseline_id, baseline_fingerprint: basis.files.get(selected.path)!.digest, schema_versions: { core: basis.project.schema_version, ...Object.fromEntries(Object.entries(basis.project.extensions).map(([name, declaration]) => [name, declaration.schema_version])) }, builder_version: 'stage3-files-1', query: { perspective: 'author', run_id: run.runId }, inputs, skills: task.skills, omissions: [] };
-    const checkpoint: Checkpoint = { id, task_id: task.id, created_at: new Date().toISOString(), summary, working_files: task.outputs, decisions: [], open_questions: ['사용자 검토와 정본 통합은 아직 수행하지 않았다.'], next_actions: ['보존된 결과와 현재 기준을 검토한다.'], input_manifest_path: inputPath, provider_hint: { type: 'fake', session_id: run.runId } };
+    const checkpoint: Checkpoint = { id, task_id: task.id, created_at: new Date().toISOString(), summary, working_files: task.outputs, decisions: [], open_questions: ['사용자 검토와 정본 통합은 아직 수행하지 않았다.'], next_actions: ['보존된 결과와 현재 기준을 검토한다.'], input_manifest_path: inputPath, provider_hint: { type: provider, session_id: run.runId } };
     return [objectFile(inputPath, manifest), objectFile(`tasks/${task.id}/checkpoints/${id}.yaml`, checkpoint)];
   }
   private async write(run: Run, lease: Lease, current: ProjectSnapshot, files: readonly SourceFile[], onPhase?: WriteOptions['onPhase']): Promise<void> {
@@ -170,7 +172,7 @@ export class TaskService {
     });
   }
 
-  async checkpoint(runId: string, taskStatus: Task['status'] = 'paused', summary = '중간 결과를 보존했다.', runStatus: Run['status'] = 'interrupted'): Promise<Run> {
+  async checkpoint(runId: string, taskStatus: Task['status'] = 'paused', summary = '중간 결과를 보존했다.', runStatus: Run['status'] = 'interrupted', provider: NonNullable<Checkpoint['provider_hint']>['type'] = 'fake'): Promise<Run> {
     const { run, registration } = await this.run(runId);
     return withWorktreeLock(run.path, async lease => {
       await assertNoPending(this.directory(runId));
@@ -178,7 +180,7 @@ export class TaskService {
       const task = rawObject<Task>(current.files, `tasks/${run.taskId}/task.yaml`);
       const id = newId('cp'); task.latest_checkpoint = id; task.status = taskStatus;
       const basis = await loadCommittedProject(registration.root, run.basisCommit);
-      await this.write(run, lease, current, [objectFile(`tasks/${task.id}/task.yaml`, task), ...this.checkpointRecords(run, task, basis, id, summary)]);
+      await this.write(run, lease, current, [objectFile(`tasks/${task.id}/task.yaml`, task), ...this.checkpointRecords(run, task, basis, id, summary, provider)]);
       const immutable = checkImmutability(await loadCommittedProject(run.path, run.initialCommit!), await this.project(runId));
       if (immutable.length) throw new ValidationFailure(immutable);
       const head = await this.commit(run, registration, run.headCommit!, 'task: preserve checkpoint', lease);
@@ -243,6 +245,26 @@ export class TaskService {
       value.cancelRequested = true; value.status = 'cancelling'; await this.save(value); return value;
     });
   }
+
+  async withExecution<T>(runId: string, action: () => Promise<T>): Promise<T> {
+    await this.run(runId);
+    return withKernelLock(join(this.directory(runId), 'execution.lock'), `execution:${runId}`, action);
+  }
+
+  async assertExecutionIdle(runId: string): Promise<void> {
+    await this.withExecution(runId, async () => {});
+  }
+
+  async executionState(runId: string, status: Run['status'], validation?: Run['validation']): Promise<void> {
+    const { run } = await this.run(runId);
+    await withWorktreeLock(run.path, async () => {
+      const current = (await this.run(runId)).run;
+      current.status = status;
+      current.cancelRequested = status === 'cancelling';
+      if (validation) current.validation = validation;
+      await this.save(current);
+    });
+  }
   async recover(runId: string): Promise<Run> {
     const { run, registration } = await this.run(runId);
     return withKernelLock(join(this.directory(runId), 'execution.lock'), `execution:${runId}`, async () => {
@@ -275,6 +297,7 @@ export class TaskService {
 
   async cleanup(runId: string): Promise<void> {
     const { run, registration } = await this.run(runId);
+    if (run.validation?.codes.includes('AGENT_TERMINATION_UNCONFIRMED')) throw fileFailure('AGENT_TERMINATION_UNCONFIRMED', 'Runner termination must be confirmed before cleanup', 'project.yaml');
     await withKernelLock(join(this.directory(runId), 'execution.lock'), `execution:${runId}`, () => withWorktreeLock(run.path, async () => {
       if (!['completed', 'cancelled', 'failed', 'interrupted'].includes(run.status) || !run.headCommit || !run.checkpointId) throw new Error('WORKTREE_UNPRESERVED');
       await assertNoPending(this.directory(runId));
@@ -331,9 +354,10 @@ export class TaskService {
   }
 
   /** Trusted manual commands share the same lease, journal and checkpoint boundary. */
-  async edit<T>(runId: string, expectedSnapshot: string, build: (current: ProjectSnapshot, run: Run) => Promise<{ files: readonly SourceFile[]; result: T }> | { files: readonly SourceFile[]; result: T }): Promise<T> {
-    const { run, registration } = await this.run(runId);
-    return withWorktreeLock(run.path, async lease => {
+  async edit<T>(runId: string, expectedSnapshot: string, build: (current: ProjectSnapshot, run: Run) => Promise<{ files: readonly SourceFile[]; result: T }> | { files: readonly SourceFile[]; result: T }, provider: NonNullable<Checkpoint['provider_hint']>['type'] = 'fake'): Promise<T> {
+    const scope = await this.run(runId);
+    return withWorktreeLock(scope.run.path, async lease => {
+      const { run, registration } = await this.run(runId);
       const current = await this.project(runId), value = await build(current, run);
       if (!value.files.length) return value.result; // Persisted, verified idempotent replay.
       if (current.fingerprint !== expectedSnapshot) throw fileFailure('BASE_CHANGED', 'Working snapshot changed before manual command', 'project.yaml');
@@ -342,9 +366,11 @@ export class TaskService {
       task.status = 'ready_for_review'; task.latest_checkpoint = id;
       task.outputs = [...new Set([...task.outputs, ...value.files.map(file => file.path)])];
       const basis = await loadCommittedProject(registration.root, run.basisCommit);
-      await this.write(run, lease, current, [...value.files, objectFile(`tasks/${task.id}/task.yaml`, task), ...this.checkpointRecords(run, task, basis, id, 'Manual changes preserved for user review.')]);
+      await this.write(run, lease, current, [...value.files, objectFile(`tasks/${task.id}/task.yaml`, task), ...this.checkpointRecords(run, task, basis, id, 'Manual changes preserved for user review.', provider)]);
       run.headCommit = await this.commit(run, registration, run.headCommit!, 'task: preserve manual changes', lease);
-      run.checkpointId = id; run.status = 'interrupted'; run.validation = { valid: true, codes: [] }; await this.save(run);
+      run.checkpointId = id;
+      if (!['running', 'waiting_for_input', 'cancelling'].includes(run.status)) run.status = 'interrupted';
+      run.validation = { valid: true, codes: [] }; await this.save(run);
       return value.result;
     });
   }

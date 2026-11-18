@@ -10,6 +10,7 @@ export async function registerConflictRoutes(app: FastifyInstance, options: Opti
   const tasks = new TaskService(options.appData), manual = new ManualService(options.appData), commands = new HttpCommands(options.appData);
   app.post<{ Params: { id: string }; Body: { localText: string; expectedDigest: string | null; resource: 'body' | 'editor'; mode: 'server' | 'fork' | 'overwrite' } }>('/api/runs/:id/conflict-resolution', { schema: { params, body: { type: 'object', additionalProperties: false, required: ['localText', 'expectedDigest', 'resource', 'mode'], properties: { localText: { type: 'string', maxLength: 400000 }, expectedDigest: digest, resource: { enum: ['body', 'editor'] }, mode: { enum: ['server', 'fork', 'overwrite'] } } } } }, async request => {
     const { run } = await tasks.run(request.params.id); options.authorize(run.registrationId);
+    await tasks.assertExecutionIdle(run.runId);
     return commands.execute(request.headers['x-craft-request-id'], 'conflict:' + run.runId, request.body, async () => {
       const { localText, expectedDigest, resource, mode } = request.body;
       if (resource === 'body' && mode === 'overwrite' || resource === 'editor' && mode !== 'overwrite') throw fileFailure('REQUEST_INVALID', 'Choose a supported conflict resolution', 'project.yaml');

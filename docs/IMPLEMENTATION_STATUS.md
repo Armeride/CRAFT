@@ -1,15 +1,34 @@
 # 구현 상태
 
-갱신: 2026-11-13, Asia/Seoul. **단계 0~5 완료, 단계 6 착수 전 대기**. 사용자가 UI 초안 03을 승인하고 단계 5 잔여 기능까지 이번에 구현하도록 확정했다. [작업 005](tasks/005-manual-workflow.md)를 완료했다. 이후 새 UI 요구는 [별도 작업](tasks/README.md)으로 관리한다. 단계 6~9는 미착수, 10은 선택 확장이다.
+갱신: 2026-11-18, Asia/Seoul. **단계 0~5 완료, 단계 6 구현·검증 진행 중**. 사용자가 UI 초안 03을 승인하고 단계 5 잔여 기능까지 이번에 구현하도록 확정했다. [작업 005](tasks/005-manual-workflow.md)를 완료했다. 이후 새 UI 요구는 [별도 작업](tasks/README.md)으로 관리한다. 단계 7~9는 미착수, 10은 선택 확장이다. 단계 6은 실제 공급자별 opt-in 시험 전까지 완료로 기록하지 않는다.
 
 ## 기준과 범위 구분
 
 - 목표: PROJECT_SPEC.md v1.4 전체, REVIEW_NOTES.md. [확정 요구·설계 기준·미결정](REQUIREMENTS.md)을 구분한다. FR 26개·AT 68개는 제품 전체 기준이며 아래 테스트 수와 다르다.
-- 앱 소스는 main이다. 단계 0·1은 3847002, 2는 6a83094, 3은 906e996, 추가 기획은 2220dc5, 단계 4는 1fe44d2, UI 초안 01은 2bbd8cf, 초안 02는 6391781, 초안 03은 50b5b6c, 단계 5 완료 구현은 96847f4다. origin은 https://github.com/Armeride/CRAFT.git이며 2026-11-13 원격 main 조회 결과는 6391781이다. 인계 문서 보강 commit은 이 문서 이후의 Git 이력으로 확인한다. 새 clone은 필요한 로컬 commit이 원격에 포함됐는지 확인한다.
+- 앱 소스는 main이다. 단계 0·1은 3847002, 2는 6a83094, 3은 906e996, 추가 기획은 2220dc5, 단계 4는 1fe44d2, UI 초안 01은 2bbd8cf, 초안 02는 6391781, 초안 03은 50b5b6c, 단계 5 완료 구현은 96847f4다. origin은 https://github.com/Armeride/CRAFT.git이며 단계 5와 인계 문서는 fcc9635까지 원격 보존했다. 이번 단계 6은 로컬 보존이며 push하지 않았다. 현재 로컬의 origin/main 추적 참조도 fcc9635다. 인계 문서 보강 commit은 이 문서 이후의 Git 이력으로 확인한다. 새 clone은 필요한 로컬 commit이 원격에 포함됐는지 확인한다.
 - 실행 기준: Windows x64, Node 24.21.0/npm 11.19.0과 exact lockfile. 전역 설정·소유권·인증을 변경하지 않는다.
 - FR-021: 진단 code/messageKey/params와 fallback 문구를 분리했다. 단계 5 초안 01에서 ko/en catalog·언어 전환/선호·폼 상태 보존을 연결했다. 현재 구현한 웹 화면 인수는 작업 005에서 검증했으며 후속 화면도 같은 gate를 유지한다.
 - FR-022: state_model@1 파일·호환성·참조·입력 digest/색인까지 구현했다. 평가기·상태 결과·시점/actor 전후 비교는 단계 8이다. 현재 state/state-input은 evaluatorAvailable:false다.
 - 공개 core/narrative/game_design v1·core 생성 타입·기존 fixture/semantic model 1은 유지했다. 새 상태 확장과 fixture만 별도로 추가했다. 문서 v1.4도 제품 core v2가 아니다.
+
+## 단계 6 — 실행기와 내부 MCP (실제 모델 시험 대기)
+
+2026-11-18 같은 세션에서 이어가도록 지시받아 [작업 006](tasks/006-agent-runners.md)을 진행했다. [ADR-016](adr/016-isolated-agent-runners-and-internal-mcp.md), [사용·중단·검토 안내](AGENT_WORKFLOW.md)를 따른다. 확정 요구는 두 실행기·격리·웹 제어·같은 scope의 MCP이며 SDK/transport/운영 상태 저장은 설계 선택이다. 재문맥화·스킬·외부 MCP는 단계 7, 전체 상태 평가/POV는 8, 규모·타 OS/장애 전체 인수는 9다.
+
+- agent-core: 공통 설치/capability/event, Codex App Server, native Claude+공식 SDK exact 0.3.327, 모델 없는 fake. 코드가 있는 한 패키지 안에서 공급자 모듈을 분리했다. 공개 core/schema/fixture는 변경하지 않았다.
+- 시작 전 지시·checkpoint, execution OS lease, 버전·인증 분리, native/알려진 npm shim, stdio 구조화 프로토콜, 질문/승인 답변·중단과 프로세스 트리 종료, stale 요청 만료와 새 run 재시도. 공급자 session resume는 false다.
+- 내부 MCP 7개는 서버 바인딩 token과 기존 ProjectIndex/ManualService/TaskService를 공유한다. basis/working·조회 query/snapshot/commit/digest를 추적하고 draft/select:false만 생성한다. 원본/기준/사용자 review를 자동 변경하지 않는다. 도구 밖 수정은 결과 검증 실패로 보존·격리하고 종료 미확인은 통합/cleanup을 막는다.
+- UI의 명시 실행기/모델·경로 선택, 질문/승인/사용량·진행·중단·실시간 작업 문서와 기존 수동 review/통합 연결, ko/en·테마/입력 유지. 로컬 테스트 실행기는 질문·승인까지 모델 없이 제공한다.
+
+설치 조사: Codex 0.169.0-alpha.11.1, Claude Code 2.1.294. 두 실행기의 로컬 auth status를 확인했으나 계정/토큰/이메일은 저장하지 않았다. Codex는 실제 native initialize/config/read와 read-only ephemeral thread/start까지 **모델 turn 없이** 확인했다. nullable MCP 설정을 TOML override에 그대로 전달하면 실패하는 것을 발견해 null 제거와 기존 MCP 비활성화를 적용했다. 설치 help/schema·SDK 타입과 공식 문서를 대조했다. 실제 모델 실행은 아직 0회다.
+
+검증: 전체 npm run check — **21파일 206개 Vitest 통과(387.74초)**, 생성 스키마·core/web typecheck·서버/worker/Vite build 통과. 이후 checkpoint의 실제 공급자 종류 표시를 보강하고 typecheck/build와 agent/MCP 서비스 6개를 재검증했다. 표준 HTTP MCP와 두 공급자 protocol fixture, 실제 Windows 자식 프로세스 종료를 포함한다. Codex native가 이 앱 MCP의 context.build를 호출해 bound working scope를 읽는 것까지 모델 turn 없이 확인했다. **npm run test:ui — Chrome E2E 14개 전체 통과(6.5분)**. 실제 로컬 테스트 실행기의 질문→언어/테마 변경과 답변→승인→새 초안→사용자 검토/실제 통합, 대기 중 중단/보존→새 run, 기존 수동/복원/관리·검색/그래프·라이트/다크/390px·자동 WCAG A/AA 회귀를 검증했다. 검토 서버 http://127.0.0.1:4174를 기존 자료를 유지한 채 최신 빌드로 재시작하고 HTTP 200과 오류 로그 없음을 확인했다.
+
+전체 회귀에서 취소 직후 terminal 보존과 별도 run 상태 쓰기가 경합하는 것을 발견해 취소는 execution 기록/abort로만 표시하도록 수정했다. 종료 미확인은 cancelled로 오인하지 않도록 별도 시험한다. AI 통합 E2E는 별도 Git 프로젝트에서 수행해 공용 예시를 변경하지 않는다. 외부 편집 모사 시험은 동시 자동 저장의 정상 WORKTREE_BUSY/BASE_CHANGED에 같은 UUID와 갱신한 snapshot으로 명시 재시도하며 다른 오류는 실패시킨다.
+
+실제 모델 opt-in은 공급자별 짧은 임시 fixture 시험만 남긴다. tools/agent-smoke.ts의 --confirm-model-use가 필요하고 기본 검사/CI에서는 호출하지 않는다. 실제 서비스 연결 성공을 모델 없는 fixture로 대체 선언하지 않는다. 이 상태에서 단계 7로 넘어가지 않는다.
+
+의존성 점검: npm audit --omit=dev는 0건이다. 전체 audit는 기존 개발 도구 체인의 high 6건(picomatch/fdir/tinyglobby와 Vite/Vitest/schema generator)을 보고한다. 자동 major 다운그레이드 제안은 적용하지 않았으며 도구 교체는 별도 검증 대상으로 남긴다. MCP client SDK 1.32.2는 exact dev dependency다. 원격 push는 이번 작업에 포함하지 않는다.
 
 ## 단계 5 — 수동 작업 흐름 완료
 

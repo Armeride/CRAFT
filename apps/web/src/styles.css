@@ -284,6 +284,22 @@ details summary{cursor:pointer;line-height:1.8;font-size:.85em;color:var(--muted
 .chat-context>strong{font-size:12px;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;max-width:180px}
 .connection-state{font-size:10px;color:var(--muted);width:100%;display:flex;align-items:center;gap:7px;margin-top:4px}
 .chat-history{flex:1;min-height:0;overflow:auto;padding:20px 17px;scrollbar-width:thin}
+.agent-panel{display:grid;gap:12px;margin-bottom:24px;min-width:0}
+.agent-panel label{display:grid;gap:6px;font-size:13px}
+.agent-panel select,.agent-panel input{width:100%;min-width:0;border:1px solid var(--line);border-radius:6px;padding:8px;background:var(--surface);color:var(--ink)}
+.agent-panel details{font-size:12px;min-width:0}
+.agent-panel details>label{margin-top:10px}
+.agent-panel summary{cursor:pointer}
+.agent-execution{border-top:1px solid var(--line);padding-top:16px;overflow-wrap:anywhere;min-width:0}
+.agent-state{font-size:12px;font-weight:600}
+.agent-message{white-space:pre-wrap;line-height:1.7;margin:12px 0}
+.agent-input{border:1px solid var(--line);border-radius:8px;padding:12px;margin:12px 0}
+.agent-input h3{font-size:14px;margin:0 0 8px}
+.agent-input fieldset{border:0;padding:8px 0;min-width:0}
+.agent-input fieldset label:has(input[type=radio]),.agent-input fieldset label:has(input[type=checkbox]){display:flex;align-items:center;padding:4px 0}
+.agent-input input[type=radio],.agent-input input[type=checkbox]{width:auto}
+.agent-input pre{max-height:180px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere}
+.agent-input .modal-controls{flex-wrap:wrap}
 .chat-notice{font-size:12px;padding:4px 0 20px;color:var(--muted)}
 .chat-notice>svg{color:var(--accent);margin-bottom:12px}
 .chat-notice h3{font-size:14px;color:var(--ink);margin-bottom:10px;line-height:1.9}
