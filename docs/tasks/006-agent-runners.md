@@ -1,6 +1,6 @@
 # 작업 006 — 에이전트 실행기와 내부 MCP
 
-2026-11-18 사용자가 같은 세션에서 다음 작업을 이어가도록 지시했다. 단계 6 진행 중이다.
+2026-11-18 사용자가 같은 세션에서 다음 작업을 이어가도록 지시했다. 사용자 opt-in 후 두 공급자 실제 시험과 최종 회귀까지 단계 6을 완료했다. 단계 7 착수 전 대기한다.
 
 확정 요구는 두 설치 실행기 탐지·선택, 격리 작업의 지시/진행/중단/결과 검토, 같은 scope의 내부 MCP와 ko/en UI다. 명세 12절과 단계 6 인수 기준을 따른다. Codex App Server와 Claude structured CLI/필요시 공식 SDK는 기존 설계 기준이다. 버전별 실제 지원 기능과 인증/권한 전달은 설치 프로토콜과 시험으로 확인한다.
 
@@ -16,8 +16,8 @@
 - 검증한 결과만 반영한다. 관리 명령 밖의 변경과 종료 미확인은 보존·격리하며 사용자 review를 에이전트가 만들거나 자동 채택할 수 없다.
 - 공개 schema/생성 타입/기존 fixture는 변경하지 않았다. 전체 공급자 세션 재개·스킬·외부 MCP는 단계 7이다.
 
-검증: 전체 `npm run check`의 schema/typecheck/build와 **21파일 206개 Vitest 통과**. 이후 실제 공급자 checkpoint.type 표시 보강은 core/web typecheck/build 및 agent/MCP 서비스 6개 시험으로 재검증했다. 표준 MCP Client와 실제 Windows native 프로세스를 포함한다. Codex native 초기화·read-only thread와 이 앱 MCP의 context.build까지 **model turn 없이** 접속·scope를 검증했다. 실제 모델 호출은 아직 0회다.
+검증: 전체 `npm run check`의 schema/typecheck/build와 **21파일 206개 Vitest 통과**. 이후 실제 공급자 checkpoint.type 표시 보강은 core/web typecheck/build 및 agent/MCP 서비스 6개 시험으로 재검증했다. 표준 MCP Client와 실제 Windows native 프로세스를 포함한다. Codex native 초기화·read-only thread와 이 앱 MCP의 context.build까지 **model turn 없이** 접속·scope를 검증했다. 이후 사용자 명시 동의로 두 공급자의 실제 모델 smoke도 통과했다.
 
 **Chrome E2E 14개 전체 통과(6.5분)**. 로컬 실행기의 실제 질문·승인·언어/테마 변경·초안/검토/통합과 중단/새 run 및 기존 UI 회귀를 검증했다. AI 통합 시나리오는 별도 프로젝트로 분리해 공용 탐색 예시를 유지한다. 외부 편집 모사 시험은 동시 자동 저장의 정상적인 WORKTREE_BUSY/BASE_CHANGED 응답 때 같은 UUID·명시 갱신한 snapshot으로 재시도하며 다른 오류는 실패시킨다.
 
-**남은 완료 조건:** 사용자 동의를 받은 뒤 임시 fixture에서 Codex·Claude 각각 짧은 실제 모델 smoke를 실행하고 결과를 기록한다. tools/agent-smoke.ts는 --confirm-model-use 없이는 실행하지 않는다. 그 전까지 단계 6 전체 완료로 표시하거나 단계 7을 시작하지 않는다.
+**실제 공급자 결과:** Codex 0.169.0-alpha.11.1, Claude Code 2.1.294/SDK 0.3.327 모두 context.build → changes.propose → project.validate → checkpoint를 완료했다. 각각 미채택 agent draft 1개이며 원본 HEAD/tree·baseline·사용자 review 불변과 조회 receipt를 다시 검증했다. [증거](../validation/phase6-provider-smoke-2026-11-18.json)를 보존했다. Codex의 실험 기능/도구 힌트, Claude의 초기화 전달 지원·환경 참조와 이름 정규화, 빈 MCP 인수·비밀값 가린 오류를 보강했다. tools/agent-smoke.ts는 --confirm-model-use 없이는 실행하지 않는다. 최종 전체 npm run check의 21파일/206개 Vitest를 통과했고 변경 화면의 AI/중단/접근성 E2E 3개도 다시 통과했다. 단계 6을 완료하고 대기한다.

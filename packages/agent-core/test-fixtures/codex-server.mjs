@@ -19,6 +19,8 @@ const lines = createInterface({ input: process.stdin });
 for await (const line of lines) {
   const message = JSON.parse(line);
   if (message.method === "initialize") {
+    if (message.params.capabilities?.experimentalApi !== true)
+      throw Error("Host input capability missing");
     reply(message.id, { userAgent: "sanitized-fixture" });
     continue;
   }

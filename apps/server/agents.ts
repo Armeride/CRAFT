@@ -249,17 +249,18 @@ export async function registerAgentRoutes(
         };
       const args = request.body.params ?? {};
       try {
+        const input = args["arguments"] ?? {};
         if (
           typeof args["name"] !== "string" ||
-          !args["arguments"] ||
-          typeof args["arguments"] !== "object" ||
-          Array.isArray(args["arguments"])
+          !input ||
+          typeof input !== "object" ||
+          Array.isArray(input)
         )
           throw new AgentError("REQUEST_INVALID");
         const result = await service.callTool(
           request.params.id,
           args["name"],
-          args["arguments"] as Record<string, unknown>,
+          input as Record<string, unknown>,
         );
         return {
           jsonrpc: "2.0",

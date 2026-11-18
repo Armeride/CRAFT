@@ -229,7 +229,10 @@ export class CodexAdapter implements AgentAdapter {
       async (message) => {
         const params = message.params ?? {};
         if (message.id !== undefined && message.method) {
-          const isQuestion = message.method === "item/tool/requestUserInput";
+          const isQuestion = [
+            "item/tool/requestUserInput",
+            "tool/requestUserInput",
+          ].includes(message.method);
           const supported =
             isQuestion ||
             [
@@ -238,6 +241,11 @@ export class CodexAdapter implements AgentAdapter {
               "item/permissions/requestApproval",
             ].includes(message.method);
           if (!supported) {
+            await context.emit({
+              type: "tool.completed",
+              tool: message.method,
+              code: "AGENT_HOST_REQUEST_UNSUPPORTED",
+            });
             connection.send({
               id: message.id,
               error: { code: -32601, message: "Unsupported host request" },
@@ -280,7 +288,14 @@ export class CodexAdapter implements AgentAdapter {
           message.method === "item/completed"
         ) {
           const item = params["item"] as
-            { type?: string; name?: string; tool?: string } | undefined;
+            | {
+                type?: string;
+                name?: string;
+                tool?: string;
+                error?: unknown;
+                result?: { isError?: boolean; content?: unknown };
+              }
+            | undefined;
           if (
             item?.type === "mcpToolCall" ||
             item?.type === "commandExecution" ||
@@ -292,6 +307,13 @@ export class CodexAdapter implements AgentAdapter {
                   ? "tool.started"
                   : "tool.completed",
               tool: item.tool ?? item.name ?? item.type,
+              ...(message.method === "item/completed" &&
+              (item.error || item.result?.isError)
+                ? {
+                    code: "AGENT_TOOL_FAILED",
+                    text: JSON.stringify(item.error ?? item.result?.content),
+                  }
+                : {}),
             });
         }
         if (message.method === "thread/tokenUsage/updated") {
@@ -342,7 +364,7 @@ export class CodexAdapter implements AgentAdapter {
     try {
       await connection.request("initialize", {
         clientInfo: { name: "craft", title: "CRAFT", version: "0.0.0" },
-        capabilities: {},
+        capabilities: { experimentalApi: true },
       });
       connection.send({ method: "initialized" });
       const configuration = await connection.request<{

@@ -34,7 +34,7 @@ export function supportedVersion(
     ?.slice(1)
     .map(Number);
   if (!parts) return false;
-  const minimum = provider === "codex" ? [0, 169, 0] : [2, 1, 261];
+  const minimum = provider === "codex" ? [0, 169, 0] : [2, 1, 294];
   for (let i = 0; i < minimum.length; i++) {
     if (parts[i]! > minimum[i]!) return true;
     if (parts[i]! < minimum[i]!) return false;

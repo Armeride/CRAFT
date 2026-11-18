@@ -102,7 +102,15 @@ export const knowledgeTools = [
       ["requestId", "expectedSnapshot", "title", "body"],
     ),
   },
-];
+].map((tool) => ({
+  ...tool,
+  annotations: {
+    readOnlyHint: !["changes.propose", "task.checkpoint"].includes(tool.name),
+    destructiveHint: false,
+    idempotentHint: tool.name !== "task.checkpoint",
+    openWorldHint: false,
+  },
+}));
 
 const validator = new Ajv2020({ strict: false, validateFormats: false });
 const validators = new Map(

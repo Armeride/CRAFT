@@ -403,6 +403,12 @@ export function AgentPanel({
                 })}
               </p>
             )}
+            {execution.diagnostic && (
+              <details>
+                <summary>{t("agent.diagnostic")}</summary>
+                <pre tabIndex={0}>{execution.diagnostic}</pre>
+              </details>
+            )}
             {["failed", "cancelled", "interrupted"].includes(
               execution.state,
             ) && (
@@ -444,6 +450,14 @@ export function AgentPanel({
                     <li key={event.sequence}>
                       {t("agent.event." + event.type)} ·{" "}
                       <code>{event.tool}</code>
+                      {event.code && (
+                        <div>
+                          <p>{t("errors." + event.code, {
+                            defaultValue: t("errors.REQUEST_FAILED"),
+                          })}</p>
+                          {event.text && <pre tabIndex={0}>{event.text}</pre>}
+                        </div>
+                      )}
                     </li>
                   ))}
               </ul>

@@ -190,12 +190,18 @@ describe("bound agent execution and preservation", () => {
   }, 120000);
 
   it("keeps unconfirmed termination distinct from cancellation and blocks cleanup and integration", async () => {
+    let privateToken = "";
     const f = await setup({
       async execute(context) {
+        privateToken = context.mcp.token;
         try {
           await pause(60000, context.signal);
         } catch {
-          throw new AgentError("AGENT_TERMINATION_UNCONFIRMED");
+          throw new AgentError("AGENT_TERMINATION_UNCONFIRMED", {
+            message: "Sensitive fixture",
+            token: privateToken,
+            authorization: "Bearer " + privateToken,
+          });
         }
       },
     });
@@ -214,6 +220,9 @@ describe("bound agent execution and preservation", () => {
       state: "failed",
       code: "AGENT_TERMINATION_UNCONFIRMED",
     });
+    const diagnostic = (await f.service.get(record.id)).diagnostic;
+    expect(diagnostic).toContain("Sensitive fixture");
+    expect(diagnostic).not.toContain(privateToken);
     await expect(f.tasks.cleanup(f.run.runId)).rejects.toThrow(
       "AGENT_TERMINATION_UNCONFIRMED",
     );

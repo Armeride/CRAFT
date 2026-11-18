@@ -368,6 +368,16 @@ export class AgentService {
         } catch (error) {
           failed(error);
           record.code = errorCode(error);
+          record.diagnostic = redact(
+            JSON.stringify(
+              error instanceof AgentError
+                ? (error.details ?? { message: error.message })
+                : {
+                    message:
+                      error instanceof Error ? error.message : String(error),
+                  },
+            ).replaceAll(active.token, "[redacted]"),
+          );
           record.state =
             active.abort.signal.aborted &&
             record.code !== "AGENT_TERMINATION_UNCONFIRMED"
@@ -398,6 +408,9 @@ export class AgentService {
                   state: record.state,
                   source,
                   message: record.message,
+                  ...(record.diagnostic
+                    ? { diagnostic: record.diagnostic }
+                    : {}),
                   interactionRequests: record.events
                     .filter((event) => event.request)
                     .map((event) => event.request),
@@ -480,6 +493,9 @@ export class AgentService {
       if (event.type === "message.delta") record.message += event.text ?? "";
       const saved: AgentEvent = {
         ...event,
+        ...(event.type !== "message.delta" && event.text
+          ? { text: redact(event.text.replaceAll(active.token, "[redacted]")) }
+          : {}),
         sequence: ++record.lastSequence,
         createdAt: new Date().toISOString(),
       };

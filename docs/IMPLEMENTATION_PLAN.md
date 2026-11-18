@@ -1,6 +1,6 @@
 # 구현 단계와 각 단계별 목표
 
-기준은 [명세 v1.4 18~19절](../PROJECT_SPEC.md)과 2026-11-13 단계 5 완료 기록이다. 단계 0~5를 완료했고 단계 6을 구현·검증 중이다. 실제 공급자 시험의 명시 동의가 남아 있으며 완료 전 단계 7로 넘어가지 않는다. FR-021은 현재 구현한 웹 화면의 ko/en·접근성·언어 전환 회귀까지, FR-022는 상태 계약/색인·정의 편집까지 검증했다. 실제 실행기/MCP와 상태 평가·비교는 단계 6~8에서 완성한다. 사용자의 지시에 따라 **한 단계 완료 후 작업을 멈추고 대기**한다. 세션 인계는 [시작 문서](../START_HERE.md#8-다른-세션에서-이어갈-때)를 따른다.
+기준은 [명세 v1.4 18~19절](../PROJECT_SPEC.md)과 2026-11-13 단계 5 완료 기록이다. 단계 0~6을 완료했다. 사용자 동의 후 설치된 두 공급자의 실제 MCP/초안/검증을 통과했으며 단계 7 착수 전 대기한다. FR-021은 현재 구현한 웹 화면의 ko/en·접근성·언어 전환 회귀까지, FR-022는 상태 계약/색인·정의 편집까지 검증했다. 실제 실행기/내부 MCP는 단계 6에서 검증했고 공급자 재개/외부 MCP와 상태 평가·비교는 단계 7~8이다. 사용자의 지시에 따라 **한 단계 완료 후 작업을 멈추고 대기**한다. 세션 인계는 [시작 문서](../START_HERE.md#8-다른-세션에서-이어갈-때)를 따른다.
 
 ## 순서와 통과 원칙
 
@@ -86,7 +86,7 @@ v1.2 추가 요구의 배치는 [ADR-009](adr/009-ui-locales-and-state-planning.
 - 추가 통과 기준: 모든 앱 문구의 ko/en·접근성 설명·오류·형식 표시를 확인하고 locale 전환이 원문·초안·선택·정본 digest를 변경하지 않는다.
 - 추적: FR-003/012/018/020/021, FR-022 편집 기반, AT-12~13/21~22/25/28/44~47/51~53.
 
-- 현재 결과: **완료, 단계 6 착수 전 대기**. UI 초안 03 승인 후 작업 005에서 새 revision/review/baseline·상태 확장 JSON 편집, 자동 저장/양쪽 보존 충돌, basis/working·Git checkpoint 복원, 멱등 proposal/실제 diff 승인·격리 통합·중단 복구, clone/import·제품 migration 계획/보고서, SSE cursor/watch를 연결했다. 생성 타입·빌드와 192개 Vitest/12개 Chrome E2E를 통과했다. [사용과 복구](MANUAL_WORKFLOW.md)·[ADR-015](adr/015-manual-review-integration-and-events.md)·[구체 검증/한계](IMPLEMENTATION_STATUS.md)를 따른다. 이후 새 UI 요구는 별도 작업이며 실제 모델/전체 상태 평가/제품 전체 인수는 후속 단계다.
+- 현재 결과: **완료(단계 5 종료 시점 기록)**. 이후 단계 6 결과는 아래를 따른다. UI 초안 03 승인 후 작업 005에서 새 revision/review/baseline·상태 확장 JSON 편집, 자동 저장/양쪽 보존 충돌, basis/working·Git checkpoint 복원, 멱등 proposal/실제 diff 승인·격리 통합·중단 복구, clone/import·제품 migration 계획/보고서, SSE cursor/watch를 연결했다. 생성 타입·빌드와 192개 Vitest/12개 Chrome E2E를 통과했다. [사용과 복구](MANUAL_WORKFLOW.md)·[ADR-015](adr/015-manual-review-integration-and-events.md)·[구체 검증/한계](IMPLEMENTATION_STATUS.md)를 따른다. 이후 새 UI 요구는 별도 작업이며 실제 모델/전체 상태 평가/제품 전체 인수는 후속 단계다.
 
 - UI 초안 02: FR-023~025/AT-61~66 추가. system/light/dark·분류 설정/언어/글꼴, 한 탐색 트리/대시보드·정확한 graph, 왼쪽 resize/오른쪽 toggle, 요소별 대화/문서·좌우 전환·working 직접 편집/실시간 미리보기를 반영했다. 요청 메모는 파일에 보관하며 실제 AI 실행은 6이다. 고급 graph 장식/범용 폰트 인식은 후순위다. 사용자 검토 후 같은 단계에서 계속한다.
 
@@ -103,7 +103,7 @@ v1.2 추가 요구의 배치는 [ADR-009](adr/009-ui-locales-and-state-planning.
 - 통과 기준: UI 지시→전용 worktree→내부 MCP→proposal→검증→사용자 검토, 두 공급자별 명시 동의 smoke. 인증 실패/미설치/잘못된 이벤트/취소·강제 종료 처리. 종료 0이어도 invalid 결과 반영 금지.
 - 추적: FR-011/012/014/015/020, AT-11/20/25/28/37/44. 모델 없는 반복 검증은 fake 사용.
 
-- 현재 결과: [작업 006](tasks/006-agent-runners.md)·[ADR-016](adr/016-isolated-agent-runners-and-internal-mcp.md)의 공통 실행기/내부 MCP·웹 제어를 구현했다. 모델 없는 반복 시험과 실제 native 초기화 검증을 구분하며 실제 공급자별 모델 시험은 동의 대기다. 정확한 검증 상태는 IMPLEMENTATION_STATUS.md를 따른다.
+- 현재 결과: [작업 006](tasks/006-agent-runners.md)·[ADR-016](adr/016-isolated-agent-runners-and-internal-mcp.md)의 공통 실행기/내부 MCP·웹 제어를 구현했다. **단계 6 완료**. 사용자 opt-in 후 Codex/Claude 실제 context→draft proposal→검증→checkpoint·원본 불변을 확인했다. 최종 206개 Vitest, 기존 14개 UI E2E와 수정 화면 3개 재검증을 통과했다. 단계 7 착수 전 대기한다. 정확한 검증 상태는 IMPLEMENTATION_STATUS.md를 따른다.
 
 ## 단계 7 — 재개·스킬·외부 MCP
 

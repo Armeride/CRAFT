@@ -89,6 +89,7 @@ describe("native protocol and process boundaries", () => {
     expect(supportedVersion("codex", "0.168.0")).toBe(false);
     expect(supportedVersion("codex", "0.169.0-alpha.11.1")).toBe(true);
     expect(supportedVersion("claude", "2.1.260")).toBe(false);
+    expect(supportedVersion("claude", "2.1.293")).toBe(false);
     expect(supportedVersion("claude", "2.1.294")).toBe(true);
     expect(supportedVersion("claude", null)).toBe(false);
   });
@@ -258,6 +259,21 @@ describe("native protocol and process boundaries", () => {
         toolUseID: "fixture-tool-id",
         requestId: "fixture-request",
       };
+    expect(
+      await handler("mcp__craft__context_build", {}, options),
+    ).toMatchObject({ behavior: "allow" });
+    const policy = { ...options, serverPolicyAskOnly: true };
+    expect(
+      await handler("mcp__craft__context_build", {}, policy),
+    ).toMatchObject({ behavior: "deny" });
+    expect(
+      await handler(
+        "mcp__craft__context_build",
+        {},
+        { ...options, mcpServer: { name: "foreign", source: "dynamic" } },
+      ),
+    ).toMatchObject({ behavior: "deny" });
+    requests.length = 0;
     const answered = await handler(
       "AskUserQuestion",
       {

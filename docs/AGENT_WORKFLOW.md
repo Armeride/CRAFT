@@ -1,6 +1,6 @@
 # AI 실행·검토·중단
 
-단계 6 구현 범위다. 실제 공급자별 모델 시험은 명시 동의 후 수행하며 최신 결과는 [구현 상태](IMPLEMENTATION_STATUS.md)를 따른다. 저장 모델·승인·원본 보존 원칙은 [ADR-016](adr/016-isolated-agent-runners-and-internal-mcp.md)에 기록했다.
+단계 6 구현 범위다. 2026-11-18 사용자 동의 후 설치 Codex/Claude의 실제 모델 시험을 통과했다. 최신 지원 범위와 후속 검증은 [구현 상태](IMPLEMENTATION_STATUS.md)를 따른다. 저장 모델·승인·원본 보존 원칙은 [ADR-016](adr/016-isolated-agent-runners-and-internal-mcp.md)에 기록했다.
 
 ## 화면에서 사용
 
@@ -30,6 +30,6 @@ node dist/tools/agent-smoke.js --provider codex --confirm-model-use
 node dist/tools/agent-smoke.js --provider claude --confirm-model-use
 ```
 
-선택적으로 `--model 이름`을 붙일 수 있다. 기본은 설치 실행기의 모델이다. 임시 `valid-minimal` 프로젝트만 사용하고 모델별 1개 짧은 draft proposal, MCP context/validation, 원본 불변을 검증한다. 120초 초과는 중단하며 질문/추가 권한은 자동 허용하지 않는다. 결과와 workspace 경로를 출력하고 보존한다. 실제 프로젝트 통합이나 push는 하지 않는다.
+선택적으로 `--model 이름`을 붙일 수 있다. 기본은 설치 실행기의 모델이다. 임시 `valid-minimal` 프로젝트만 사용하고 모델별 1개 짧은 draft proposal, MCP context/validation, 원본 불변을 검증한다. 120초 초과는 중단하며 질문/추가 권한은 자동 허용하지 않는다. 승인 대기가 생기면 출력된 controlUrl의 인증된 로컬 API에서 실행 기록을 확인하고 해당 requestId에 응답할 수 있다. 알 수 없는 요청을 자동 허용하거나 승인 우회 옵션을 켜지 않는다. 결과와 workspace 경로를 출력하고 보존한다. 실제 프로젝트 통합이나 push는 하지 않는다.
 
-내부 API는 browser cookie/CSRF로, `/mcp/agent_UUID`는 해당 active 실행의 메모리 토큰으로 접근한다. 클라이언트가 프로젝트 root나 다른 run을 고를 수 없다. 토큰은 argv/브라우저/Git에 쓰지 않는다. 조회 receipt에는 snapshot/source/baseline·Git commit과 정확한 revision 근거를 보존한다. 세션/응답 원문에는 사용자가 보낸 자료가 포함되므로 작업 결과 파일로 취급한다.
+내부 API는 browser cookie/CSRF로, `/mcp/agent_UUID`는 해당 active 실행의 메모리 토큰으로 접근한다. 클라이언트가 프로젝트 root나 다른 run을 고를 수 없다. 토큰 원문은 argv/브라우저/Git에 쓰지 않는다. Claude argv의 MCP 설정에는 환경 변수 참조만 넣고 native 프로세스 환경에서 해석한다. 공급자 오류와 도구 거절은 비밀값을 가린 원문을 접힌 상세 보기에서 확인할 수 있다. 조회 receipt에는 snapshot/source/baseline·Git commit과 정확한 revision 근거를 보존한다. 세션/응답 원문에는 사용자가 보낸 자료가 포함되므로 작업 결과 파일로 취급한다.

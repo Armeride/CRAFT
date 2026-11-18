@@ -91,6 +91,7 @@ export interface AgentExecution {
   checkpointId?: string;
   providerSession?: string;
   code?: string;
+  diagnostic?: string;
   createdAt: string;
   updatedAt: string;
 }

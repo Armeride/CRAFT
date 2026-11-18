@@ -1,0 +1,66 @@
+{
+  "date": "2026-11-18",
+  "userOptIn": "Both providers explicitly permitted in this session",
+  "source": "Disposable valid-minimal Git projects; real user projects not integrated",
+  "sdk": {
+    "claude": "0.3.327"
+  },
+  "providers": [
+    {
+      "provider": "codex",
+      "version": "0.169.0-alpha.11.1",
+      "executionId": "agent_e0c3a774-eee5-444f-9ed1-10fec78d47c7",
+      "runId": "run_1541d3de-288e-489e-9035-bec44d6371cd",
+      "taskId": "task_f4c9c792-87af-4ba8-8088-202133e5dfd7",
+      "checkpointId": "cp_1af14b18-c16e-4e82-9611-489e92ca2c8a",
+      "createdRevision": {
+        "entityId": "ent_c64cdd2b-24a2-4da9-935a-a9058a1616a9",
+        "revisionId": "rev_6a350808-d9f1-45c2-a8df-3899473ea849"
+      },
+      "tools": [
+        "context.build",
+        "changes.propose",
+        "project.validate"
+      ],
+      "assertions": {
+        "completed": true,
+        "exactlyOneDraftProposal": true,
+        "newRevisionIsAgentDraft": true,
+        "baselineSelectionUnchanged": true,
+        "userReviewsUnchanged": true,
+        "checkpointProviderMatches": true,
+        "contextReceiptsPreserved": true,
+        "sourceTreeClean": true,
+        "sourceHeadUnchanged": true
+      }
+    },
+    {
+      "provider": "claude",
+      "version": "2.1.294",
+      "executionId": "agent_e48ba5cc-be0d-4107-a9ad-abba73f7f4ac",
+      "runId": "run_ed7a2e6c-15ee-43bb-84b0-8f7758811a2d",
+      "taskId": "task_6e730c77-a5f5-4e5b-8685-5d2e5cd0088a",
+      "checkpointId": "cp_10c17744-f2d3-4a33-9942-7bf6f60701ea",
+      "createdRevision": {
+        "entityId": "ent_7524041b-d96f-4d14-aecc-1784eb077de4",
+        "revisionId": "rev_6810838c-c4f1-4739-ac94-ff212b6fcb62"
+      },
+      "tools": [
+        "context.build",
+        "changes.propose",
+        "project.validate"
+      ],
+      "assertions": {
+        "completed": true,
+        "exactlyOneDraftProposal": true,
+        "newRevisionIsAgentDraft": true,
+        "baselineSelectionUnchanged": true,
+        "userReviewsUnchanged": true,
+        "checkpointProviderMatches": true,
+        "contextReceiptsPreserved": true,
+        "sourceTreeClean": true,
+        "sourceHeadUnchanged": true
+      }
+    }
+  ]
+}

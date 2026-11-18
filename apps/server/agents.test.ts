@@ -142,6 +142,45 @@ describe("internal MCP and browser agent boundary", () => {
         arguments: { root: fixture.root },
       });
       expect(invalid.isError).toBe(true);
+      const omitted = await app.inject({
+        method: "POST",
+        url,
+        headers: bearer,
+        payload: {
+          jsonrpc: "2.0",
+          id: 2,
+          method: "tools/call",
+          params: { name: "context.build" },
+        },
+      });
+      expect(omitted.json().result.isError).not.toBe(true);
+      expect(
+        JSON.parse(omitted.json().result.content[0].text).context.scope.runId,
+      ).toBe(run.runId);
+      const empty = await app.inject({
+        method: "POST",
+        url,
+        headers: bearer,
+        payload: {
+          jsonrpc: "2.0",
+          id: 3,
+          method: "tools/call",
+          params: { name: "context.build", arguments: null },
+        },
+      });
+      expect(empty.json().result.isError).not.toBe(true);
+      const malformed = await app.inject({
+        method: "POST",
+        url,
+        headers: bearer,
+        payload: {
+          jsonrpc: "2.0",
+          id: 4,
+          method: "tools/call",
+          params: { name: "context.build", arguments: [] },
+        },
+      });
+      expect(malformed.json().result.isError).toBe(true);
       const built = await client.callTool({
         name: "context.build",
         arguments: {},

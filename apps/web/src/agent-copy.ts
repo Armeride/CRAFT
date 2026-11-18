@@ -1,5 +1,9 @@
 export const agentKo = {
   "agent.controls": "AI 실행",
+  "agent.diagnostic": "실행기 오류 원문 · 비밀값 가림",
+  "errors.AGENT_TOOL_FAILED": "도구 호출이 실패했습니다.",
+  "errors.AGENT_HOST_REQUEST_UNSUPPORTED":
+    "이 실행기 요청 형식은 아직 지원하지 않습니다.",
   "agent.provider": "실행기",
   "agent.choose": "실행기를 선택하세요",
   "agent.provider.codex": "Codex",
@@ -90,6 +94,10 @@ export const agentKo = {
 
 export const agentEn: Record<keyof typeof agentKo, string> = {
   "agent.controls": "AI execution",
+  "agent.diagnostic": "Runner error details · secrets redacted",
+  "errors.AGENT_TOOL_FAILED": "The tool call failed.",
+  "errors.AGENT_HOST_REQUEST_UNSUPPORTED":
+    "This runner request format is not supported yet.",
   "agent.provider": "Runner",
   "agent.choose": "Choose a runner",
   "agent.provider.codex": "Codex",

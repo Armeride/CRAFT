@@ -219,6 +219,8 @@ test("cancels a pending request, preserves it, and opens a distinct retry worksp
       response.request().method() === "POST" &&
       /\/agent-executions\/[^/]+\/fork$/.test(response.url()),
   );
+  await page.getByText('실행기 오류 원문 · 비밀값 가림', { exact: true }).click();
+  expect((await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze()).violations).toEqual([]);
   await page
     .getByRole("button", {
       name: "보존 지점에서 새 작업 공간 열기",

@@ -34,6 +34,26 @@ await new Promise<void>((resolve) => listener.close(() => resolve()));
 const app = await createWebApp({ appData: fixture.app, port });
 let executionId = "";
 try {
+  app.addHook("onResponse", async (request, reply) => {
+    const rpc = request.body as
+      | { method?: string; params?: { name?: string; arguments?: unknown } }
+      | undefined;
+    if (
+      request.url.startsWith("/mcp/") &&
+      (reply.statusCode >= 400 || rpc?.method === "tools/call")
+    )
+      console.log(
+        JSON.stringify({
+          mcpStatus: reply.statusCode,
+          method: rpc?.method,
+          tool: rpc?.params?.name,
+          argumentType:
+            rpc?.params?.arguments === null
+              ? "null"
+              : typeof rpc?.params?.arguments,
+        }),
+      );
+  });
   await app.listen({ port, host: "127.0.0.1" });
   const headers: Record<string, string> = { host: "127.0.0.1:" + port };
   const session = await app.inject({ url: "/api/session", headers });
@@ -55,6 +75,13 @@ try {
   if (response.statusCode !== 200)
     throw new Error("Start failed: " + response.json().code);
   executionId = response.json<AgentExecution>().id;
+  console.log(
+    JSON.stringify({
+      controlUrl: "http://127.0.0.1:" + port,
+      executionId,
+      provider,
+    }),
+  );
   const deadline = Date.now() + 120000;
   let result: AgentExecution;
   for (;;) {
@@ -65,14 +92,8 @@ try {
       ["completed", "failed", "cancelled", "interrupted"].includes(result.state)
     )
       break;
-    if (result.pending) {
-      await app.inject({
-        method: "POST",
-        url: `/api/agent-executions/${executionId}/respond`,
-        headers,
-        payload: { requestId: result.pending.id, answer: { allow: false } },
-      });
-    }
+    // A smoke operator may answer a scoped request through the local API.
+    // No question, command, or permission is automatically accepted.
     if (Date.now() > deadline) {
       await app.inject({
         method: "POST",
@@ -87,7 +108,13 @@ try {
     await new Promise((resolve) => setTimeout(resolve, 200));
   }
   if (result.state !== "completed")
-    throw new Error("Provider result: " + result.state + " / " + result.code);
+    throw new Error(
+      "Provider result: " +
+        result.state +
+        " / " +
+        result.code +
+        (result.diagnostic ? " / " + result.diagnostic : ""),
+    );
   const inspection = await new ManualService(fixture.app).inspect(run.runId),
     snapshot = await tasks.project(run.runId);
   const changes = inspection.proposals.flatMap((proposal) => proposal.changes);

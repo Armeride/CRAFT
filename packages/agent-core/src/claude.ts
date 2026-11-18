@@ -58,7 +58,11 @@ export async function consumeClaudeStream(
       await context.emit({ type: "tool.started", tool: message.tool_name });
     if (message.type === "result") {
       if (message.subtype !== "success" || message.is_error)
-        throw new AgentError("AGENT_PROVIDER_FAILED");
+        throw new AgentError("AGENT_PROVIDER_FAILED", {
+          subtype: message.subtype,
+          errors:
+            message.subtype !== "success" ? message.errors : [message.result],
+        });
       if (message.permission_denials.length)
         throw new AgentError("AGENT_PERMISSION_REQUIRED");
       if (!hasText && message.result)
@@ -119,12 +123,18 @@ export function claudePermissionHandler(context: AdapterContext): CanUseTool {
       };
     }
     const ownTool = knowledgeTools.some(
-      (tool) => name === "mcp__craft__" + tool.name,
+      (tool) =>
+        name === "mcp__craft__" + tool.name ||
+        name === "mcp__craft__" + tool.name.replaceAll(".", "_"),
     );
+    const askOnly =
+      "serverPolicyAskOnly" in options && options.serverPolicyAskOnly === true;
     if (
       ownTool &&
-      options.mcpServer?.name === "craft" &&
-      options.mcpServer.source === "dynamic"
+      !askOnly &&
+      (!options.mcpServer ||
+        (options.mcpServer.name === "craft" &&
+          options.mcpServer.source === "dynamic"))
     )
       return {
         behavior: "allow",
@@ -154,6 +164,7 @@ export class ClaudeAdapter implements AgentAdapter {
     const abort = new AbortController();
     const children = new Set<ChildProcessWithoutNullStreams>();
     const stopTimers = new Set<ReturnType<typeof setTimeout>>();
+    let stderr = "";
     const aborted = () => abort.abort();
     context.signal.addEventListener("abort", aborted, { once: true });
     if (context.signal.aborted) abort.abort();
@@ -165,16 +176,15 @@ export class ClaudeAdapter implements AgentAdapter {
         abortController: abort,
         settingSources: [],
         strictMcpConfig: true,
-        mcpServersDelivery: "initialize",
+        mcpServersDelivery: "argv",
         mcpServers: {
           craft: {
             type: "http",
             url: context.mcp.url,
-            headers: { Authorization: "Bearer " + context.mcp.token },
+            headers: { Authorization: "Bearer ${CRAFT_MCP_TOKEN}" },
           },
         },
         tools: ["AskUserQuestion"],
-        allowedTools: knowledgeTools.map((tool) => "mcp__craft__" + tool.name),
         permissionMode: "default",
         permissionPrompts: "host",
         canUseTool: claudePermissionHandler(context),
@@ -183,15 +193,23 @@ export class ClaudeAdapter implements AgentAdapter {
         extraArgs: { restricted: null },
         ...(context.model ? { model: context.model } : {}),
         spawnClaudeCodeProcess: (options) => {
+          if (options.args.some((arg) => arg.includes(context.mcp.token)))
+            throw new AgentError(
+              "AGENT_PROVIDER_FAILED",
+              "MCP credentials must not appear in process arguments",
+            );
           const child = spawn(options.command, options.args, {
             cwd: options.cwd ?? context.cwd,
-            env: options.env,
+            env: { ...options.env, CRAFT_MCP_TOKEN: context.mcp.token },
             shell: false,
             windowsHide: true,
             stdio: ["pipe", "pipe", "pipe"],
           });
           children.add(child);
-          child.stderr.resume();
+          child.stderr.setEncoding("utf8");
+          child.stderr.on("data", (chunk: string) => {
+            stderr = (stderr + chunk).slice(-16000);
+          });
           child.once("close", () => children.delete(child));
           const proxy: SpawnedProcess = {
             stdin: child.stdin,
@@ -224,6 +242,16 @@ export class ClaudeAdapter implements AgentAdapter {
     });
     try {
       await consumeClaudeStream(stream, context);
+    } catch (error) {
+      const details = JSON.stringify({
+        message: error instanceof Error ? error.message : String(error),
+        ...(error instanceof AgentError ? { result: error.details } : {}),
+        stderr,
+      }).replaceAll(context.mcp.token, "[redacted]");
+      throw new AgentError(
+        error instanceof AgentError ? error.code : "AGENT_PROVIDER_FAILED",
+        JSON.parse(details),
+      );
     } finally {
       context.signal.removeEventListener("abort", aborted);
       stream.close();
