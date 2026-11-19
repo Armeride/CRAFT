@@ -1,0 +1,153 @@
+[
+  {
+    "type": "dependency",
+    "from": "packages/domain/src/selected.ts",
+    "to": "packages/state-model/src/evaluation-contracts.ts",
+    "unresolvedTo": "../../state-model/src/evaluation-contracts.js",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "domain-core-is-lowest-layer"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "packages/domain/src/story-contracts.ts",
+    "to": "packages/state-model/src/evaluation-contracts.ts",
+    "unresolvedTo": "../../state-model/src/evaluation-contracts.js",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "domain-core-is-lowest-layer"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "packages/domain/src/story.ts",
+    "to": "packages/state-model/src/evaluate.ts",
+    "unresolvedTo": "../../state-model/src/evaluate.js",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "domain-core-is-lowest-layer"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "packages/domain/src/story.ts",
+    "to": "packages/state-model/src/evaluation-contracts.ts",
+    "unresolvedTo": "../../state-model/src/evaluation-contracts.js",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "domain-core-is-lowest-layer"
+    }
+  },
+  {
+    "type": "dependency",
+    "from": "packages/domain/src/story.ts",
+    "to": "packages/state-model/src/timeline.ts",
+    "unresolvedTo": "../../state-model/src/timeline.js",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "domain-core-is-lowest-layer"
+    }
+  },
+  {
+    "type": "cycle",
+    "from": "apps/web/src/graph-engines.tsx",
+    "to": "apps/web/src/GraphCanvas.tsx",
+    "unresolvedTo": "./GraphCanvas.js",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      {
+        "name": "apps/web/src/GraphCanvas.tsx",
+        "dependencyTypes": [
+          "local",
+          "import"
+        ]
+      },
+      {
+        "name": "apps/web/src/graph-engines.tsx",
+        "dependencyTypes": [
+          "local",
+          "type-only",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "cycle",
+    "from": "packages/domain/src/story-contracts.ts",
+    "to": "packages/state-model/src/evaluation-contracts.ts",
+    "unresolvedTo": "../../state-model/src/evaluation-contracts.js",
+    "dependencyTypes": [
+      "local",
+      "type-only",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "no-circular"
+    },
+    "cycle": [
+      {
+        "name": "packages/state-model/src/evaluation-contracts.ts",
+        "dependencyTypes": [
+          "local",
+          "type-only",
+          "import"
+        ]
+      },
+      {
+        "name": "packages/domain/src/story-contracts.ts",
+        "dependencyTypes": [
+          "local",
+          "type-only",
+          "import"
+        ]
+      }
+    ]
+  },
+  {
+    "type": "dependency",
+    "from": "tools/agent-smoke.ts",
+    "to": "packages/indexer/src/test-helpers.ts",
+    "unresolvedTo": "../packages/indexer/src/test-helpers.js",
+    "dependencyTypes": [
+      "local",
+      "import"
+    ],
+    "rule": {
+      "severity": "error",
+      "name": "prod-not-to-tests"
+    }
+  }
+]

@@ -1,0 +1,2144 @@
+{
+  "apps/server/agents.test.ts": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 1
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 8
+    },
+    "@typescript-eslint/no-unsafe-argument": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 12
+    },
+    "@typescript-eslint/restrict-plus-operands": {
+      "count": 1
+    },
+    "no-await-in-loop": {
+      "count": 4
+    },
+    "sonarjs/no-alphabetical-sort": {
+      "count": 1
+    }
+  },
+  "apps/server/agents.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    },
+    "@typescript-eslint/restrict-template-expressions": {
+      "count": 1
+    },
+    "sonarjs/no-nested-conditional": {
+      "count": 1
+    }
+  },
+  "apps/server/app.test.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 5
+    },
+    "no-await-in-loop": {
+      "count": 3
+    },
+    "sonarjs/no-alphabetical-sort": {
+      "count": 1
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 1
+    }
+  },
+  "apps/server/app.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 2
+    },
+    "@typescript-eslint/restrict-template-expressions": {
+      "count": 3
+    },
+    "no-await-in-loop": {
+      "count": 2
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    },
+    "sonarjs/no-nested-conditional": {
+      "count": 1
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 1
+    }
+  },
+  "apps/server/commands.test.ts": {
+    "@typescript-eslint/require-await": {
+      "count": 5
+    },
+    "no-await-in-loop": {
+      "count": 2
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 1
+    }
+  },
+  "apps/server/commands.ts": {
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 2
+    }
+  },
+  "apps/server/conflicts.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 1
+    },
+    "@typescript-eslint/require-await": {
+      "count": 1
+    },
+    "regexp/no-unused-capturing-group": {
+      "count": 1
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 2
+    }
+  },
+  "apps/server/drafts.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    },
+    "@typescript-eslint/require-await": {
+      "count": 1
+    },
+    "no-await-in-loop": {
+      "count": 2
+    },
+    "sonarjs/no-alphabetical-sort": {
+      "count": 1
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 4
+    }
+  },
+  "apps/server/events.test.ts": {
+    "no-await-in-loop": {
+      "count": 3
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 2
+    }
+  },
+  "apps/server/events.ts": {
+    "@typescript-eslint/require-await": {
+      "count": 2
+    },
+    "@typescript-eslint/restrict-plus-operands": {
+      "count": 1
+    },
+    "@typescript-eslint/restrict-template-expressions": {
+      "count": 1
+    },
+    "no-await-in-loop": {
+      "count": 2
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 6
+    }
+  },
+  "apps/server/library.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-argument": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 3
+    },
+    "@typescript-eslint/no-unsafe-return": {
+      "count": 1
+    },
+    "@typescript-eslint/require-await": {
+      "count": 1
+    },
+    "regexp/no-unused-capturing-group": {
+      "count": 1
+    },
+    "sonarjs/no-alphabetical-sort": {
+      "count": 1
+    }
+  },
+  "apps/server/manual.test.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 4
+    },
+    "@typescript-eslint/no-unnecessary-type-assertion": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 8
+    },
+    "no-await-in-loop": {
+      "count": 2
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 1
+    }
+  },
+  "apps/server/manual.ts": {
+    "@typescript-eslint/require-await": {
+      "count": 1
+    }
+  },
+  "apps/server/stream.test.ts": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 2
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 4
+    },
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    },
+    "@typescript-eslint/restrict-template-expressions": {
+      "count": 1
+    },
+    "no-await-in-loop": {
+      "count": 3
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 3
+    }
+  },
+  "apps/web/src/AgentPanel.tsx": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 10
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 1
+    },
+    "react-hooks/exhaustive-deps": {
+      "count": 3
+    },
+    "react-hooks/refs": {
+      "count": 1
+    },
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    },
+    "sonarjs/no-nested-conditional": {
+      "count": 1
+    },
+    "sonarjs/no-nested-functions": {
+      "count": 1
+    },
+    "sonarjs/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "apps/web/src/App.tsx": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 25
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 1
+    },
+    "@typescript-eslint/restrict-plus-operands": {
+      "count": 2
+    },
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    },
+    "react-hooks/refs": {
+      "count": 104
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    },
+    "sonarjs/no-nested-conditional": {
+      "count": 13
+    },
+    "sonarjs/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "apps/web/src/Chat.tsx": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 2
+    },
+    "sonarjs/no-nested-conditional": {
+      "count": 1
+    },
+    "sonarjs/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "apps/web/src/ContinuationPanel.tsx": {
+    "@typescript-eslint/no-base-to-string": {
+      "count": 3
+    },
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 6
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 2
+    },
+    "@typescript-eslint/use-unknown-in-catch-callback-variable": {
+      "count": 1
+    },
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    },
+    "regexp/prefer-w": {
+      "count": 1
+    },
+    "sonarjs/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "apps/web/src/Dashboard.tsx": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 2
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 2
+    },
+    "sonarjs/no-nested-conditional": {
+      "count": 2
+    },
+    "sonarjs/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "apps/web/src/Document.tsx": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 8
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 4
+    },
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    },
+    "react-hooks/set-state-in-effect": {
+      "count": 2
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    },
+    "sonarjs/no-nested-conditional": {
+      "count": 13
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 4
+    },
+    "sonarjs/prefer-read-only-props": {
+      "count": 2
+    },
+    "sonarjs/redundant-type-aliases": {
+      "count": 1
+    }
+  },
+  "apps/web/src/DomainWorkspace.tsx": {
+    "@typescript-eslint/no-base-to-string": {
+      "count": 2
+    },
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 2
+    },
+    "sonarjs/no-nested-conditional": {
+      "count": 1
+    },
+    "sonarjs/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "apps/web/src/DraftConflict.tsx": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 2
+    },
+    "sonarjs/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "apps/web/src/GameWorkspace.tsx": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 2
+    },
+    "sonarjs/different-types-comparison": {
+      "count": 2
+    },
+    "sonarjs/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "apps/web/src/Graph.tsx": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 2
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 1
+    },
+    "sonarjs/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "apps/web/src/GraphCanvas.tsx": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 7
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 4
+    },
+    "@typescript-eslint/restrict-template-expressions": {
+      "count": 17
+    },
+    "react-hooks/exhaustive-deps": {
+      "count": 2
+    },
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    },
+    "sonarjs/no-nested-conditional": {
+      "count": 1
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 5
+    }
+  },
+  "apps/web/src/Icon.tsx": {
+    "sonarjs/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "apps/web/src/Inspector.tsx": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 1
+    },
+    "@typescript-eslint/restrict-plus-operands": {
+      "count": 1
+    },
+    "sonarjs/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "apps/web/src/IntegrationRecovery.tsx": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 1
+    },
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 2
+    },
+    "sonarjs/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "apps/web/src/LibraryPanel.tsx": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 7
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 1
+    },
+    "react-hooks/exhaustive-deps": {
+      "count": 1
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 3
+    },
+    "sonarjs/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "apps/web/src/ManagedImage.tsx": {
+    "@typescript-eslint/no-base-to-string": {
+      "count": 1
+    },
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 2
+    },
+    "sonarjs/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "apps/web/src/ManualWorkspace.tsx": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 12
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 4
+    },
+    "react-hooks/exhaustive-deps": {
+      "count": 6
+    },
+    "react-hooks/immutability": {
+      "count": 4
+    },
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 11
+    },
+    "sonarjs/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "apps/web/src/ResizeHandle.tsx": {
+    "sonarjs/no-nested-conditional": {
+      "count": 3
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 1
+    },
+    "sonarjs/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "apps/web/src/Settings.tsx": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 8
+    },
+    "sonarjs/no-nested-conditional": {
+      "count": 3
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 1
+    },
+    "sonarjs/prefer-read-only-props": {
+      "count": 1
+    }
+  },
+  "apps/web/src/StateComparison.tsx": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 8
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    },
+    "sonarjs/no-nested-conditional": {
+      "count": 3
+    },
+    "sonarjs/prefer-read-only-props": {
+      "count": 4
+    }
+  },
+  "apps/web/src/StoryWorkspace.tsx": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 7
+    },
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    },
+    "@typescript-eslint/restrict-plus-operands": {
+      "count": 1
+    },
+    "sonarjs/no-nested-conditional": {
+      "count": 1
+    },
+    "sonarjs/prefer-read-only-props": {
+      "count": 3
+    }
+  },
+  "apps/web/src/api.ts": {
+    "@typescript-eslint/no-unsafe-argument": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 3
+    },
+    "@typescript-eslint/restrict-plus-operands": {
+      "count": 1
+    },
+    "no-await-in-loop": {
+      "count": 3
+    },
+    "no-empty": {
+      "count": 1
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 3
+    }
+  },
+  "apps/web/src/domain-widgets.tsx": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unnecessary-type-parameters": {
+      "count": 1
+    },
+    "@typescript-eslint/use-unknown-in-catch-callback-variable": {
+      "count": 1
+    },
+    "react-hooks/set-state-in-effect": {
+      "count": 1
+    },
+    "sonarjs/prefer-read-only-props": {
+      "count": 2
+    }
+  },
+  "apps/web/src/graph-layout.test.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 3
+    },
+    "@typescript-eslint/restrict-plus-operands": {
+      "count": 4
+    }
+  },
+  "apps/web/src/graph-layout.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 41
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    },
+    "sonarjs/no-alphabetical-sort": {
+      "count": 1
+    },
+    "sonarjs/no-nested-conditional": {
+      "count": 4
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 1
+    }
+  },
+  "apps/web/src/graph-model.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    },
+    "@typescript-eslint/restrict-plus-operands": {
+      "count": 2
+    },
+    "sonarjs/no-alphabetical-sort": {
+      "count": 1
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 1
+    }
+  },
+  "apps/web/src/i18n.test.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 2
+    },
+    "regexp/strict": {
+      "count": 2
+    },
+    "sonarjs/no-alphabetical-sort": {
+      "count": 3
+    }
+  },
+  "apps/web/src/i18n.ts": {
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 1
+    }
+  },
+  "apps/web/src/main.tsx": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 1
+    }
+  },
+  "apps/web/src/manual-editor-store.ts": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 1
+    },
+    "@typescript-eslint/use-unknown-in-catch-callback-variable": {
+      "count": 1
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 4
+    }
+  },
+  "apps/web/src/preferences.test.ts": {
+    "sonarjs/no-alphabetical-sort": {
+      "count": 2
+    }
+  },
+  "apps/web/src/preferences.ts": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 3
+    },
+    "@typescript-eslint/restrict-template-expressions": {
+      "count": 4
+    },
+    "no-control-regex": {
+      "count": 1
+    },
+    "sonarjs/no-nested-conditional": {
+      "count": 3
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 1
+    }
+  },
+  "apps/web/src/useDrafts.ts": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 1
+    },
+    "@typescript-eslint/no-dynamic-delete": {
+      "count": 2
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 2
+    },
+    "@typescript-eslint/restrict-plus-operands": {
+      "count": 2
+    },
+    "@typescript-eslint/use-unknown-in-catch-callback-variable": {
+      "count": 1
+    },
+    "no-empty": {
+      "count": 2
+    },
+    "react-hooks/exhaustive-deps": {
+      "count": 2
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 15
+    }
+  },
+  "apps/web/src/useWorkspace.ts": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 9
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 3
+    },
+    "@typescript-eslint/use-unknown-in-catch-callback-variable": {
+      "count": 3
+    },
+    "react-hooks/immutability": {
+      "count": 1
+    },
+    "react-hooks/set-state-in-effect": {
+      "count": 3
+    },
+    "sonarjs/no-nested-functions": {
+      "count": 1
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 12
+    }
+  },
+  "apps/web/src/useWorkspaceEvents.ts": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 1
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 3
+    },
+    "no-await-in-loop": {
+      "count": 3
+    },
+    "react-hooks/refs": {
+      "count": 1
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 6
+    }
+  },
+  "apps/web/src/workspace-model.test.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 4
+    },
+    "@typescript-eslint/restrict-plus-operands": {
+      "count": 1
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 1
+    }
+  },
+  "apps/web/src/workspace-model.ts": {
+    "sonarjs/no-nested-conditional": {
+      "count": 2
+    }
+  },
+  "packages/agent-core/src/claude.ts": {
+    "@typescript-eslint/no-base-to-string": {
+      "count": 1
+    },
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unnecessary-type-conversion": {
+      "count": 1
+    },
+    "no-await-in-loop": {
+      "count": 2
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    }
+  },
+  "packages/agent-core/src/codex.ts": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 3
+    },
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 5
+    },
+    "@typescript-eslint/no-unnecessary-type-conversion": {
+      "count": 4
+    },
+    "@typescript-eslint/prefer-promise-reject-errors": {
+      "count": 1
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 2
+    },
+    "sonarjs/no-nested-conditional": {
+      "count": 1
+    }
+  },
+  "packages/agent-core/src/detect.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 4
+    },
+    "no-empty": {
+      "count": 1
+    },
+    "regexp/use-ignore-case": {
+      "count": 1
+    },
+    "security/detect-unsafe-regex": {
+      "count": 1
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    }
+  },
+  "packages/agent-core/src/external.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "@typescript-eslint/use-unknown-in-catch-callback-variable": {
+      "count": 1
+    },
+    "no-await-in-loop": {
+      "count": 2
+    },
+    "regexp/prefer-w": {
+      "count": 1
+    },
+    "regexp/use-ignore-case": {
+      "count": 1
+    },
+    "security/detect-unsafe-regex": {
+      "count": 1
+    },
+    "sonarjs/no-alphabetical-sort": {
+      "count": 1
+    },
+    "sonarjs/no-nested-conditional": {
+      "count": 1
+    },
+    "sonarjs/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "packages/agent-core/src/fake.ts": {
+    "no-await-in-loop": {
+      "count": 2
+    }
+  },
+  "packages/agent-core/src/knowledge.ts": {
+    "@typescript-eslint/no-base-to-string": {
+      "count": 1
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 4
+    },
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unnecessary-type-assertion": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 3
+    },
+    "@typescript-eslint/restrict-template-expressions": {
+      "count": 7
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    }
+  },
+  "packages/agent-core/src/phase7.test.ts": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 1
+    },
+    "@typescript-eslint/no-misused-promises": {
+      "count": 1
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 3
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 6
+    },
+    "@typescript-eslint/restrict-plus-operands": {
+      "count": 2
+    },
+    "no-await-in-loop": {
+      "count": 7
+    }
+  },
+  "packages/agent-core/src/pov.test.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 6
+    },
+    "no-await-in-loop": {
+      "count": 1
+    }
+  },
+  "packages/agent-core/src/process.ts": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 4
+    },
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 4
+    },
+    "@typescript-eslint/return-await": {
+      "count": 1
+    },
+    "no-await-in-loop": {
+      "count": 2
+    },
+    "no-empty": {
+      "count": 1
+    },
+    "sonarjs/no-os-command-from-path": {
+      "count": 1
+    }
+  },
+  "packages/agent-core/src/protocol.test.ts": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 1
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 1
+    },
+    "@typescript-eslint/require-await": {
+      "count": 10
+    },
+    "no-await-in-loop": {
+      "count": 3
+    },
+    "sonarjs/explicit-test-skip": {
+      "count": 1
+    }
+  },
+  "packages/agent-core/src/service.test.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 14
+    },
+    "no-await-in-loop": {
+      "count": 4
+    }
+  },
+  "packages/agent-core/src/service.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 4
+    },
+    "@typescript-eslint/use-unknown-in-catch-callback-variable": {
+      "count": 1
+    },
+    "no-await-in-loop": {
+      "count": 3
+    },
+    "no-unsafe-finally": {
+      "count": 1
+    },
+    "regexp/prefer-w": {
+      "count": 1
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 2
+    },
+    "sonarjs/no-nested-conditional": {
+      "count": 5
+    }
+  },
+  "packages/agent-core/src/skills.ts": {
+    "@typescript-eslint/restrict-template-expressions": {
+      "count": 1
+    },
+    "@typescript-eslint/use-unknown-in-catch-callback-variable": {
+      "count": 1
+    },
+    "no-await-in-loop": {
+      "count": 1
+    },
+    "regexp/use-ignore-case": {
+      "count": 1
+    }
+  },
+  "packages/domain/src/analysis.test.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 24
+    },
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "no-await-in-loop": {
+      "count": 1
+    },
+    "sonarjs/different-types-comparison": {
+      "count": 1
+    },
+    "sonarjs/unused-import": {
+      "count": 1
+    }
+  },
+  "packages/domain/src/analysis.ts": {
+    "@typescript-eslint/consistent-type-assertions": {
+      "count": 1
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 23
+    },
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unnecessary-type-assertion": {
+      "count": 4
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "@typescript-eslint/restrict-template-expressions": {
+      "count": 4
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 3
+    },
+    "sonarjs/no-alphabetical-sort": {
+      "count": 3
+    },
+    "sonarjs/no-misleading-array-reverse": {
+      "count": 5
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 4
+    },
+    "sonarjs/unused-import": {
+      "count": 1
+    }
+  },
+  "packages/domain/src/canonical.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 3
+    },
+    "sonarjs/no-alphabetical-sort": {
+      "count": 6
+    },
+    "sonarjs/no-nested-conditional": {
+      "count": 1
+    },
+    "sonarjs/no-nested-template-literals": {
+      "count": 1
+    },
+    "sonarjs/no-unused-vars": {
+      "count": 3
+    }
+  },
+  "packages/domain/src/diff.ts": {
+    "sonarjs/no-alphabetical-sort": {
+      "count": 2
+    }
+  },
+  "packages/domain/src/game.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 1
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    }
+  },
+  "packages/domain/src/model.ts": {
+    "@typescript-eslint/restrict-template-expressions": {
+      "count": 2
+    }
+  },
+  "packages/domain/src/path.ts": {
+    "no-control-regex": {
+      "count": 1
+    }
+  },
+  "packages/domain/src/selected.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 1
+    }
+  },
+  "packages/domain/src/story.test.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 8
+    }
+  },
+  "packages/domain/src/story.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 3
+    },
+    "@typescript-eslint/no-unnecessary-type-assertion": {
+      "count": 6
+    },
+    "@typescript-eslint/no-unnecessary-type-parameters": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "preserve-caught-error": {
+      "count": 1
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 2
+    },
+    "sonarjs/unused-import": {
+      "count": 1
+    }
+  },
+  "packages/domain/src/validate.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 6
+    },
+    "@typescript-eslint/restrict-template-expressions": {
+      "count": 8
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    }
+  },
+  "packages/git-workspace/src/fs.ts": {
+    "no-await-in-loop": {
+      "count": 2
+    }
+  },
+  "packages/git-workspace/src/generation.ts": {
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 2
+    }
+  },
+  "packages/git-workspace/src/git.ts": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 2
+    },
+    "@typescript-eslint/no-dynamic-delete": {
+      "count": 1
+    },
+    "sonarjs/no-os-command-from-path": {
+      "count": 1
+    }
+  },
+  "packages/git-workspace/src/locks.ts": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 1
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 3
+    },
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 2
+    },
+    "@typescript-eslint/use-unknown-in-catch-callback-variable": {
+      "count": 1
+    },
+    "no-await-in-loop": {
+      "count": 2
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 1
+    },
+    "sonarjs/unused-import": {
+      "count": 2
+    }
+  },
+  "packages/git-workspace/src/worktree.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 2
+    },
+    "no-await-in-loop": {
+      "count": 6
+    },
+    "no-unsafe-finally": {
+      "count": 1
+    },
+    "security/detect-possible-timing-attacks": {
+      "count": 1
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 2
+    }
+  },
+  "packages/indexer/src/domain.test.ts": {
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 2
+    }
+  },
+  "packages/indexer/src/indexer.test.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 9
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "@typescript-eslint/require-await": {
+      "count": 1
+    },
+    "no-await-in-loop": {
+      "count": 3
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 1
+    },
+    "sonarjs/unused-import": {
+      "count": 1
+    }
+  },
+  "packages/indexer/src/perspective.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "packages/indexer/src/service.ts": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 2
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 8
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 2
+    },
+    "no-await-in-loop": {
+      "count": 3
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 2
+    },
+    "sonarjs/no-nested-conditional": {
+      "count": 3
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 8
+    },
+    "sonarjs/unused-import": {
+      "count": 2
+    }
+  },
+  "packages/indexer/src/test-helpers.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 1
+    }
+  },
+  "packages/indexer/src/worker.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 18
+    },
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 6
+    },
+    "@typescript-eslint/no-unnecessary-type-parameters": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-argument": {
+      "count": 4
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 3
+    },
+    "@typescript-eslint/no-unsafe-return": {
+      "count": 1
+    },
+    "@typescript-eslint/restrict-template-expressions": {
+      "count": 1
+    },
+    "regexp/no-unused-capturing-group": {
+      "count": 1
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 3
+    },
+    "sonarjs/no-alphabetical-sort": {
+      "count": 3
+    },
+    "sonarjs/no-nested-conditional": {
+      "count": 5
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 8
+    }
+  },
+  "packages/migrations/src/engine.ts": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 2
+    },
+    "@typescript-eslint/restrict-template-expressions": {
+      "count": 2
+    },
+    "no-await-in-loop": {
+      "count": 18
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    },
+    "sonarjs/no-alphabetical-sort": {
+      "count": 3
+    },
+    "sonarjs/unused-import": {
+      "count": 2
+    }
+  },
+  "packages/migrations/src/fixture-codecs.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unsafe-argument": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 9
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "@typescript-eslint/restrict-template-expressions": {
+      "count": 1
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    },
+    "sonarjs/unused-import": {
+      "count": 1
+    }
+  },
+  "packages/migrations/src/migrations.test.ts": {
+    "@typescript-eslint/no-dynamic-delete": {
+      "count": 1
+    },
+    "@typescript-eslint/no-explicit-any": {
+      "count": 7
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 47
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 8
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 13
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 5
+    },
+    "@typescript-eslint/require-await": {
+      "count": 2
+    },
+    "@typescript-eslint/restrict-template-expressions": {
+      "count": 3
+    },
+    "no-await-in-loop": {
+      "count": 1
+    },
+    "sonarjs/no-alphabetical-sort": {
+      "count": 2
+    },
+    "sonarjs/unused-import": {
+      "count": 5
+    }
+  },
+  "packages/migrations/src/registry.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 3
+    },
+    "@typescript-eslint/restrict-template-expressions": {
+      "count": 1
+    },
+    "no-await-in-loop": {
+      "count": 1
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    },
+    "sonarjs/no-alphabetical-sort": {
+      "count": 1
+    }
+  },
+  "packages/migrations/src/source.ts": {
+    "@typescript-eslint/no-unnecessary-type-parameters": {
+      "count": 1
+    }
+  },
+  "packages/migrations/src/steps/fixture-v1-v2.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 3
+    },
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 2
+    },
+    "@typescript-eslint/require-await": {
+      "count": 3
+    },
+    "sonarjs/no-alphabetical-sort": {
+      "count": 1
+    },
+    "sonarjs/no-misleading-array-reverse": {
+      "count": 1
+    },
+    "sonarjs/no-unused-vars": {
+      "count": 2
+    }
+  },
+  "packages/migrations/src/test-helpers.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 1
+    },
+    "no-await-in-loop": {
+      "count": 1
+    }
+  },
+  "packages/migrations/src/verify.ts": {
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    },
+    "sonarjs/no-alphabetical-sort": {
+      "count": 5
+    }
+  },
+  "packages/project-fs/src/changes.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 1
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    },
+    "sonarjs/no-nested-conditional": {
+      "count": 1
+    }
+  },
+  "packages/project-fs/src/content.ts": {
+    "@typescript-eslint/no-unnecessary-type-parameters": {
+      "count": 1
+    }
+  },
+  "packages/project-fs/src/files.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 5
+    },
+    "no-await-in-loop": {
+      "count": 3
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    },
+    "sonarjs/no-nested-conditional": {
+      "count": 2
+    }
+  },
+  "packages/project-fs/src/git-baseline.ts": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 2
+    },
+    "@typescript-eslint/no-dynamic-delete": {
+      "count": 1
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 6
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    },
+    "sonarjs/no-os-command-from-path": {
+      "count": 1
+    }
+  },
+  "packages/project-fs/src/images.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 2
+    }
+  },
+  "packages/project-fs/src/project.test.ts": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 1
+    },
+    "@typescript-eslint/no-explicit-any": {
+      "count": 1
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 10
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 7
+    },
+    "@typescript-eslint/no-unsafe-call": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 27
+    },
+    "@typescript-eslint/require-await": {
+      "count": 1
+    },
+    "no-await-in-loop": {
+      "count": 1
+    },
+    "sonarjs/no-alphabetical-sort": {
+      "count": 1
+    },
+    "sonarjs/no-nested-conditional": {
+      "count": 1
+    }
+  },
+  "packages/project-fs/src/project.ts": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 1
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 9
+    },
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 3
+    },
+    "@typescript-eslint/no-unnecessary-type-assertion": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unnecessary-type-parameters": {
+      "count": 1
+    },
+    "@typescript-eslint/restrict-template-expressions": {
+      "count": 13
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 2
+    },
+    "sonarjs/no-nested-conditional": {
+      "count": 1
+    }
+  },
+  "packages/project-fs/src/state-input.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 3
+    }
+  },
+  "packages/project-fs/src/state-query.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 5
+    },
+    "@typescript-eslint/no-unnecessary-type-assertion": {
+      "count": 2
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    },
+    "sonarjs/no-nested-conditional": {
+      "count": 1
+    }
+  },
+  "packages/project-fs/src/test-helpers.ts": {
+    "@typescript-eslint/no-explicit-any": {
+      "count": 2
+    }
+  },
+  "packages/project-fs/src/writer.ts": {
+    "@typescript-eslint/no-unused-vars": {
+      "count": 4
+    },
+    "no-await-in-loop": {
+      "count": 8
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 2
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 1
+    },
+    "sonarjs/unused-import": {
+      "count": 4
+    }
+  },
+  "packages/project-fs/src/yaml.test.ts": {
+    "@typescript-eslint/consistent-type-assertions": {
+      "count": 1
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 1
+    },
+    "sonarjs/prefer-specific-assertions": {
+      "count": 1
+    }
+  },
+  "packages/project-fs/src/yaml.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 3
+    },
+    "@typescript-eslint/restrict-template-expressions": {
+      "count": 1
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    },
+    "sonarjs/function-return-type": {
+      "count": 1
+    }
+  },
+  "packages/schema/src/index.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 1
+    },
+    "security/detect-unsafe-regex": {
+      "count": 1
+    }
+  },
+  "packages/state-model/src/condition.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 1
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    },
+    "sonarjs/function-return-type": {
+      "count": 1
+    },
+    "sonarjs/no-nested-conditional": {
+      "count": 2
+    }
+  },
+  "packages/state-model/src/evaluate.test.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 13
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "sonarjs/no-unused-vars": {
+      "count": 1
+    }
+  },
+  "packages/state-model/src/evaluate.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 7
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 5
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 6
+    },
+    "sonarjs/no-nested-conditional": {
+      "count": 2
+    },
+    "sonarjs/no-unused-vars": {
+      "count": 4
+    },
+    "sonarjs/unused-import": {
+      "count": 1
+    }
+  },
+  "packages/state-model/src/model.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "@typescript-eslint/restrict-template-expressions": {
+      "count": 5
+    },
+    "@typescript-eslint/switch-exhaustiveness-check": {
+      "count": 1
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 2
+    },
+    "sonarjs/no-nested-conditional": {
+      "count": 1
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 5
+    },
+    "sonarjs/unused-import": {
+      "count": 1
+    }
+  },
+  "packages/state-model/src/state-board.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 2
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    },
+    "sonarjs/no-nested-conditional": {
+      "count": 1
+    }
+  },
+  "packages/state-model/src/state-model.test.ts": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 1
+    },
+    "@typescript-eslint/no-explicit-any": {
+      "count": 15
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 21
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 5
+    },
+    "@typescript-eslint/no-unsafe-call": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 24
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 3
+    },
+    "sonarjs/unused-import": {
+      "count": 3
+    }
+  },
+  "packages/state-model/src/timeline.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 1
+    },
+    "sonarjs/no-misleading-array-reverse": {
+      "count": 1
+    }
+  },
+  "packages/tasks/src/discovery.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 2
+    },
+    "no-await-in-loop": {
+      "count": 2
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    }
+  },
+  "packages/tasks/src/external-records.ts": {
+    "sonarjs/no-alphabetical-sort": {
+      "count": 1
+    }
+  },
+  "packages/tasks/src/images.test.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 15
+    }
+  },
+  "packages/tasks/src/import.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 4
+    },
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "regexp/no-unused-capturing-group": {
+      "count": 1
+    },
+    "sonarjs/unused-import": {
+      "count": 1
+    }
+  },
+  "packages/tasks/src/integration-state.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 1
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 3
+    }
+  },
+  "packages/tasks/src/integration.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 2
+    },
+    "regexp/no-unused-capturing-group": {
+      "count": 1
+    },
+    "security/detect-possible-timing-attacks": {
+      "count": 1
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    },
+    "sonarjs/no-alphabetical-sort": {
+      "count": 3
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 7
+    },
+    "sonarjs/unused-import": {
+      "count": 1
+    }
+  },
+  "packages/tasks/src/manual.test.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 22
+    },
+    "@typescript-eslint/require-await": {
+      "count": 3
+    },
+    "@typescript-eslint/restrict-plus-operands": {
+      "count": 6
+    },
+    "no-await-in-loop": {
+      "count": 1
+    }
+  },
+  "packages/tasks/src/manual.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 2
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 2
+    },
+    "sonarjs/unused-import": {
+      "count": 2
+    }
+  },
+  "packages/tasks/src/projects.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 1
+    },
+    "no-await-in-loop": {
+      "count": 6
+    },
+    "no-control-regex": {
+      "count": 1
+    },
+    "no-empty": {
+      "count": 2
+    },
+    "regexp/prefer-w": {
+      "count": 5
+    },
+    "regexp/use-ignore-case": {
+      "count": 3
+    },
+    "sonarjs/unused-import": {
+      "count": 1
+    }
+  },
+  "packages/tasks/src/resume-context.ts": {
+    "@typescript-eslint/no-unnecessary-condition": {
+      "count": 3
+    },
+    "sonarjs/no-alphabetical-sort": {
+      "count": 1
+    }
+  },
+  "packages/tasks/src/service.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 12
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 3
+    },
+    "no-await-in-loop": {
+      "count": 4
+    },
+    "no-useless-escape": {
+      "count": 1
+    },
+    "regexp/no-useless-escape": {
+      "count": 1
+    },
+    "security/detect-non-literal-regexp": {
+      "count": 1
+    },
+    "sonarjs/cognitive-complexity": {
+      "count": 1
+    },
+    "sonarjs/no-alphabetical-sort": {
+      "count": 1
+    },
+    "sonarjs/no-nested-conditional": {
+      "count": 1
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 1
+    },
+    "sonarjs/unused-import": {
+      "count": 3
+    }
+  },
+  "packages/tasks/src/tasks.test.ts": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 2
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 27
+    },
+    "@typescript-eslint/no-unnecessary-type-assertion": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unused-vars": {
+      "count": 4
+    },
+    "@typescript-eslint/require-await": {
+      "count": 3
+    },
+    "@typescript-eslint/restrict-template-expressions": {
+      "count": 1
+    },
+    "no-await-in-loop": {
+      "count": 1
+    },
+    "regexp/no-unused-capturing-group": {
+      "count": 1
+    },
+    "sonarjs/prefer-specific-assertions": {
+      "count": 1
+    },
+    "sonarjs/unused-import": {
+      "count": 4
+    }
+  },
+  "packages/tasks/src/test-helpers.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 1
+    }
+  },
+  "playwright.config.ts": {
+    "@typescript-eslint/restrict-plus-operands": {
+      "count": 1
+    }
+  },
+  "tests/ui/continuation.spec.ts": {
+    "@typescript-eslint/restrict-plus-operands": {
+      "count": 1
+    }
+  },
+  "tests/ui/domain.spec.ts": {
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 2
+    }
+  },
+  "tests/ui/draft.spec.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 4
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 4
+    },
+    "@typescript-eslint/no-unsafe-call": {
+      "count": 3
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 5
+    },
+    "@typescript-eslint/require-await": {
+      "count": 1
+    },
+    "@typescript-eslint/restrict-plus-operands": {
+      "count": 4
+    },
+    "no-await-in-loop": {
+      "count": 2
+    },
+    "security/detect-non-literal-regexp": {
+      "count": 2
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 3
+    }
+  },
+  "tests/ui/manual-restoration.spec.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-argument": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 6
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 6
+    },
+    "@typescript-eslint/restrict-plus-operands": {
+      "count": 6
+    },
+    "@typescript-eslint/restrict-template-expressions": {
+      "count": 2
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 1
+    }
+  },
+  "tests/ui/manual.spec.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 1
+    },
+    "@typescript-eslint/restrict-plus-operands": {
+      "count": 1
+    }
+  },
+  "tools/agent-smoke.ts": {
+    "@typescript-eslint/no-confusing-void-expression": {
+      "count": 1
+    },
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 6
+    },
+    "@typescript-eslint/no-unsafe-assignment": {
+      "count": 1
+    },
+    "@typescript-eslint/no-unsafe-member-access": {
+      "count": 2
+    },
+    "@typescript-eslint/restrict-plus-operands": {
+      "count": 5
+    },
+    "no-await-in-loop": {
+      "count": 3
+    }
+  },
+  "tools/domain-example.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 9
+    },
+    "no-await-in-loop": {
+      "count": 2
+    }
+  },
+  "tools/index-cli.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 3
+    },
+    "@typescript-eslint/no-unnecessary-type-assertion": {
+      "count": 1
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 11
+    }
+  },
+  "tools/migration-cli.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 2
+    },
+    "@typescript-eslint/restrict-template-expressions": {
+      "count": 1
+    },
+    "sonarjs/no-nested-conditional": {
+      "count": 1
+    }
+  },
+  "tools/project-cli.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 4
+    }
+  },
+  "tools/ui-preview.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 3
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 2
+    }
+  },
+  "tools/workspace-cli.ts": {
+    "@typescript-eslint/no-non-null-assertion": {
+      "count": 2
+    },
+    "@typescript-eslint/no-unnecessary-type-assertion": {
+      "count": 1
+    },
+    "sonarjs/no-unenclosed-multiline-block": {
+      "count": 3
+    }
+  }
+}

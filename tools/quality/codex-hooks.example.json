@@ -1,0 +1,18 @@
+{
+  "//": "Proposal only. To enable, copy to .codex/hooks.json (or merge into it), then trust the project and approve the hook via /hooks in Codex. Runs check:fast after every file edit and feeds failures back to the model (PostToolUse decision=block).",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "apply_patch|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node tools/quality/run.mjs codex-hook",
+            "timeout": 90,
+            "statusMessage": "CRAFT check:fast"
+          }
+        ]
+      }
+    ]
+  }
+}

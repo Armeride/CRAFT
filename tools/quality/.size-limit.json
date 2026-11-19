@@ -1,0 +1,14 @@
+[
+  {
+    "name": "web JS (gzip) — measured 144.7 kB on 2026-11-19",
+    "path": "../../dist/web/assets/*.js",
+    "gzip": true,
+    "limit": "148 kB"
+  },
+  {
+    "name": "web CSS (gzip) — measured 34.6 kB on 2026-11-19",
+    "path": "../../dist/web/assets/*.css",
+    "gzip": true,
+    "limit": "36 kB"
+  }
+]

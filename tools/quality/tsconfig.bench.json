@@ -1,0 +1,8 @@
+{
+  "//": "Quality gate: type-checks vitest benchmarks in bench/ (outside the app tsconfig on purpose so they are not emitted into dist/).",
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": ["../../bench/**/*.ts"]
+}

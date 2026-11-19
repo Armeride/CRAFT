@@ -1,0 +1,7 @@
+{
+  "comment": "Ratchet floors measured 2026-11-19 (type-coverage --strict --ignore-catch). Raise when coverage improves; never lower.",
+  "typeCoverage": {
+    "tsconfig.json": 98.14,
+    "tools/quality/tsconfig.web-tests.json": 99.08
+  }
+}

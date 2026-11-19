@@ -1,0 +1,36 @@
+# Protected-file guard. Protected file (see AGENTS.md).
+# Fails a PR that changes quality-gate files (tools/quality/**, .semgrep/**, AGENTS.md,
+# .github/**, tsconfig*, gate scripts in package.json) or grows a baseline, unless the
+# maintainer adds the `quality-gate-change` label. This replaces CODEOWNERS review,
+# which cannot work with a single GitHub account (authors cannot approve their own PRs).
+# Kept separate from quality.yml so label events re-run only this cheap job.
+name: quality-guard
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-guard-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  guard:
+    name: guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+      - name: Guard protected files and baselines
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          QUALITY_GATE_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'quality-gate-change') && '1' || '0' }}
+        run: node tools/quality/run.mjs guard --base "origin/$BASE_REF"

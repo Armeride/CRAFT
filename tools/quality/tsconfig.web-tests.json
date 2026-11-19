@@ -1,0 +1,9 @@
+{
+  "//": "Quality gate: type-checks web unit tests and the Vite config, which apps/web/tsconfig.json excludes. Used by `npm run typecheck:quality` and ESLint.",
+  "extends": "../../apps/web/tsconfig.json",
+  "compilerOptions": {
+    "types": ["vite/client", "node"]
+  },
+  "include": ["../../apps/web/src/**/*.ts", "../../apps/web/src/**/*.tsx", "../../apps/web/vite.config.ts"],
+  "exclude": []
+}

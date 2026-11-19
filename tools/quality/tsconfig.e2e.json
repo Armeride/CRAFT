@@ -1,0 +1,9 @@
+{
+  "//": "Quality gate: Playwright E2E specs and config. Lint-only for now: tests/ui/draft.spec.ts has 3 existing TS2352 errors. Add to typecheck:quality once they are fixed.",
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "lib": ["ES2023", "DOM", "DOM.Iterable"]
+  },
+  "include": ["../../tests/**/*.ts", "../../playwright.config.ts"]
+}

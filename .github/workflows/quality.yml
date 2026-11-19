@@ -1,0 +1,77 @@
+# CRAFT quality gate. Protected file (see AGENTS.md). Required checks on main: check, security, guard.
+# Third-party actions are pinned to commit SHAs (tag in the trailing comment).
+name: quality
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: check
+    # The product is developed and verified on Windows native (docs/DEVELOPMENT.md).
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+      - name: Pin npm (engine-strict requires the exact version)
+        run: npm install --global npm@11.19.0
+      - run: npm ci
+      - name: Install quality tooling (no git hooks in CI)
+        run: node tools/quality/run.mjs setup --no-hooks
+      - run: npm run check
+
+  security:
+    name: security
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # gitleaks scans the full history
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .node-version
+      - name: Pin npm
+        run: npm install --global npm@11.19.0
+      - name: Install semgrep (pinned)
+        run: pipx install semgrep==1.185.0
+      - name: Install pinned gitleaks / osv-scanner (sha256 verified)
+        run: node tools/quality/run.mjs setup --no-hooks
+      - name: check:security
+        run: node tools/quality/run.mjs security --sarif
+      - name: Upload Semgrep SARIF
+        if: always() && hashFiles('.tmp/quality-reports/semgrep.sarif') != ''
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: .tmp/quality-reports/semgrep.sarif
+          category: semgrep
+      - name: Upload osv-scanner SARIF
+        if: always() && hashFiles('.tmp/quality-reports/osv-scanner.sarif') != ''
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: .tmp/quality-reports/osv-scanner.sarif
+          category: osv-scanner
+      - name: Upload gitleaks SARIF
+        if: always() && hashFiles('.tmp/quality-reports/gitleaks.sarif') != ''
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: .tmp/quality-reports/gitleaks.sarif
+          category: gitleaks

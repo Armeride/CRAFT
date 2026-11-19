@@ -1,0 +1,13 @@
+# osv-scanner config. Protected file (see AGENTS.md).
+# Baseline of known findings. Every entry needs a reason and an expiry date.
+
+[[IgnoredVulns]]
+id = "GHSA-g3hv-75wg-m249"
+ignoreUntil = 2027-02-17T00:00:00Z
+reason = """
+minimatch 10.2.6 (ReDoS via glob-part amplification) appears only in tools/quality/package-lock.json,
+pulled in by eslint, typescript-eslint, eslint-plugin-sonarjs and type-coverage (dev-only quality tooling).
+Glob patterns come from our own config files, not untrusted input. The fix exists only in minimatch 11.x
+(a major bump the upstream packages do not declare). Re-check when those packages update; remove by expiry.
+Baselined 2026-11-19.
+"""

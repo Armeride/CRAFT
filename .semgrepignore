@@ -1,0 +1,8 @@
+# Semgrep scan exclusions. Protected file (see AGENTS.md).
+:include .gitignore
+.tools/
+tools/quality/node_modules/
+fixtures/
+packages/**/test-fixtures/
+# Rule fixtures intentionally contain violations; tested via `semgrep --test`.
+.semgrep/
