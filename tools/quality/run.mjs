@@ -104,8 +104,12 @@ function timed(label, fn) {
 function exe(name) {
   const local = join(BIN_DIR, isWin ? `${name}.exe` : name);
   if (existsSync(local)) return local;
-  const probe = run(name, ['--version'], { capture: true });
-  if (probe.status === 0) return name;
+  try {
+    const probe = run(name, ['--version'], { capture: true });
+    if (probe.status === 0) return name;
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error; // not on PATH
+  }
   return undefined;
 }
 
