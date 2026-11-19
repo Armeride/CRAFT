@@ -189,7 +189,7 @@ npm run test:ui
 npm run ui:preview -- --port 4174
 ~~~
 
-같은 PC의 다른 세션은 D:/git/CRAFT를 열고 branch·HEAD·미커밋 변경부터 확인한다. 2026-11-13 확인 시 원격 main은 6391781, 로컬 단계 5 구현은 96847f4였다. 새 clone의 인수인계 기준은 원격에 반영된 commit으로 결정되므로 필요한 구현·문서 commit이 포함됐는지 먼저 확인한다. 최신 로컬 문서 commit은 git log -1로 확인한다.
+같은 PC의 다른 세션은 D:/git/CRAFT를 열고 branch·HEAD·미커밋 변경을 먼저 확인한다. 새 clone에서는 원격 main과 [구현 상태](IMPLEMENTATION_STATUS.md)의 단계별 commit을 대조한다. 최신 문서 변경은 Git 이력에서 확인한다.
 
 node_modules/dist는 재생성할 수 있다. .tmp/ui-preview에는 사용자가 작성한 초안과 앱 운영 데이터가 있을 수 있으며 Git에서 제외된다. 같은 PC에서는 해당 자료를 보존하고, 다른 PC로 옮길 자료가 있으면 별도로 전달한다. tracked 소스·fixture·문서로 테스트와 기본 예시를 재생성할 수 있다.
 

@@ -5,7 +5,7 @@
 ## 기준과 범위 구분
 
 - 목표: PROJECT_SPEC.md v1.4 전체, REVIEW_NOTES.md. [확정 요구·설계 기준·미결정](REQUIREMENTS.md)을 구분한다. FR 26개·AT 68개는 제품 전체 기준이며 아래 테스트 수와 다르다.
-- 앱 소스는 main이다. 단계 0·1은 3847002, 2는 6a83094, 3은 906e996, 추가 기획은 2220dc5, 단계 4는 1fe44d2, UI 초안 01은 2bbd8cf, 초안 02는 6391781, 초안 03은 50b5b6c, 단계 5 완료 구현은 96847f4다. origin은 https://github.com/Armeride/CRAFT.git이며 단계 5와 인계 문서는 fcc9635까지 원격 보존했다. 단계 6의 실제 실행기 검증은 08415d2, 단계 7은 7338b81에 보존했다. 단계 8의 작업 이력은 로컬 main의 최신 기록을 따른다. 현재 로컬의 origin/main 추적 참조도 fcc9635다. 인계 문서 보강 commit은 이 문서 이후의 Git 이력으로 확인한다. 새 clone은 필요한 로컬 commit이 원격에 포함됐는지 확인한다.
+- 앱 소스는 main이다. 단계 0·1은 3847002, 2는 6a83094, 3은 906e996, 추가 기획은 2220dc5, 단계 4는 1fe44d2, UI 초안 01은 2bbd8cf, 초안 02는 6391781, 초안 03은 50b5b6c, 단계 5 완료 구현은 96847f4다. origin은 https://github.com/Armeride/CRAFT.git이며 단계 5와 인계 문서는 fcc9635까지 원격 보존했다. 단계 6의 실제 실행기 검증은 08415d2, 단계 7은 7338b81, 단계 8은 74cc91a에 보존했다. 최신 구현과 인계 문서는 원격 main의 Git 이력에서 확인한다.
 - 실행 기준: Windows x64, Node 24.21.0/npm 11.19.0과 exact lockfile. 전역 설정·소유권·인증을 변경하지 않는다.
 - FR-021: 진단 code/messageKey/params와 fallback 문구를 분리했다. 단계 5 초안 01에서 ko/en catalog·언어 전환/선호·폼 상태 보존을 연결했다. 현재 구현한 웹 화면 인수는 작업 005에서 검증했으며 후속 화면도 같은 gate를 유지한다.
 - FR-022: state_model@1 파일과 색인 위에 시점·개체·가정·조건 평가 결과와 비교를 구현했다. 평가 정책과 입력 digest를 결과에 기록한다. [상태 v1](STATE_MODEL_V1.md).
