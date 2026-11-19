@@ -2,15 +2,15 @@
 
 - 문서 버전: 1.4
 - 작성일: 2026-11-10, Asia/Seoul
-- 재검토: 2026-11-10. 요구사항 누락·설계 충돌·구현 판단 경계를 재점검했다. 변경 이유는 `REVIEW_NOTES.md`에 기록한다.
+- 재검토: 2026-11-10. 요구사항 누락·설계 충돌·구현 판단 경계를 재점검했다. 변경 이유는 [검토 기록](REVIEW_NOTES.md)에 기록한다.
 - 추가 개정: 2026-11-11. 사용자 요청과 후속 답변에 따라 UI 전체 한국어·영어 i18n, 일반 요소의 시간·트리거·조건부 상태 변화를 추가했다.
 - UI 개정: 2026-11-11. 초안 피드백으로 시스템 테마·분류 설정/글꼴·통합 탐색/대시보드·패널 조절·요소별 대화/문서 작업을 추가했다.
 - 그래프 개정: 2026-11-13. 오픈소스 후보 검토와 엔진 교체/사용자 설정, 관계 중심 군집·확대/이동 캔버스를 추가했다.
-- 상태: 제품 설계 기준. 단계 0~6의 실제 구현·검증은 `docs/IMPLEMENTATION_STATUS.md`를 따른다. UI 초안 03 승인 후 단계 5의 잔여 수동 작성·검토·승인 통합을 완료했다. 단계 6의 실행기·내부 MCP와 사용자 opt-in 후 Codex/Claude 실제 모델 시험을 완료했다. 단계 7 착수 전 대기한다. 새 UI 변경은 별도 작업으로 관리한다. 공급자 세션 재개·스킬·외부 MCP, 상태 평가/시점·actor 비교 및 전체 제품 인수는 후속 단계다. 한 단계 완료 후 대기한다.
+- 상태: 제품 설계 기준. 단계 0~6의 실제 구현·검증은 [구현 상태](IMPLEMENTATION_STATUS.md)를 따른다. UI 초안 03 승인 후 단계 5의 잔여 수동 작성·검토·승인 통합을 완료했다. 단계 6의 실행기·내부 MCP와 사용자 opt-in 후 Codex/Claude 실제 모델 시험을 완료했다. 단계 7 착수 전 대기한다. 새 UI 변경은 별도 작업으로 관리한다. 공급자 세션 재개·스킬·외부 MCP, 상태 평가/시점·actor 비교 및 전체 제품 인수는 후속 단계다. 한 단계 완료 후 대기한다.
 - 제품명: CRAFT(Context, References, Agents, Files, Tasks)
 - 대상 독자: 이 대화 없이 새 Codex 세션에서 개발을 시작하는 구현자.
-- 짝 문서: `START_HERE.md` — 새 세션 시작 지시문과 구현 순서.
-- 검토 문서: `REVIEW_NOTES.md` — v1.1 검토 이력과 v1.2 추가 요구·설계 경계.
+- 짝 문서: [START_HERE.md](START_HERE.md) — 새 세션 시작 지시문과 구현 순서.
+- 검토 문서: [REVIEW_NOTES.md](REVIEW_NOTES.md) — v1.1 검토 이력과 v1.2 추가 요구·설계 경계.
 
 ### 주요 절 바로가기
 
@@ -723,7 +723,7 @@ v1 시간 모델은 작품 내 명시적 정렬 키 `world_tick`(정수)와 `eve
 
 **게임 적용:** 사용자가 고른 기획 기준에서 플레이어 또는 특정 NPC의 레벨·소지품·플래그·퀘스트 등의 가정과 입력 사건을 주면 전후 상태를 계산·비교한다. 예를 들어 '입장 사건 + actor 레벨 10 이상 + 퀘스트 완료'일 때 대상 문을 연다고 정의하고, 레벨 9/10·완료/미완료/미기록을 각각 비교한다. 서로 다른 NPC instance의 상태를 공유하지 않는다. 결과는 **기획 가정 평가**로 표시하고 실제 플레이에서 문이 열렸다는 관찰이나 정본 세계 사실로 자동 저장하지 않는다. 실제 빌드 observation과도 별개다. 가정을 보존하려면 사용자 명시 저장으로 시나리오/작업 자료를 Git에 기록한다.
 
-**호환성 구현:** 공개 core/narrative/game_design v1은 그대로 유지하고 단계 4에서 state_model@1을 추가했다. 내장 reader pin과 유한 AST/효과·반복 한도, narrative 초기값의 단일 출처 adapter, 참조·semantic digest·지원표·fixture는 [ADR-010](docs/adr/010-versioned-state-model.md)과 [상태 계약](docs/STATE_MODEL_V1.md)을 따른다. 옛 앱은 새 필수 확장의 쓰기를 차단한다. 기존 v1 schema/fixture를 같은 번호로 바꾸거나 초기값·조건을 추정 생성하지 않는다. 현재는 검증·색인·입력 근거만 지원하며 전체 평가기·시점 비교·도메인 UI 완성은 단계 8이다.
+**호환성 구현:** 공개 core/narrative/game_design v1은 그대로 유지하고 단계 4에서 state_model@1을 추가했다. 내장 reader pin과 유한 AST/효과·반복 한도, narrative 초기값의 단일 출처 adapter, 참조·semantic digest·지원표·fixture는 [ADR-010](adr/010-versioned-state-model.md)과 [상태 계약](STATE_MODEL_V1.md)을 따른다. 옛 앱은 새 필수 확장의 쓰기를 차단한다. 기존 v1 schema/fixture를 같은 번호로 바꾸거나 초기값·조건을 추정 생성하지 않는다. 현재는 검증·색인·입력 근거만 지원하며 전체 평가기·시점 비교·도메인 UI 완성은 단계 8이다.
 
 ## 9. 검색·문맥 구성·재개
 
@@ -1061,7 +1061,7 @@ cache key는 로컬 repository registration, worktree identity, core/extension s
 
 원본이 invalid면 원본 오류를 먼저 표시한다. 구 index를 제공해야 한다면 반드시 stale임을 표시하고 변경 반영·확정 조회에는 사용하지 않는다. 정확 조회는 필요시 파일을 직접 읽을 수 있지만 같은 검증·권한 규칙을 적용한다.
 
-단계 4 구현 선택: 메모리에서 검증된 후보를 준비하고 기존 DB의 단일 transaction으로 새 generation을 게시한다. 오류는 rollback하며 이전 정상 generation을 보존한다. Windows DB 파일 교체 대신 이 방식을 사용한 근거와 전후 원본 검사는 [ADR-011](docs/adr/011-worker-index-and-generations.md)을 따른다.
+단계 4 구현 선택: 메모리에서 검증된 후보를 준비하고 기존 DB의 단일 transaction으로 새 generation을 게시한다. 오류는 rollback하며 이전 정상 generation을 보존한다. Windows DB 파일 교체 대신 이 방식을 사용한 근거와 전후 원본 검사는 [ADR-011](adr/011-worker-index-and-generations.md)을 따른다.
 
 ### 13.4 증분 갱신
 
@@ -1284,7 +1284,7 @@ slash command는 도메인 API의 편의 표현이다. 특정 CLI가 이 명령�
 
 **설계 기준:** 개인 선호는 정본 지식과 분리된 브라우저 로컬 설정이다. 테마 토큰·언어별 self-host 글꼴·typed 설정 registry와 pointer/keyboard 리사이즈를 사용한다. 설치 글꼴은 명시 버튼 동작과 브라우저 허용 후에만 조회하고 미지원/거부에는 직접 이름 입력과 fallback을 제공한다. 모바일은 같은 제어로 열리는 정보 drawer를 사용한다. 그래프는 정확한 revision과 과거 핀을 보존하며 한도를 표시한다.
 
-**단계 경계/후순위:** UI 초안 02는 실제 working 편집/미리보기와 사용자 요청 메모 보관까지다. AI 응답/자동 수정/도구 실행은 6의 실행기를 연결한 뒤 제공한다. 고급 graph layout·위치 저장/내보내기, OS 전반의 글꼴 지원과 추가 세부 설정은 독립 확장으로 후순위에 둔다. 이를 필수 요구의 삭제로 해석하지 않는다. [ADR-013](docs/adr/013-workspace-navigation-and-preferences.md)을 따른다.
+**단계 경계/후순위:** UI 초안 02는 실제 working 편집/미리보기와 사용자 요청 메모 보관까지다. AI 응답/자동 수정/도구 실행은 6의 실행기를 연결한 뒤 제공한다. 고급 graph layout·위치 저장/내보내기, OS 전반의 글꼴 지원과 추가 세부 설정은 독립 확장으로 후순위에 둔다. 이를 필수 요구의 삭제로 해석하지 않는다. [ADR-013](adr/013-workspace-navigation-and-preferences.md)을 따른다.
 
 ### 15.6 교체 가능한 관계 그래프와 캔버스
 
@@ -1292,7 +1292,7 @@ slash command는 도메인 API의 편의 표현이다. 특정 CLI가 이 명령�
 
 **설계 기준:** 공통 pinned GraphModel·엔진 registry/View·배치·viewport를 분리한다. 이번에는 관계 중심(기본)/열 배치 내장 엔진만 등록한다. 표시된 범위/필터의 고유 이웃 수를 초기 중심성으로 사용하고 군집은 시각적 추정으로만 표시한다. 방향·중복·self edge를 배치 계산에서만 단순화하며 실제 Reference·exact revision·blocking/advisory/none·과거 pin은 유지한다. 한도와 텍스트 관계 목록, 키보드/포인터 제어·i18n/테마를 모든 엔진에 유지한다. 엔진 선택/위치/군집은 정본/semantic digest가 아니다.
 
-**후순위/미결정:** 외부 라이브러리 최종 선택/정확 버전·실제 규모/접근성/라이선스 검증은 도입 시 수행한다. 전체 프로젝트 중심성·고급 community 알고리즘·노드 고정/수동 배치·위치 저장/export·pinch 등은 별도 확장이다. 기본 force 휴리스틱은 모든 노드의 최적 중심 배치나 무겹침을 보장하지 않는다. [검토](docs/GRAPH_ENGINES.md)와 [ADR-014](docs/adr/014-pluggable-relationship-graph.md)를 따른다. 15.5절의 graph 후순위 중 엔진 선택/관계 배치/탐색만 이번 요청으로 앞당겼다.
+**후순위/미결정:** 외부 라이브러리 최종 선택/정확 버전·실제 규모/접근성/라이선스 검증은 도입 시 수행한다. 전체 프로젝트 중심성·고급 community 알고리즘·노드 고정/수동 배치·위치 저장/export·pinch 등은 별도 확장이다. 기본 force 휴리스틱은 모든 노드의 최적 중심 배치나 무겹침을 보장하지 않는다. [검토](GRAPH_ENGINES.md)와 [ADR-014](adr/014-pluggable-relationship-graph.md)를 따른다. 15.5절의 graph 후순위 중 엔진 선택/관계 배치/탐색만 이번 요청으로 앞당겼다.
 
 ## 16. 실행 안전성·운영 경계
 

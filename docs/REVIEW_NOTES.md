@@ -1,10 +1,10 @@
 # 명세 재검토 결과와 구현 판단 — v1.1 검토·v1.2 추가 요구
 
 - 검토일: 2026-11-10
-- 대상: PROJECT_SPEC.md v1.0 및 START_HERE.md, 이 대화의 사용자 요구사항
+- 대상: [PROJECT_SPEC.md](PROJECT_SPEC.md) v1.0 및 [START_HERE.md](START_HERE.md), 이 대화의 사용자 요구사항
 - 결과: 발견한 모순·누락을 PROJECT_SPEC.md v1.1에 직접 통합했다. 이 문서는 변경 이유와 추적 기록이다.
 - 검토 범위: 문서 설계와 예시의 정합성. 실제 제품 구현·CLI 통합·migration 실행을 시험한 것은 아니다.
-- 추가 개정: 2026-11-11. 사용자 요청과 후속 답변에 따른 v1.2 변경은 6절에 기록한다. 1~5절은 v1.1 당시의 검토·검증 이력이며 현재 구현 상태는 `docs/IMPLEMENTATION_STATUS.md`를 따른다.
+- 추가 개정: 2026-11-11. 사용자 요청과 후속 답변에 따른 v1.2 변경은 6절에 기록한다. 1~5절은 v1.1 당시의 검토·검증 이력이며 현재 구현 상태는 [구현 상태](IMPLEMENTATION_STATUS.md)를 따른다.
 
 ## 1. 결론
 
@@ -141,17 +141,17 @@ v1.1에서는 각 항목의 기본 행동과 실패 시 보류 조건을 명시�
 
 이미 공개한 core/narrative/game_design v1 schema·기존 fixture·의미 digest 계약은 이번 문서 개정으로 변경하지 않는다. 문서 v1.2와 제품 schema 버전을 구분한다. 기존 인물 초기 상태와 새 일반 상태를 중복 정본으로 만들지 않고, 단일 출처/명시 매핑을 먼저 설계한다. 정의 변경은 새 revision이고 시간 진행·가정 계산·UI 언어 변경은 원본을 덮어쓰는 동작이 아니다.
 
-현재 FR은 22개, AT는 60개다. AT-51~60은 새 인수 요구이며 제품 테스트 통과 기록이 아니다. 기존 123개 테스트는 단계 3까지의 검증으로 남긴다. 이번 변경의 확인 범위는 문서·추적·링크·기존 계약 무변경이다. [ADR-009](docs/adr/009-ui-locales-and-state-planning.md)에 배치 이유를 남긴다.
+현재 FR은 22개, AT는 60개다. AT-51~60은 새 인수 요구이며 제품 테스트 통과 기록이 아니다. 기존 123개 테스트는 단계 3까지의 검증으로 남긴다. 이번 변경의 확인 범위는 문서·추적·링크·기존 계약 무변경이다. [ADR-009](adr/009-ui-locales-and-state-planning.md)에 배치 이유를 남긴다.
 
 ## 7. 단계 4 구현 후속 — 2026-11-11
 
-6절은 기획 변경 당시 기록이다. 후속 단계 4 지시에 따라 상태 namespace/AST/효과·반복 한도·legacy 단일 출처 매핑을 [ADR-010](docs/adr/010-versioned-state-model.md)으로 결정했다. 일반 custom schema만으로는 옛 앱의 의미 검증을 강제할 수 없어 기존 plugin lock에 내장 reader pin을 추가했으며 실제 옛 reader의 쓰기 차단을 검증했다. 공개 core/narrative/game_design v1·기존 fixture는 유지했다.
+6절은 기획 변경 당시 기록이다. 후속 단계 4 지시에 따라 상태 namespace/AST/효과·반복 한도·legacy 단일 출처 매핑을 [ADR-010](adr/010-versioned-state-model.md)으로 결정했다. 일반 custom schema만으로는 옛 앱의 의미 검증을 강제할 수 없어 기존 plugin lock에 내장 reader pin을 추가했으며 실제 옛 reader의 쓰기 차단을 검증했다. 공개 core/narrative/game_design v1·기존 fixture는 유지했다.
 
-worker SQLite/증분·복원·scope·SCC·검토/갱신 경고·NFC/FTS5·입력 digest와 구조화 진단은 [ADR-011](docs/adr/011-worker-index-and-generations.md), [실제 상태](docs/IMPLEMENTATION_STATUS.md)를 따른다. 8파일 158개 테스트와 CLI 검증을 통과했다. 그래프 전체 재분석/요청 시 hash refresh는 현 구현 선택이다. UI catalog/독립 watcher는 5, 상태 평가·시점/actor 비교는 8, 목표 규모 성능은 9에 남아 있다. 이번 단계 완료 후 멈추고 다음 지시를 기다린다.
+worker SQLite/증분·복원·scope·SCC·검토/갱신 경고·NFC/FTS5·입력 digest와 구조화 진단은 [ADR-011](adr/011-worker-index-and-generations.md), [실제 상태](IMPLEMENTATION_STATUS.md)를 따른다. 8파일 158개 테스트와 CLI 검증을 통과했다. 그래프 전체 재분석/요청 시 hash refresh는 현 구현 선택이다. UI catalog/독립 watcher는 5, 상태 평가·시점/actor 비교는 8, 목표 규모 성능은 9에 남아 있다. 이번 단계 완료 후 멈추고 다음 지시를 기다린다.
 
 ## 8. 단계 5 UI 초안 검토 — 2026-11-11
 
-사용자는 UI 초안을 직접 확인하고 추가 요구를 전달하는 반복 방식을 요청했다. [UI 초안 01](docs/UI_PREVIEW.md)은 실제 색인/작업 서비스를 연결한 ko/en 탐색·리비전/참조/diff·진단·명시 working 초안 저장까지 제공한다. [ADR-012](docs/adr/012-web-draft-and-local-session.md)에 스택/locale/session·검증 결정을 남겼다. 첫 초안 검토 지점에서 멈추고 단계 5 전체 완료·단계 6 착수로 처리하지 않는다. 초기 상태 값 표시는 정의 원문이며 조건 평가 결과가 아니다. 전체 상태 평가·시점/actor 비교는 단계 8에 유지한다.
+사용자는 UI 초안을 직접 확인하고 추가 요구를 전달하는 반복 방식을 요청했다. [UI 초안 01](UI_PREVIEW.md)은 실제 색인/작업 서비스를 연결한 ko/en 탐색·리비전/참조/diff·진단·명시 working 초안 저장까지 제공한다. [ADR-012](adr/012-web-draft-and-local-session.md)에 스택/locale/session·검증 결정을 남겼다. 첫 초안 검토 지점에서 멈추고 단계 5 전체 완료·단계 6 착수로 처리하지 않는다. 초기 상태 값 표시는 정의 원문이며 조건 평가 결과가 아니다. 전체 상태 평가·시점/actor 비교는 단계 8에 유지한다.
 
 ## 9. v1.3 — UI 피드백과 초안 02
 
@@ -164,7 +164,7 @@ worker SQLite/증분·복원·scope·SCC·검토/갱신 경고·NFC/FTS5·입력
 | R-29 | 왼쪽 resize·오른쪽 정보 제어 | FR-024, pointer/keyboard·선호 보존·작은 화면 drawer | AT-64 |
 | R-30 | 요소별 대화/문서 나란히·직접 편집·좌우 전환 | FR-025, 독립 working preview/명시 저장·사용자 요청 메모 보관 | AT-65~66 |
 
-확정 요구와 설계 선택/후순위는 [ADR-013](docs/adr/013-workspace-navigation-and-preferences.md)을 따른다. 기본 theme는 system, 밝은 모드는 라이트/기본으로 해석했다. 실제 AI는 6에 연결하며 현재 UI는 미연결을 표시한다. 고급 graph 장식/위치 저장·범용 OS font 인식은 독립 확장으로 남겼다. 공개 schema v1·기존 fixture/불변 조건은 유지한다. [초안 02](docs/UI_PREVIEW.md)를 제시하고 피드백을 기다리며 단계 5 전체 완료로 표시하지 않는다.
+확정 요구와 설계 선택/후순위는 [ADR-013](adr/013-workspace-navigation-and-preferences.md)을 따른다. 기본 theme는 system, 밝은 모드는 라이트/기본으로 해석했다. 실제 AI는 6에 연결하며 현재 UI는 미연결을 표시한다. 고급 graph 장식/위치 저장·범용 OS font 인식은 독립 확장으로 남겼다. 공개 schema v1·기존 fixture/불변 조건은 유지한다. [초안 02](UI_PREVIEW.md)를 제시하고 피드백을 기다리며 단계 5 전체 완료로 표시하지 않는다.
 
 ## 10. v1.4 — 교체형 관계 그래프
 
@@ -174,9 +174,9 @@ worker SQLite/증분·복원·scope·SCC·검토/갱신 경고·NFC/FTS5·입력
 |---|---|---|---|
 | R-31 | 오픈소스 검토·교체형 엔진/설정·연결 중심/군집·zoom/pan 캔버스 | 15.6절, 공통 모델/registry/View·내장 2종·캔버스. 외부 패키지 도입 보류 | AT-67~68 |
 
-[후보 비교](docs/GRAPH_ENGINES.md)와 [ADR-014](docs/adr/014-pluggable-relationship-graph.md)에 공식 근거·적합성 추론·미검증 도입 경계를 남겼다. 표시 범위의 연결 수/시각 군집과 정본 분류/차단 진단은 분리한다. core/extension v1·fixture·기존 불변 조건은 유지하며 단계 5 초안 03에서 사용자 검토를 기다린다.
+[후보 비교](GRAPH_ENGINES.md)와 [ADR-014](adr/014-pluggable-relationship-graph.md)에 공식 근거·적합성 추론·미검증 도입 경계를 남겼다. 표시 범위의 연결 수/시각 군집과 정본 분류/차단 진단은 분리한다. core/extension v1·fixture·기존 불변 조건은 유지하며 단계 5 초안 03에서 사용자 검토를 기다린다.
 
 
 ## 2026-11-13 — UI 기준선 승인·단계 5 완료
 
-사용자는 초안 03을 승인하고 단계 5의 남은 수동 기능까지 이번에 구현하도록 확정했다. [작업 005](docs/tasks/005-manual-workflow.md)의 수동 작성/사용자 검토·실제 diff 승인 통합·자동 저장/충돌/복구·관리/SSE를 완료했다. [ADR-015](docs/adr/015-manual-review-integration-and-events.md)와 [검증/한계](docs/IMPLEMENTATION_STATUS.md)를 따른다. 위 초안 검토 대기 문구는 당시 이력이다. 새 UI 요구는 새 작업으로 관리하며 외부 graph 후보는 기록만 유지한다. 단계 6은 착수 전 대기, 실제 AI·상태 평가·전체 제품 인수는 후속 단계다. 기존 요구/불변 조건/공개 v1 의미는 바꾸지 않는다.
+사용자는 초안 03을 승인하고 단계 5의 남은 수동 기능까지 이번에 구현하도록 확정했다. [작업 005](tasks/005-manual-workflow.md)의 수동 작성/사용자 검토·실제 diff 승인 통합·자동 저장/충돌/복구·관리/SSE를 완료했다. [ADR-015](adr/015-manual-review-integration-and-events.md)와 [검증/한계](IMPLEMENTATION_STATUS.md)를 따른다. 위 초안 검토 대기 문구는 당시 이력이다. 새 UI 요구는 새 작업으로 관리하며 외부 graph 후보는 기록만 유지한다. 단계 6은 착수 전 대기, 실제 AI·상태 평가·전체 제품 인수는 후속 단계다. 기존 요구/불변 조건/공개 v1 의미는 바꾸지 않는다.

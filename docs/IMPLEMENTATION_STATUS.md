@@ -238,14 +238,10 @@ npm run workspace -- start --app-data <관리-경로> --registration <등록-ID>
 - native 모듈은 해당 OS/ABI에서 재설치한다. remotePreserved는 local remote-tracking ref 관측이며 실시간 서버 보장이 아니다. local-only 결과는 새 clone에 없다.
 - 2026-11-13 ChatGPT 앱 전환 점검에서도 일반 셸의 helper_unknown_error/setup refresh 오류가 재현됐고 권한 검토를 거친 실행은 통과했다. Node 24.21.0/npm 11.19.0, 타입 검사·SQLite·Chrome·4174 검토 서버·원격 읽기/push dry-run을 확인했다. Git safe.directory는 D:/git/CRAFT 한 명령 범위로 사용했다. 새 세션은 해당 실행 환경의 실제 권한·오류를 확인한다.
 
-## 다음 작업 — 사용자 지시 후 단계 6
+## 다음 작업 — 사용자 지시 후 단계 7
 
-1. [새 세션 진입 순서](../START_HERE.md#8-다른-세션에서-이어갈-때)로 문서·HEAD·실행 환경을 확인한다. 단계 6 구현은 사용자의 진행 지시 후 시작한다.
-2. 설치된 실행기의 버전/help/인증 상태와 공식 프로토콜을 확인하고 단계 6의 adapter/capability/event 계약을 구체화한다. 이 확인은 단계 6 착수 시 수행할 일이다.
-3. 기존 TaskService의 격리 작업/초기 checkpoint·저장/취소/복구와 ProjectIndex의 scope/basis/working 조회를 재사용해 공통 실행기와 fake 흐름을 구성한다.
-4. search/entity/reverse/context/checkpoint/propose/validate 내부 MCP를 같은 application service와 run scope에 연결한다.
-5. 각 공급자 adapter를 연결하고 기존 수동 proposal·검토/통합 서비스와 웹 작업 흐름으로 전달한다. 실패/취소·경로/권한·ko/en/접근성 회귀와 명시 동의 범위의 실제 공급자 smoke를 검증한다.
-6. 단계 6 완료 기준·검증 결과·한계를 기록하고 대기한다. 별도 UI 요구는 새 작업으로 진행한다.
+1. [새 세션 진입 순서](START_HERE.md#8-다른-세션에서-이어갈-때)에서 문서·HEAD·실행 환경을 확인한다.
+2. 사용자 진행 지시 후 [단계 7 계획](IMPLEMENTATION_PLAN.md#단계-7--재개스킬외부-mcp)에 따라 체크포인트 기반 재개, 기본 스킬, 외부 MCP를 구현한다. 기존 실행기 계약과 검증 결과는 [작업 006](tasks/006-agent-runners.md)을 참고한다.
 
 ## 보존 상태
 

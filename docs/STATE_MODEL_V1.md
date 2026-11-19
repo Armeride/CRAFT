@@ -1,6 +1,6 @@
 # 상태 모델 v1 계약과 현재 지원
 
-2026-11-11. FR-022의 단계 4 산출물이다. [ADR-010](adr/010-versioned-state-model.md), [명세 8.5절](../PROJECT_SPEC.md#85-일반-요소의-시간트리거조건부-상태-변화)을 따른다. **현재는 파일 검증·참조·색인·입력 manifest까지 제공한다. 사건 재생, 조건 평가, 상태 결과/전후 비교는 단계 8이다.** `state`와 `state-input`은 `evaluatorAvailable: false`를 반환한다.
+2026-11-11. FR-022의 단계 4 산출물이다. [ADR-010](adr/010-versioned-state-model.md), [명세 8.5절](PROJECT_SPEC.md#85-일반-요소의-시간트리거조건부-상태-변화)을 따른다. **현재는 파일 검증·참조·색인·입력 manifest까지 제공한다. 사건 재생, 조건 평가, 상태 결과/전후 비교는 단계 8이다.** `state`와 `state-input`은 `evaluatorAvailable: false`를 반환한다.
 
 ## 파일과 호환성
 

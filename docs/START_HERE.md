@@ -1,19 +1,19 @@
 # 새 Codex 세션에서 개발 시작하기
 
-작성일: 2026-11-10, 갱신: 2026-11-18. 명세 v1.4 반영본. 현재 단계 0~6 완료, 단계 7 착수 전 대기다. UI 초안 03을 승인 기준선으로 [작업 005](docs/tasks/005-manual-workflow.md)의 잔여 수동 기능을 완성했다. 현재 전체 Vitest 206개와 Chrome E2E 14개가 통과했다. 실행기·내부 MCP와 실제 Codex/Claude opt-in 시험은 작업 006·ADR-016에서 완료했다. 공급자 세션 재개·스킬·외부 MCP는 7, 상태 평가/시점·actor 비교는 8에 남아 있다. 새 UI 요구는 별도 작업으로 진행하며 **한 단계 완료 후 멈추고 대기** 지시를 유지한다. 최신 검증 범위와 한계는 상태 문서를 따른다.
+작성일: 2026-11-10, 갱신: 2026-11-18. 명세 v1.4 반영본. 현재 단계 0~6 완료, 단계 7 착수 전 대기다. UI 초안 03을 승인 기준선으로 [작업 005](tasks/005-manual-workflow.md)의 잔여 수동 기능을 완성했다. 현재 전체 Vitest 206개와 Chrome E2E 14개가 통과했다. 실행기·내부 MCP와 실제 Codex/Claude opt-in 시험은 작업 006·ADR-016에서 완료했다. 공급자 세션 재개·스킬·외부 MCP는 7, 상태 평가/시점·actor 비교는 8에 남아 있다. 새 UI 요구는 별도 작업으로 진행하며 **한 단계 완료 후 멈추고 대기** 지시를 유지한다. 최신 검증 범위와 한계는 상태 문서를 따른다.
 
 ## 1. 전달할 파일
 
-- `PROJECT_SPEC.md`: 전체 요구사항, 아키텍처, 원본 파일 구조, 스키마, 마이그레이션, 실행 흐름, 개발 계획, 인수 시험.
+- [PROJECT_SPEC.md](PROJECT_SPEC.md): 전체 요구사항, 아키텍처, 원본 파일 구조, 스키마, 마이그레이션, 실행 흐름, 개발 계획, 인수 시험.
 - 이 문서: 시작 지시문과 작업 인계 방법.
-- `REVIEW_NOTES.md`: 요구사항 대조, 발견한 설계 충돌과 보완 이유, 남은 구현 판단.
+- [REVIEW_NOTES.md](REVIEW_NOTES.md): 요구사항 대조, 발견한 설계 충돌과 보완 이유, 남은 구현 판단.
 
-현재 저장소에서는 세 파일을 루트에 유지한다. 새 세션에는 이들과 `docs/REQUIREMENTS.md`, `docs/IMPLEMENTATION_PLAN.md`, `docs/IMPLEMENTATION_STATUS.md`를 함께 전달한다. 구현 기준은 보완이 통합된 PROJECT_SPEC.md v1.4이며 REVIEW_NOTES.md를 상충 사양으로 해석하지 않는다. 기존 개발 저장소의 경로·지침·Git 변경부터 확인하고 완료한 단계를 초기화/재구현하지 않는다.
+저장소에는 세 파일을 모두 `docs/`에 보관한다. 새 세션에는 이들과 `docs/REQUIREMENTS.md`, `docs/IMPLEMENTATION_PLAN.md`, `docs/IMPLEMENTATION_STATUS.md`를 함께 전달한다. 구현 기준은 보완이 통합된 PROJECT_SPEC.md v1.4이며 REVIEW_NOTES.md를 상충 사양으로 해석하지 않는다. 기존 개발 저장소의 경로·지침·Git 변경부터 확인하고 완료한 단계를 초기화/재구현하지 않는다.
 
 ## 2. 새 세션에 붙여넣을 시작 지시문
 
 ```text
-첨부한 PROJECT_SPEC.md v1.4와 docs/IMPLEMENTATION_STATUS.md를 기준으로 현재 작업을 이어가줘.
+docs/PROJECT_SPEC.md v1.4와 docs/IMPLEMENTATION_STATUS.md를 기준으로 현재 작업을 이어가줘.
 REVIEW_NOTES.md도 읽어서 버전·참조·복원·마이그레이션의 함정을 확인해.
 
 이 프로젝트는 소설과 게임 기획에 공통으로 사용하는 로컬 우선 웹 앱이야.
@@ -72,10 +72,12 @@ fixture용 v2 시험은 제품 v2를 미리 확정하는 작업이 아니다. �
 ## 4. 저장소에서 보존할 문서
 
 ```text
-PROJECT_SPEC.md
-REVIEW_NOTES.md
-START_HERE.md
+README.md
 docs/
+├─ README.md
+├─ PROJECT_SPEC.md
+├─ REVIEW_NOTES.md
+├─ START_HERE.md
 ├─ REQUIREMENTS.md
 ├─ IMPLEMENTATION_PLAN.md
 ├─ IMPLEMENTATION_STATUS.md
@@ -162,13 +164,13 @@ ADR은 선택 이유와 트레이드오프를 남긴다. 단순 진행 로그로
 
 현재 요구는 FR 26개·AT 68개다. FR-026/AT-67~68에 외부 검토·엔진 선택·중심 배치/군집·캔버스 탐색을 기록했다. FR-023~025/AT-61~66으로 추가 UI 요구를 기록하고 확정 요구·설계 선택·후순위를 분리했다.
 
-UI 초안 03은 사용자 승인을 받았다. 수동 작성·검토·실제 diff 승인 통합·자동 저장/충돌/복구·관리/SSE까지 작업 005에서 완성했다. 단계 6에서 실행기·내부 MCP·웹 제어와 실제 두 공급자 시험까지 완료했다. 다음은 단계 7이지만 사용자 진행 지시 전 대기한다. [작업 006](docs/tasks/006-agent-runners.md)·[ADR-016](docs/adr/016-isolated-agent-runners-and-internal-mcp.md)·[AI 안내](docs/AGENT_WORKFLOW.md)를 따른다. 상태 평가·시점/actor 비교는 단계 8의 목표다.
+UI 초안 03은 사용자 승인을 받았다. 수동 작성·검토·실제 diff 승인 통합·자동 저장/충돌/복구·관리/SSE까지 작업 005에서 완성했다. 단계 6에서 실행기·내부 MCP·웹 제어와 실제 두 공급자 시험까지 완료했다. 다음은 단계 7이지만 사용자 진행 지시 전 대기한다. [작업 006](tasks/006-agent-runners.md)·[ADR-016](adr/016-isolated-agent-runners-and-internal-mcp.md)·[AI 안내](AGENT_WORKFLOW.md)를 따른다. 상태 평가·시점/actor 비교는 단계 8의 목표다.
 
 문서 버전 1.4도 제품 schema v2 출시가 아니다. 공개 core/narrative/game_design v1·기존 fixture를 유지하며 별도 state_model@1 계약을 추가했다. 상세 지원/실행법은 docs/STATE_MODEL_V1.md와 docs/INDEXING.md를 따른다.
 
 ## 8. 다른 세션에서 이어갈 때
 
-읽는 순서는 이 문서 → 현재 구현 상태 → PROJECT_SPEC.md 전체와 REVIEW_NOTES.md → 요구사항 구분과 단계 6 계획이다. 실행기 경계는 ADR-004, 작업 격리는 ADR-008, 조회 scope는 ADR-011, 수동 검토/통합은 ADR-015에 근거를 남겼다. [현재 구현 상태](docs/IMPLEMENTATION_STATUS.md), [요구사항 구분](docs/REQUIREMENTS.md), [단계 6 계획](docs/IMPLEMENTATION_PLAN.md#단계-6--에이전트와-내부-mcp)
+이 문서 다음에는 현재 구현 상태, 전체 프로젝트 명세와 설계 검토 기록, 요구사항 분류와 단계 7 계획을 순서대로 읽는다. 실행기 경계는 ADR-004, 작업 격리는 ADR-008, 조회 scope는 ADR-011, 수동 검토/통합은 ADR-015에 근거를 남겼다. [현재 구현 상태](IMPLEMENTATION_STATUS.md), [요구사항 구분](REQUIREMENTS.md), [단계 7 계획](IMPLEMENTATION_PLAN.md#단계-7--재개스킬외부-mcp)
 
 | 재사용할 기반 | 코드와 계약 |
 |---|---|

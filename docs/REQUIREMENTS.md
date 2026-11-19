@@ -1,6 +1,6 @@
 # 요구사항 해석과 구현 경계
 
-기준: 2026-11-11, Asia/Seoul. [PROJECT_SPEC.md v1.4](../PROJECT_SPEC.md) 전체 0~23절, [REVIEW_NOTES.md](../REVIEW_NOTES.md) 전체, [START_HERE.md](../START_HERE.md)를 읽고 정리했다. 이 문서는 명세를 대체하지 않는다. 요구사항이 바뀌면 명세와 관련 ADR도 함께 갱신한다.
+기준: 2026-11-11, Asia/Seoul. [PROJECT_SPEC.md v1.4](PROJECT_SPEC.md) 전체 0~23절, [REVIEW_NOTES.md](REVIEW_NOTES.md) 전체, [START_HERE.md](START_HERE.md)를 읽고 정리했다. 이 문서는 명세를 대체하지 않는다. 요구사항이 바뀌면 명세와 관련 ADR도 함께 갱신한다.
 
 ## 분류 원칙
 
