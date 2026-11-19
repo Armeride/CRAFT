@@ -1,0 +1,18 @@
+# Git hooks for the CRAFT quality gate. Protected file (see AGENTS.md).
+# Install: npm run quality:setup   (lefthook binary lives in tools/quality/node_modules)
+# Never bypass with --no-verify; CI runs the same gates.
+pre-commit:
+  piped: true
+  jobs:
+    - name: guard + secrets (staged)
+      run: node tools/quality/run.mjs pre-commit
+    - name: check:fast (staged files)
+      glob: "*.{ts,tsx,mts,cts}"
+      run: node tools/quality/run.mjs fast {staged_files}
+
+pre-push:
+  jobs:
+    - name: check:security
+      run: node tools/quality/run.mjs security
+    - name: lint + structure (full)
+      run: node tools/quality/run.mjs lint

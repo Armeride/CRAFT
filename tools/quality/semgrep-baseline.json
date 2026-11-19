@@ -1,0 +1,6 @@
+{
+  "comment": "Existing Semgrep findings: \"<rule> <path>\": count. Counts may only go down.",
+  "findings": {
+    "package_managers.npm.npm-missing-minimum-release-age.npm-missing-minimum-release-age .npmrc": 1
+  }
+}

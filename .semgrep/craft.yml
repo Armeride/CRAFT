@@ -1,0 +1,127 @@
+# CRAFT project-specific Semgrep rules. Protected file (see AGENTS.md).
+# Verify rule behavior with: semgrep --test .semgrep/  (fixtures: .semgrep/craft.ts)
+rules:
+  - id: craft-no-shell-exec
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      Shell-based process execution is forbidden. Use spawn/execFile with an argument
+      array and shell:false through the existing process wrappers
+      (packages/agent-core/src/process.ts, packages/git-workspace/src/git.ts).
+    metadata:
+      category: security
+      cwe: ['CWE-78: OS Command Injection']
+    patterns:
+      - pattern-either:
+          - pattern: import { exec } from "$M"
+          - pattern: import { execSync } from "$M"
+          - pattern: import { exec as $A } from "$M"
+          - pattern: import { execSync as $A } from "$M"
+          - pattern: require("$M").exec(...)
+          - pattern: require("$M").execSync(...)
+          - patterns:
+              - pattern-inside: |
+                  import * as $CP from "$M"
+                  ...
+              - pattern-either:
+                  - pattern: $CP.exec(...)
+                  - pattern: $CP.execSync(...)
+          - patterns:
+              - pattern-inside: |
+                  import $CP from "$M"
+                  ...
+              - pattern-either:
+                  - pattern: $CP.exec(...)
+                  - pattern: $CP.execSync(...)
+      - metavariable-regex:
+          metavariable: $M
+          regex: ^(node:)?child_process$
+
+  - id: craft-no-spawn-shell-true
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      shell:true lets the platform shell interpret arguments (command injection, Windows
+      quoting bugs). Pass an argument array with shell:false.
+    metadata:
+      category: security
+      cwe: ['CWE-78: OS Command Injection']
+    pattern-either:
+      - pattern: '$F(..., {..., shell: true, ...})'
+      - pattern: '$O.$F(..., {..., shell: true, ...})'
+
+  - id: craft-no-dynamic-code
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: Dynamic code evaluation (eval, Function constructor, string timers, node:vm) is forbidden.
+    metadata:
+      category: security
+      cwe: ['CWE-95: Eval Injection']
+    pattern-either:
+      - pattern: eval(...)
+      - pattern: window.eval(...)
+      - pattern: globalThis.eval(...)
+      - pattern: new Function(...)
+      - pattern: Function(...)
+      - pattern: setTimeout("...", ...)
+      - pattern: setInterval("...", ...)
+      - pattern-regex: (?:from\s+|require\(\s*|import\(\s*)['"](?:node:)?vm['"]
+
+  - id: craft-child-process-wrapper-only
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      Runtime child_process imports are allowed only in the process wrapper modules.
+      Call the wrapper (agent-core/process, git-workspace/git, project-fs/git-baseline)
+      instead. Type-only imports are fine.
+    metadata:
+      category: architecture
+    paths:
+      exclude:
+        - packages/agent-core/src/process.ts
+        - packages/agent-core/src/claude.ts
+        - packages/git-workspace/src/git.ts
+        - packages/project-fs/src/git-baseline.ts
+        - tools/quality/run.mjs
+        - '*.test.ts'
+        - '*.spec.ts'
+        - 'test-fixtures/'
+    pattern-regex: (?m)(?:^\s*import\s+(?!type\b)[^;]*?\bfrom\s+|require\(\s*|import\(\s*)['"](?:node:)?child_process['"]
+
+  - id: craft-sqlite-adapter-only
+    languages: [typescript, javascript]
+    severity: ERROR
+    message: >-
+      better-sqlite3 is used only behind the indexer worker adapter
+      (packages/indexer/src/worker.ts, ADR-005). Use the indexer API instead.
+    metadata:
+      category: architecture
+    paths:
+      exclude:
+        - packages/indexer/src/worker.ts
+        - '*.test.ts'
+    pattern-regex: (?m)(?:^\s*import\s+(?!type\b)[^;]*?\bfrom\s+|require\(\s*|import\(\s*)['"]better-sqlite3['"]
+
+  - id: craft-web-network-via-api-only
+    languages: [typescript]
+    severity: ERROR
+    message: >-
+      Browser code must reach the server only through apps/web/src/api.ts (CSRF header,
+      session refresh, same-origin credentials). Add a function there instead.
+    metadata:
+      category: security
+      cwe: ['CWE-352: Cross-Site Request Forgery']
+    paths:
+      include:
+        - apps/web/src/
+        - .semgrep/craft.ts
+      exclude:
+        - apps/web/src/api.ts
+        - '*.test.ts'
+    pattern-either:
+      - pattern: fetch(...)
+      - pattern: window.fetch(...)
+      - pattern: new EventSource(...)
+      - pattern: new WebSocket(...)
+      - pattern: new XMLHttpRequest()
+      - pattern: navigator.sendBeacon(...)

@@ -1,0 +1,24 @@
+{
+  "$schema": "./node_modules/knip/schema.json",
+  "entry": [
+    "tools/*.ts",
+    "tools/*.mjs",
+    "apps/web/src/main.tsx",
+    "packages/agent-core/test-fixtures/*.mjs",
+    "bench/**/*.bench.ts"
+  ],
+  "project": [
+    "apps/**/*.{ts,tsx}",
+    "packages/**/*.{ts,mts}",
+    "tools/*.{ts,mjs}",
+    "tests/**/*.ts",
+    "bench/**/*.ts"
+  ],
+  "ignore": ["tools/quality/**"],
+  "vite": { "config": ["apps/web/vite.config.ts"] },
+  "ignoreBinaries": ["taskkill.exe"],
+  "ignoreIssues": {
+    "**/generated.ts": ["exports", "types"],
+    "**/generated-*.ts": ["exports", "types"]
+  }
+}
