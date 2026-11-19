@@ -14,3 +14,4 @@
 - [구현 계획과 인수 기준](IMPLEMENTATION_PLAN.md), [현재 구현 및 검증 상태](IMPLEMENTATION_STATUS.md), [개발 작업 기록](tasks/README.md)
 - [파일 형식 v1](FILE_FORMAT_V1.md), [상태 모델 v1](STATE_MODEL_V1.md), [관계 그래프 엔진 검토](GRAPH_ENGINES.md)
 - [설계 결정 기록](adr/), [실제 AI 실행 검증 기록](validation/phase6-provider-smoke-2026-11-18.json)
+- [이미지 생성·문서 시각화 검토안](VISUAL_TOOLS_PROPOSAL.md)
