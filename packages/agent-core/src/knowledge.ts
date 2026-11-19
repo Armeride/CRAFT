@@ -11,6 +11,7 @@ import { captureFiles } from "../../project-fs/src/files.js";
 import { hash } from "../../project-fs/src/files.js";
 import { loadCommittedProject } from "../../project-fs/src/git-baseline.js";
 import { canonicalJson } from "../../domain/src/canonical.js";
+import type { QueryScope } from '../../domain/src/analysis.js';
 import type { SourceFile } from "../../domain/src/model.js";
 import type { Revision, Task } from "../../schema/src/generated.js";
 import type { QueryEnvelope } from "../../indexer/src/types.js";
@@ -64,6 +65,15 @@ export const knowledgeTools = [
       "Read task context and the current workingFingerprint required for changes.propose. The optional view is basis or working.",
     inputSchema: schema({ view }),
   },
+  ...[
+    ['state.evaluate', 'Evaluate a state at an explicit world tick or with a fixed hypothetical scenario.'],
+    ['state.compare', 'Compare two state evaluations in the same captured baseline.'],
+    ['narrative.context', 'Read a scene boundary, story state and known/revealed facts.'],
+    ['game.context', 'Read scoped planning rules, unselected revisions and build observations.'],
+  ].map(([name, description]) => ({ name: name!, description: description!, inputSchema: schema({
+    query: { type: 'object', maxProperties: 12 }, view,
+    scope: schema({ continuity: boundedText(256), platform: boundedText(256), mode: boundedText(256) }),
+  }, ['query']) })),
   {
     name: "project.validate",
     description:
@@ -112,6 +122,8 @@ export const knowledgeTools = [
   },
 }));
 
+export const povKnowledgeTools = knowledgeTools.filter(tool => ['knowledge.search', 'entity.get', 'references.reverse', 'context.build'].includes(tool.name));
+
 const validator = new Ajv2020({ strict: false, validateFormats: false });
 const validators = new Map(
   knowledgeTools.map((tool) => [
@@ -128,6 +140,7 @@ export interface KnowledgeReceipt {
   baselineFingerprint: string;
   query: Record<string, unknown>;
   resultDigest: string;
+  perspective?: NonNullable<AgentExecution['perspective']>;
   basisCommit: string;
   sourceCommit: string;
   targets: {
@@ -238,10 +251,20 @@ export class RunKnowledge {
     return next;
   }
 
+  listTools() {
+    return this.execution.perspective ? povKnowledgeTools : knowledgeTools;
+  }
+
+  async projectedContext() {
+    const result = await this.query('story', {}, 'basis');
+    return { context: result.data, snapshotToken: result.snapshotToken };
+  }
+
   private async query(
     operation: Parameters<ProjectIndex["query"]>[0],
     args: Record<string, unknown>,
     selectedView: "basis" | "working",
+    scope?: QueryScope,
   ): Promise<QueryEnvelope<unknown> & { workingFingerprint?: string }> {
     let index = this.indexes.get(selectedView);
     if (!index) {
@@ -255,6 +278,8 @@ export class RunKnowledge {
     const result = await index.query(operation, args, {
       scopeToken: index.scopeToken,
       baselineId: this.execution.baselineId,
+      ...(scope ? { scope } : {}),
+      ...(this.execution.perspective ? { perspective: this.execution.perspective } : {}),
     });
     if (this.receipts.length >= 500)
       throw fileFailure(
@@ -302,8 +327,9 @@ export class RunKnowledge {
       snapshotToken: result.snapshotToken,
       sourceFingerprint: result.sourceFingerprint,
       baselineFingerprint: result.baselineFingerprint,
-      query: args,
+      query: { ...args, ...(scope ? { scope } : {}) },
       resultDigest: hash(canonicalJson(result.data)),
+      ...(this.execution.perspective ? { perspective: this.execution.perspective } : {}),
       basisCommit: run.basisCommit,
       sourceCommit: status.manifest.source.headCommit,
       targets,
@@ -317,6 +343,9 @@ export class RunKnowledge {
     await mkdir(dirname(path), { recursive: true });
     await appendFile(path, JSON.stringify(receipt) + "\n", "utf8");
     this.receipts.push(receipt);
+    if (this.execution.perspective) {
+      return { ...result, scope: { ...result.scope, root: '', commonDir: '', gitDir: '' } };
+    }
     return {
       ...result,
       ...(selectedView === "working"
@@ -365,6 +394,7 @@ export class RunKnowledge {
     name: string,
     input: Record<string, unknown>,
   ): Promise<unknown> {
+    if (this.execution.perspective && !povKnowledgeTools.some(tool => tool.name === name)) throw new Error('CONTEXT_FORBIDDEN');
     await this.assertManaged();
     if (this.external && (name === 'external.call' || name === 'external.status')) {
       return this.external.call(name, input, () => this.track([]));
@@ -376,7 +406,8 @@ export class RunKnowledge {
         "Unsupported knowledge tool arguments",
         "project.yaml",
       );
-    const selectedView = input["view"] === "basis" ? "basis" : "working";
+    if (this.execution.perspective && input['view'] === 'working') throw new Error('CONTEXT_FORBIDDEN');
+    const selectedView = this.execution.perspective || input["view"] === "basis" ? "basis" : "working";
     switch (name) {
       case "knowledge.search":
         return this.query(
@@ -401,9 +432,17 @@ export class RunKnowledge {
           },
           selectedView,
         );
+      case 'state.evaluate':
+      case 'state.compare':
+      case 'narrative.context':
+      case 'game.context': {
+        const operations = { 'state.evaluate': 'state-evaluate', 'state.compare': 'state-compare', 'narrative.context': 'story', 'game.context': 'game' } as const;
+        return this.query(operations[name], input['query'] as Record<string, unknown>, selectedView, input['scope'] as QueryScope | undefined);
+      }
       case "project.validate":
         return this.query("analyze", {}, selectedView);
       case "context.build": {
+        if (this.execution.perspective) return this.projectedContext();
         const source = this.execution.source;
         const context = await this.query(
           source ? "exact" : "catalog",

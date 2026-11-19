@@ -4,6 +4,7 @@
 
 - [프로젝트 소개와 시작하기](../README.md)
 - [화면 사용법](UI_PREVIEW.md), [수동 편집·통합·복구](MANUAL_WORKFLOW.md), [AI 실행](AGENT_WORKFLOW.md), [작업 재개·스킬·외부 연결·PNG 첨부](RESUME_AND_TOOLS.md)
+- [시점·상태·관점 조회와 소설·게임 예시](DOMAIN_WORKFLOW.md)
 - [Git 프로젝트와 작업 보존](WORKSPACES.md), [검색·색인](INDEXING.md), [파일 형식 변환](MIGRATIONS.md)
 - [포함된 글꼴과 라이선스](THIRD_PARTY_FONTS.md)
 

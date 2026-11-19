@@ -6,7 +6,7 @@
 
 ProjectIndex.registered(appData, registrationId), .run(appData, runId, working|basis), .committed(appData, registrationId, commit)로 scope를 바인딩한다. scope는 등록/project ID뿐 아니라 실제 root/common-dir/git-dir/worktree/task/run/view/commit을 포함한다. 같은 project_id의 clone과 두 run의 working, run의 basis는 별도 캐시다. managed run을 일반 등록 경로로 우회하지 못한다.
 
-각 호출은 인스턴스의 opaque scopeToken을 요구한다. snapshotToken은 권한이 아닌 자료 버전이며 expectedSnapshot으로 변경을 거부할 수 있다. 응답은 scope, snapshotToken, sourceFingerprint/currentSourceFingerprint, baselineFingerprint, generationId, freshness와 data를 포함한다. 현재 author 관점만 지원한다. character/reader를 author로 fallback하지 않으며 해당 관점은 단계 8까지 거부한다.
+각 호출은 인스턴스의 opaque scopeToken을 요구한다. snapshotToken은 권한이 아닌 자료 버전이며 expectedSnapshot으로 변경을 거부할 수 있다. 응답은 scope, snapshotToken, sourceFingerprint/currentSourceFingerprint, baselineFingerprint, generationId, freshness와 data를 포함한다. 기본 관점은 author다. reader/character는 장면·경계와 범위를 고정해 공개 표현의 검색·정확 조회·연결 조회를 반환한다. 관점이 있는 요청은 기준 및 스냅샷 token에 그 정책을 결합한다. [시점과 관점](DOMAIN_WORKFLOW.md).
 
 | operation | 현재 결과 |
 |---|---|

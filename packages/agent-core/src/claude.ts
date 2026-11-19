@@ -11,7 +11,7 @@ import {
   type AdapterContext,
   type AgentQuestion,
 } from "./contracts.js";
-import { knowledgeTools } from "./knowledge.js";
+import { knowledgeTools, povKnowledgeTools } from "./knowledge.js";
 import { externalTools } from './external.js';
 import { resolveProgram, terminateTree } from "./process.js";
 
@@ -83,7 +83,7 @@ export async function consumeClaudeStream(
 
 export function claudePermissionHandler(context: AdapterContext): CanUseTool {
   return async (name, input, options) => {
-    if (name === "AskUserQuestion") {
+    if (name === "AskUserQuestion" && context.profile !== 'pov') {
       const source = Array.isArray(input["questions"])
         ? (input["questions"] as Record<string, unknown>[])
         : [];
@@ -123,7 +123,7 @@ export function claudePermissionHandler(context: AdapterContext): CanUseTool {
         toolUseID: options.toolUseID,
       };
     }
-    const ownTool = [...knowledgeTools, ...externalTools].some(
+    const ownTool = (context.profile === 'pov' ? povKnowledgeTools : [...knowledgeTools, ...externalTools]).some(
       (tool) =>
         name === "mcp__craft__" + tool.name ||
         name === "mcp__craft__" + tool.name.replaceAll(".", "_"),
@@ -142,6 +142,7 @@ export function claudePermissionHandler(context: AdapterContext): CanUseTool {
         updatedInput: input,
         toolUseID: options.toolUseID,
       };
+    if (context.profile === 'pov') return { behavior: 'deny', message: 'Only filtered CRAFT knowledge tools are available', toolUseID: options.toolUseID };
     const answer = await context.ask({
       kind: "approval",
       title: name,
@@ -185,7 +186,8 @@ export class ClaudeAdapter implements AgentAdapter {
             headers: { Authorization: "Bearer ${CRAFT_MCP_TOKEN}" },
           },
         },
-        tools: ["AskUserQuestion"],
+        tools: context.profile === 'pov' ? [] : ["AskUserQuestion"],
+        ...(context.profile === 'pov' ? { plugins: [], skills: [], disallowedTools: ['Bash', 'Read', 'Write', 'Edit', 'Grep', 'Glob', 'Agent', 'Task', 'WebFetch', 'WebSearch', 'Skill', 'ToolSearch', 'AskUserQuestion'] } : {}),
         permissionMode: "default",
         permissionPrompts: "host",
         canUseTool: claudePermissionHandler(context),

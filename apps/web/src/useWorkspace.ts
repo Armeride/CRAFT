@@ -10,7 +10,7 @@ import { useWorkspaceEvents } from './useWorkspaceEvents.js';
 import { categoryOf, workingKey } from './workspace-model.js';
 import type { Category, Collection } from './workspace-model.js';
 import type { DocumentTab } from './Document.js';
-export type Page = 'manage' | 'dashboard' | 'entity' | 'search' | 'tasks' | 'diagnostics';
+export type Page = 'manage' | 'dashboard' | 'entity' | 'search' | 'tasks' | 'diagnostics' | 'domain';
 export function useWorkspace(initialPreferences: Preferences) {
   const { t, i18n } = useTranslation(), preferences = usePreferences(initialPreferences), prefs = preferences.preferences;
   const [boot, setBoot] = useState<Session | null>(null), [projectId, setProjectId] = useState(''), [baselineId, setBaselineId] = useState('');

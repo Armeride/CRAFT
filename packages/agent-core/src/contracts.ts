@@ -72,6 +72,8 @@ export interface AgentEvent {
   usage?: Record<string, number>;
 }
 
+import type { Perspective } from '../../domain/src/story-contracts.js';
+
 export interface AgentExecution {
   version: 1;
   id: string;
@@ -88,6 +90,7 @@ export interface AgentExecution {
   pending: AgentRequest | null;
   source: { entityId: string; revisionId: string } | null;
   baselineId: string;
+  perspective?: Perspective;
   checkpointId?: string;
   providerSession?: string;
   code?: string;
@@ -98,6 +101,7 @@ export interface AgentExecution {
 
 export interface AdapterContext {
   cwd: string;
+  profile?: 'pov';
   prompt: string;
   userPrompt: string;
   model?: string;

@@ -8,7 +8,7 @@ import { statePolicy } from '../../state-model/src/contracts.js';
 import { hash } from './files.js';
 import { semanticDigest } from './changes.js';
 
-/** Fixed inputs/provenance and a future cache key, not a state evaluator. */
+/** Fixed scenario inputs and provenance for consumers of the separate evaluation query. */
 export function stateInputManifest(snapshot: ProjectSnapshot, source: { scopeFingerprint: string; headCommit: string }, baselineId: string, scenario: SnapshotTarget, actor?: string, overrides: Record<string, JsonValue> = {}) {
   const record = exactRevision(snapshot, scenario.entity_id, scenario.revision_id), payload = statePayload(record);
   if (!record.writable || payload?.record_type !== 'scenario' || payload.baseline_id !== baselineId) throw new ValidationFailure([issue('STATE_SCENARIO_MISMATCH', record.path)]);
@@ -23,5 +23,5 @@ export function stateInputManifest(snapshot: ProjectSnapshot, source: { scopeFin
   const invalid = validateStateModel({ ...snapshot, entities }); if (invalid.length) throw new ValidationFailure(invalid);
   const manifest = { source: { projectId: snapshot.project.project_id, headCommit: source.headCommit, fileFingerprint: snapshot.fingerprint }, baselineId, baselineFingerprint: snapshot.files.get(baseline.path)!.digest, schemaLockDigest: snapshot.files.get('schemas/lock.json')!.digest, policyVersion: statePolicy.version, scenario: { ...scenario, semanticDigest: semanticDigest(snapshot, scenario.entity_id, scenario.revision_id) }, actor: actor ?? null, actors: payload.actors, inputs, occurrences: payload.occurrences, assumptions: payload.assumptions, selectedInputs: Object.entries(baseline.value.selected).sort(([a], [b]) => a.localeCompare(b, 'en')).map(([entity_id, revision_id]) => ({ entity_id, revision_id, semanticDigest: semanticDigest(snapshot, entity_id, revision_id) })) };
   const inputDigest = hash(canonicalJson(manifest));
-  return { manifest, inputDigest, scopeCacheKey: hash(canonicalJson({ scopeFingerprint: source.scopeFingerprint, inputDigest })), evaluatorAvailable: false as const };
+  return { manifest, inputDigest, scopeCacheKey: hash(canonicalJson({ scopeFingerprint: source.scopeFingerprint, inputDigest })), evaluatorAvailable: true as const };
 }

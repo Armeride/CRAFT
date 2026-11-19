@@ -6,7 +6,6 @@ import {
   type AgentServiceOptions,
   type StartAgent,
 } from "../../packages/agent-core/src/service.js";
-import { knowledgeTools } from "../../packages/agent-core/src/knowledge.js";
 import {
   AgentError,
   type AgentAnswer,
@@ -110,6 +109,7 @@ export async function registerAgentRoutes(
             resumeTarget: { type: 'string', pattern: '^(?:[a-f0-9]{40}|[a-f0-9]{64})$' },
             skillKeys: { type: 'array', maxItems: 5, uniqueItems: true, items: text(100) },
             externalProfileId: text(48),
+            perspective: { type: 'object', maxProperties: 3 },
           },
         },
       },
@@ -247,7 +247,7 @@ export async function registerAgentRoutes(
         };
       if (method === "ping") return { jsonrpc: "2.0", id, result: {} };
       if (method === "tools/list")
-        return { jsonrpc: "2.0", id, result: { tools: [...knowledgeTools, ...(knowledge.external ? externalTools : [])] } };
+        return { jsonrpc: "2.0", id, result: { tools: [...knowledge.listTools(), ...(knowledge.external ? externalTools : [])] } };
       if (method !== "tools/call")
         return {
           jsonrpc: "2.0",

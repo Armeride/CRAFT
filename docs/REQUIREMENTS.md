@@ -12,7 +12,7 @@
 
 ## 기능 요구 추적
 
-아래 단계는 명세 18절의 번호다. 현재 단계 1의 파일·검증·정확 조회, 단계 2의 migration, 단계 3의 Git 프로젝트·작업 격리·보존, 단계 4의 재구축 색인·참조 진단·검색과 상태 계약 기반을 구현했다. 단계 5는 UI 초안 03 승인 후 작업 005의 수동 작성·검토·승인 통합·자동 저장/충돌·관리/SSE를 완료했고 단계 6의 실행기/내부 MCP·UI 제어와 사용자 opt-in 후 두 공급자 실제 모델 시험도 완료했다. 단계 7에서 작업 기록 기반 재개·스킬·관리 MCP를 검증했다. 각 요구의 구현 범위는 [구현 상태](IMPLEMENTATION_STATUS.md)에서 확인한다.
+아래 단계는 명세 18절의 번호다. 현재 단계 1의 파일·검증·정확 조회, 단계 2의 migration, 단계 3의 Git 프로젝트·작업 격리·보존, 단계 4의 재구축 색인·참조 진단·검색과 상태 계약 기반을 구현했다. 단계 5는 UI 초안 03 승인 후 작업 005의 수동 작성·검토·승인 통합·자동 저장/충돌·관리/SSE를 완료했고 단계 6의 실행기/내부 MCP·UI 제어와 사용자 opt-in 후 두 공급자 실제 모델 시험도 완료했다. 단계 7에서 작업 기록 기반 재개·스킬·관리 MCP를 검증했고, 단계 8에서 상태 평가·개체와 장면 경계·관점별 도메인 조회를 구현했다. 각 요구의 구현 범위는 [구현 상태](IMPLEMENTATION_STATUS.md)에서 확인한다.
 
 | ID | 구분 | 구현할 행동 | 주 단계 |
 |---|---|---|---|
@@ -120,7 +120,7 @@ R-01~R-24는 기존 검토 식별자, R-25/26은 추가 사용자 요구의 설�
 
 실제 의존/인용 의미, 초기 상태·시점·canon 여부, 서로 다른 변경안 채택, migration 새 필드의 의미, dirty 포함 선택은 원자료가 불명확할 때만 사용자 판단이 필요하다. 현재 환경·계획을 막는 질문은 없다. 자동 승인·자동 통합·원격 push 확대는 기본값으로 부여하지 않는다.
 
-상태 모델의 namespace·조건/효과 AST·연쇄 한도·기존 narrative 초기값 단일 출처 매핑은 [ADR-010](adr/010-versioned-state-model.md)과 fixture로 결정했다. 색인 게시/격리·전체 그래프 재분석과 요청 시 refresh는 [ADR-011](adr/011-worker-index-and-generations.md)을 따른다. 실제 평가·관점/상태 충돌 검증은 단계 8, i18n 구현체/초기 리소스는 [ADR-012](adr/012-web-draft-and-local-session.md)로 결정했다. UI의 시각 방향·탐색/편집 흐름은 사용자 초안 검토를 기다린다. 자연어 조건의 업무 의미·입력 초기값이 없으면 임의 확정하지 않는다. [ADR-009](adr/009-ui-locales-and-state-planning.md)를 따른다.
+상태 모델의 namespace·조건/효과 AST·연쇄 한도·기존 narrative 초기값 단일 출처 매핑은 [ADR-010](adr/010-versioned-state-model.md)과 fixture로 결정했다. 색인 게시/격리·전체 그래프 재분석과 요청 시 refresh는 [ADR-011](adr/011-worker-index-and-generations.md)을 따른다. 실제 평가·관점/상태 충돌 검증은 [ADR-018](adr/018-state-evaluation-and-scoped-perspective.md), i18n 구현체/초기 리소스는 [ADR-012](adr/012-web-draft-and-local-session.md)로 결정했다. UI의 시각 방향·탐색/편집 흐름은 사용자 초안 검토를 기다린다. 자연어 조건의 업무 의미·입력 초기값이 없으면 임의 확정하지 않는다. [ADR-009](adr/009-ui-locales-and-state-planning.md)를 따른다.
 
 ## UI 피드백의 분류와 우선순위
 

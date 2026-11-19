@@ -132,11 +132,18 @@ describe("internal MCP and browser agent boundary", () => {
         "changes.propose",
         "context.build",
         "entity.get",
+        "game.context",
         "knowledge.search",
+        "narrative.context",
         "project.validate",
         "references.reverse",
+        "state.compare",
+        "state.evaluate",
         "task.checkpoint",
       ]);
+      const evaluated = await client.callTool({ name: 'state.evaluate', arguments: { query: { worldTick: 0 } } });
+      expect(evaluated.isError).not.toBe(true);
+      expect(JSON.parse((evaluated.content as { text: string }[])[0]!.text).data).toMatchObject({ point: { worldTick: 0 }, cells: [], inputDigest: expect.any(String) });
       const invalid = await client.callTool({
         name: "context.build",
         arguments: { root: fixture.root },

@@ -76,6 +76,8 @@ details summary{cursor:pointer;line-height:1.8;font-size:.85em;color:var(--muted
 .icon-button:hover,.icon-button.pressed{background:var(--selected);color:var(--accent)}
 .subbar{display:flex;justify-content:space-between;align-items:center;height:45px;flex-shrink:0;padding:0 25px;background:var(--surface);border-bottom:1px solid var(--line);font-size:11px;color:var(--muted)}
 .subbar>div,.subbar label{display:flex;align-items:center;gap:9px}
+.domain-link{display:inline-flex;align-items:center;gap:6px;max-width:100%;text-align:start}
+.domain-link[aria-current="page"]{color:var(--accent)}
 .subbar select{background:none;border:0;font-size:11px;padding:4px;max-width:180px;color:var(--ink)}
 .workspace-canvas{display:grid;grid-template-columns:minmax(0,1fr);flex:1;min-height:0;min-width:0}
 .workspace-canvas.with-inspector{grid-template-columns:minmax(0,1fr) 274px}
@@ -320,6 +322,27 @@ details summary{cursor:pointer;line-height:1.8;font-size:.85em;color:var(--muted
 .search-results>button:hover,.saved-work-list>button:hover{border-color:var(--accent)}
 .saved-work-list small{display:block;margin-top:6px;color:var(--muted)}
 .saved-work-list>button>span{font-size:11px;color:var(--accent)}
+.domain-page{display:grid;gap:18px;align-content:start}
+.domain-tabs,.domain-fields{display:flex;gap:12px;align-items:end;flex-wrap:wrap}
+.domain-form,.domain-filtered{display:grid;gap:12px;padding:16px;border:1px solid var(--line);border-radius:10px}
+.domain-fields>label,.domain-form fieldset label,.domain-filtered label{display:grid;gap:6px}
+.domain-fields input,.domain-fields select,.domain-form input,.domain-form select,.domain-form textarea,.domain-filtered textarea{max-width:100%;min-width:0}
+.domain-columns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.domain-columns>section,.domain-columns>fieldset{min-width:0}
+.domain-columns>fieldset{display:grid;gap:10px;margin:0}
+.domain-values,.domain-flow{display:grid;gap:8px;padding-inline-start:20px}
+.domain-values li,.domain-flow li{overflow-wrap:anywhere}
+.domain-flow{list-style:none;border-inline-start:1px solid var(--line);margin-inline-start:6px}
+.domain-flow>li{position:relative;padding-block:5px;border-block-end:1px solid var(--line)}
+.domain-flow>li::before{position:absolute;inset-inline-start:-24px;top:11px;width:7px;height:7px;border-radius:50%;background:currentColor;content:""}
+.domain-flow>li[data-outcome="conflict"]::before,.domain-flow>li[data-outcome="unknown"]::before{background:transparent;border:1px solid currentColor}
+.domain-flow li span,.domain-flow li small{margin-inline-end:8px}
+.domain-card{padding:12px;margin-block:8px;border:1px solid var(--line);border-radius:8px}
+.domain-pin{margin:2px 3px;white-space:normal;text-align:start;overflow-wrap:anywhere}
+.domain-table{overflow:auto}.domain-table table{width:100%;border-collapse:collapse}
+.domain-table td,.domain-table th{padding:8px;text-align:start;overflow-wrap:anywhere;border-bottom:1px solid var(--line)}
+.domain-page code,.domain-page pre{white-space:pre-wrap;overflow-wrap:anywhere}
+@media (max-width:780px){.domain-columns{grid-template-columns:1fr}}
 .phase-seven{margin-block:12px}
 .phase-seven summary{cursor:pointer}
 .phase-seven fieldset{display:grid;gap:8px;min-inline-size:0;margin:8px 0}

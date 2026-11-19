@@ -11,6 +11,10 @@ import { isProjectPath } from '../../domain/src/path.js';
 import { checkImmutability, dependencyManifestDigest, semanticDigest } from '../../project-fs/src/changes.js';
 import { FILE_LIMITS, fingerprint, hash, isCanonicalPath, newId } from '../../project-fs/src/files.js';
 import { parseProject } from '../../project-fs/src/project.js';
+import { stateOptions, stateEvaluation, stateComparison } from '../../project-fs/src/state-query.js';
+import { readPerspective, readStoryQuery, storyContext, storySequences } from '../../domain/src/story.js';
+import { gameContext } from '../../domain/src/game.js';
+import { perspectiveQuery, restrictedOperations } from './perspective.js';
 import { stateInputManifest } from '../../project-fs/src/state-input.js';
 import type { JsonValue } from '../../schema/src/generated.js';
 import { stateRecords } from '../../state-model/src/model.js';
@@ -165,16 +169,22 @@ function publish(payload: { token: string; failBeforeCommit?: boolean }) {
   return manifest;
 }
 
-function query(payload: { operation: string; args: Record<string, unknown>; baselineId?: string; scope?: Parameters<typeof resolveScope>[2]; perspective?: string }): unknown {
+function query(payload: { operation: string; args: Record<string, unknown>; baselineId?: string; scope?: Parameters<typeof resolveScope>[2]; perspective?: unknown }): unknown {
   return connect().transaction(() => queryInsideTransaction(payload)).deferred();
 }
-function queryInsideTransaction(payload: { operation: string; args: Record<string, unknown>; baselineId?: string; scope?: Parameters<typeof resolveScope>[2]; perspective?: string }) {
+function queryInsideTransaction(payload: { operation: string; args: Record<string, unknown>; baselineId?: string; scope?: Parameters<typeof resolveScope>[2]; perspective?: unknown }) {
   const active = loadCurrent(); if (!active) throw new Error('INDEX_STALE');
-  if (payload.perspective !== undefined && payload.perspective !== 'author') throw new Error('CONTEXT_FORBIDDEN');
+  const perspective = readPerspective(payload.perspective);
   const { snapshot } = active, allRecords = records(snapshot), baselineId = payload.baselineId ?? snapshot.project.default_baseline_id, baseline = snapshot.baselines.get(baselineId);
   if (!baseline) throw new ValidationFailure([issue('BASELINE_MISSING', 'project.yaml')]);
   const args = payload.args;
-  if (payload.scope && !['selected', 'search', 'reverse', 'state', 'state-input'].includes(payload.operation)) throw new Error('QUERY_ARGUMENT_INVALID');
+  const analysis = active.analyses.get(baselineId)!;
+  if (perspective) {
+    if (!restrictedOperations.some(operation => operation === payload.operation)) throw new Error('CONTEXT_FORBIDDEN');
+    const data = perspectiveQuery(snapshot, baselineId, resolveScope(snapshot, baselineId, perspective.scope), analysis, perspective, payload.operation, args);
+    return { data, baselineId, baselineFingerprint: snapshot.files.get(baseline.path)!.digest, manifest: active.manifest };
+  }
+  if (payload.scope && !['selected', 'search', 'reverse', 'state', 'state-input', 'state-options', 'state-evaluate', 'state-compare', 'story-options', 'story', 'game'].includes(payload.operation)) throw new Error('QUERY_ARGUMENT_INVALID');
   const string = (name: string) => { const value = args[name]; if (typeof value !== 'string' || !value || value.length > 256) throw new Error('QUERY_ARGUMENT_INVALID'); return value; };
   const item = (entity: string, revision: string) => {
     const record = exactRevision(snapshot, entity, revision);
@@ -222,14 +232,23 @@ function queryInsideTransaction(payload: { operation: string; args: Record<strin
     case 'tasks': data = { records: [...snapshot.documents].filter(([path]) => path.startsWith('tasks/')).map(([path, value]) => ({ path, value })), workingFiles: [...snapshot.files.values()].filter(file => /^tasks\/[^/]+\/working\//.test(file.path)).map(file => ({ path: file.path, text: file.text, digest: file.digest })) }; break;
     case 'state': {
       const scope = payload.scope ? resolveScope(snapshot, baselineId, payload.scope) : undefined;
-      data = { records: stateRecords(snapshot).map(record => ({ ...record, selected: baseline.value.selected[record.target.entity_id] === record.target.revision_id })).filter(record => (args['includeHistory'] === true || record.selected) && (!scope || applies(exactRevision(snapshot, record.target.entity_id, record.target.revision_id).meta.scope, scope))), evaluatorAvailable: false }; break;
+      data = { records: stateRecords(snapshot).map(record => ({ ...record, selected: baseline.value.selected[record.target.entity_id] === record.target.revision_id })).filter(record => (args['includeHistory'] === true || record.selected) && (!scope || applies(exactRevision(snapshot, record.target.entity_id, record.target.revision_id).meta.scope, scope))), evaluatorAvailable: true }; break;
     }
+    case 'state-options': data = stateOptions(snapshot, baselineId, resolveScope(snapshot, baselineId, payload.scope)); break;
+    case 'state-evaluate':
+    case 'state-compare': {
+      const evaluate = payload.operation === 'state-evaluate' ? stateEvaluation : stateComparison;
+      data = evaluate(snapshot, { baselineId, scope: resolveScope(snapshot, baselineId, payload.scope), analysis, headCommit: active.manifest.source.headCommit, scopeFingerprint: active.manifest.scopeKey }, args); break;
+    }
+    case 'story-options': data = storySequences(snapshot, baselineId, resolveScope(snapshot, baselineId, payload.scope)); break;
+    case 'story': data = storyContext(snapshot, baselineId, resolveScope(snapshot, baselineId, payload.scope), analysis, readStoryQuery(args)); break;
+    case 'game': data = gameContext(snapshot, baselineId, resolveScope(snapshot, baselineId, payload.scope), analysis, args['entityId'] === undefined ? undefined : string('entityId')); break;
     case 'state-input': {
       const scope = resolveScope(snapshot, baselineId, payload.scope), record = exactRevision(snapshot, string('entityId'), string('revisionId'));
       if (!applies(record.meta.scope, scope)) throw new ValidationFailure([issue('SCOPE_MISMATCH', record.path)]);
       const overrides = args['overrides'] ?? {};
       if (!overrides || typeof overrides !== 'object' || Array.isArray(overrides) || Object.keys(overrides).length > 256) throw new Error('QUERY_ARGUMENT_INVALID');
-      data = stateInputManifest(snapshot, { scopeFingerprint: active.manifest.sourceFingerprint, headCommit: active.manifest.source.headCommit }, baselineId, { entity_id: record.meta.entity_id, revision_id: record.meta.revision_id }, args['actor'] === undefined ? undefined : string('actor'), overrides as Record<string, JsonValue>); break;
+      data = stateInputManifest(snapshot, { scopeFingerprint: active.manifest.scopeKey, headCommit: active.manifest.source.headCommit }, baselineId, { entity_id: record.meta.entity_id, revision_id: record.meta.revision_id }, args['actor'] === undefined ? undefined : string('actor'), overrides as Record<string, JsonValue>); break;
     }
     default: throw new Error('QUERY_OPERATION_INVALID');
   }

@@ -139,7 +139,7 @@ describe('rebuildable scoped SQLite index', () => {
 
   it('indexes state inputs and reverse dependencies without claiming an evaluator exists', async () => {
     const f = await registered('state-model');
-    const states = await f.index.query<{ records: { recordType: string }[]; evaluatorAvailable: boolean }>('state', {}, f.options); expect(states.data.evaluatorAvailable).toBe(false); expect(states.data.records.filter(r => r.recordType === 'definition')).toHaveLength(3);
+    const states = await f.index.query<{ records: { recordType: string }[]; evaluatorAvailable: boolean }>('state', {}, f.options); expect(states.data.evaluatorAvailable).toBe(true); expect(states.data.records.filter(r => r.recordType === 'definition')).toHaveLength(3);
     const reverse = await f.index.query<{ results: { source: string }[] }>('reverse', { entityId: 'ent_actor', revisionId: 'rev_actor' }, f.options);
     expect(reverse.data.results.map(result => result.source)).toContain('ent_gate_rule/rev_gate_rule');
     expect((await f.index.query<Search>('search', { text: '국경 지역', mode: 'exact' }, f.options)).data.hits[0]!.entityId).toBe('ent_border');
@@ -150,7 +150,7 @@ describe('rebuildable scoped SQLite index', () => {
     const f = await registered('state-model'), args = { entityId: 'ent_gate_scenario', revisionId: 'rev_gate_scenario', actor: 'player' };
     const first = await f.index.query<{ inputDigest: string; scopeCacheKey: string; evaluatorAvailable: boolean }>('state-input', args, f.options);
     const again = await f.index.query<{ inputDigest: string }>('state-input', args, f.options), npc = await f.index.query<{ inputDigest: string }>('state-input', { ...args, actor: 'npc' }, f.options);
-    expect(first.data.inputDigest).toBe(again.data.inputDigest); expect(first.data.inputDigest).not.toBe(npc.data.inputDigest); expect(first.data.evaluatorAvailable).toBe(false);
+    expect(first.data.inputDigest).toBe(again.data.inputDigest); expect(first.data.inputDigest).not.toBe(npc.data.inputDigest); expect(first.data.evaluatorAvailable).toBe(true);
     expect(again.sourceFingerprint).toBe(first.sourceFingerprint);
     await code(f.index.query('state-input', { ...args, actor: 'missing' }, f.options), 'STATE_ACTOR_MISSING');
     await code(f.index.query('state-input', { ...args, overrides: { undeclared: true } }, f.options), 'STATE_INPUT_MISSING');

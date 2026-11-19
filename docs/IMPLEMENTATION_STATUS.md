@@ -1,15 +1,21 @@
 # 구현 상태
 
-갱신: 2026-11-19, Asia/Seoul. **단계 0~7 완료, 단계 8 지시 대기**. 사용자가 UI 초안 03을 승인하고 단계 5 잔여 기능까지 이번에 구현하도록 확정했다. [작업 005](tasks/005-manual-workflow.md)를 완료했다. 이후 새 UI 요구는 [별도 작업](tasks/README.md)으로 관리한다. 단계 8~9는 미착수, 10은 선택 확장이다. 사용자 opt-in 후 실제 Codex/Claude 시험과 최종 회귀를 완료했다.
+갱신: 2026-11-19, Asia/Seoul. **단계 0~8 완료, 단계 9 지시 대기**. 사용자가 UI 초안 03을 승인하고 단계 5 잔여 기능까지 이번에 구현하도록 확정했다. [작업 005](tasks/005-manual-workflow.md)를 완료했다. 이후 새 UI 요구는 [별도 작업](tasks/README.md)으로 관리한다. 단계 9는 착수 전이며 10은 선택 확장이다. 사용자 opt-in 후 실제 Codex/Claude 시험과 최종 회귀를 완료했다.
 
 ## 기준과 범위 구분
 
 - 목표: PROJECT_SPEC.md v1.4 전체, REVIEW_NOTES.md. [확정 요구·설계 기준·미결정](REQUIREMENTS.md)을 구분한다. FR 26개·AT 68개는 제품 전체 기준이며 아래 테스트 수와 다르다.
-- 앱 소스는 main이다. 단계 0·1은 3847002, 2는 6a83094, 3은 906e996, 추가 기획은 2220dc5, 단계 4는 1fe44d2, UI 초안 01은 2bbd8cf, 초안 02는 6391781, 초안 03은 50b5b6c, 단계 5 완료 구현은 96847f4다. origin은 https://github.com/Armeride/CRAFT.git이며 단계 5와 인계 문서는 fcc9635까지 원격 보존했다. 이번 단계 6은 로컬 보존이며 push하지 않았다. 현재 로컬의 origin/main 추적 참조도 fcc9635다. 인계 문서 보강 commit은 이 문서 이후의 Git 이력으로 확인한다. 새 clone은 필요한 로컬 commit이 원격에 포함됐는지 확인한다.
+- 앱 소스는 main이다. 단계 0·1은 3847002, 2는 6a83094, 3은 906e996, 추가 기획은 2220dc5, 단계 4는 1fe44d2, UI 초안 01은 2bbd8cf, 초안 02는 6391781, 초안 03은 50b5b6c, 단계 5 완료 구현은 96847f4다. origin은 https://github.com/Armeride/CRAFT.git이며 단계 5와 인계 문서는 fcc9635까지 원격 보존했다. 단계 6의 실제 실행기 검증은 08415d2, 단계 7은 7338b81에 보존했다. 단계 8의 작업 이력은 로컬 main의 최신 기록을 따른다. 현재 로컬의 origin/main 추적 참조도 fcc9635다. 인계 문서 보강 commit은 이 문서 이후의 Git 이력으로 확인한다. 새 clone은 필요한 로컬 commit이 원격에 포함됐는지 확인한다.
 - 실행 기준: Windows x64, Node 24.21.0/npm 11.19.0과 exact lockfile. 전역 설정·소유권·인증을 변경하지 않는다.
 - FR-021: 진단 code/messageKey/params와 fallback 문구를 분리했다. 단계 5 초안 01에서 ko/en catalog·언어 전환/선호·폼 상태 보존을 연결했다. 현재 구현한 웹 화면 인수는 작업 005에서 검증했으며 후속 화면도 같은 gate를 유지한다.
-- FR-022: state_model@1 파일·호환성·참조·입력 digest/색인까지 구현했다. 평가기·상태 결과·시점/actor 전후 비교는 단계 8이다. 현재 state/state-input은 evaluatorAvailable:false다.
+- FR-022: state_model@1 파일과 색인 위에 시점·개체·가정·조건 평가 결과와 비교를 구현했다. 평가 정책과 입력 digest를 결과에 기록한다. [상태 v1](STATE_MODEL_V1.md).
 - 공개 core/narrative/game_design v1·core 생성 타입·기존 fixture/semantic model 1은 유지했다. 새 상태 확장과 fixture만 별도로 추가했다. 문서 v1.4도 제품 core v2가 아니다.
+
+## 단계 8 — 시점·상태 평가와 소설·게임 조회
+
+[작업 008](tasks/008-domain-queries.md)과 [ADR-018](adr/018-state-evaluation-and-scoped-perspective.md)의 계약으로 구현했다. 같은 스냅샷에서 장면/시간 경계, 조건과 개체, 명시 가정의 전후를 비교한다. 정본·계획·잠정·가정, 독자 공개 순서와 세계 시간, 기획 값과 빌드 관찰을 구별한다. 앱의 제한 관점 검색과 확정 Claude 프로필은 공개 자료로만 조회를 구성한다. [사용 안내와 실행 예시](DOMAIN_WORKFLOW.md).
+
+검증: `npm run check`에서 스키마·타입·서버/웹 빌드와 Vitest 27파일 218개가 통과했다. Chrome 18개 시나리오를 검증했고, 모바일 수정 후 접근성·모바일·도메인 5개, 늦은 관점 응답 제어 추가 후 도메인 3개를 다시 통과했다. 로컬 미리보기의 확정 1장/5장 조회도 확인했다.
 
 ## 단계 7 — 재개·스킬·외부 MCP 완료
 
@@ -235,7 +241,7 @@ npm run workspace -- start --app-data <관리-경로> --registration <등록-ID>
 ## 현재 한계와 미결정
 
 - 단계 5의 수동 작성·검토·통합·자동 저장/충돌/복구·SSE·관리 UI를 구현했다. 실제 Codex/Claude 실행기와 내부 MCP는 단계 6, 스킬·외부 MCP와 체크포인트 기반 실행기 교체는 단계 7에서 구현했다.
-- 상태 파일/입력·참조는 검증하지만 trigger 실행·시점/actor 상태 비교·canon/plan·confirmed/working·POV 결과 필터는 단계 8이다. author만 지원하고 character/reader 요청은 거부한다.
+- 관점 제한은 공급자에게 제공하는 도구와 자료의 경계에서 검증했다. 실제 모델 호출 및 운영체제 수준의 원본 읽기 격리는 별도 범위다. 실제 게임 실행과 연결하는 기능은 제공하지 않으며 상태 결과는 파일에서 계산한다.
 - 요소 비교는 metadata/ref 비교와 본문 단일 hunk를 제공하고 통합 검토는 전체 실제 Git diff를 제공한다. 승인 token·proposal 멱등성과 source/target 재검증을 구현했다. 다른 schema B/T/R·일반 텍스트 자동 3-way merge·전체 장애/규모 시험은 단계 9의 목표다.
 - 그래프 전체 재분석과 요청마다 원본 hash 확인은 현재의 계산 비용이다. watcher 힌트·갱신 UI를 구현했으며 영향 부분 최적화와 큰 자료 성능은 단계 9에서 판단한다.
 - product migration registry는 core 1만 지원한다. fixture core 2를 제품 업그레이드로 사용하지 않는다. 새 상태 계약은 선택적 추가 확장이며 자동 의미 migration은 없다.
@@ -244,10 +250,10 @@ npm run workspace -- start --app-data <관리-경로> --registration <등록-ID>
 - native 모듈은 해당 OS/ABI에서 재설치한다. remotePreserved는 local remote-tracking ref 관측이며 실시간 서버 보장이 아니다. local-only 결과는 새 clone에 없다.
 - 2026-11-13 ChatGPT 앱 전환 점검에서도 일반 셸의 helper_unknown_error/setup refresh 오류가 재현됐고 권한 검토를 거친 실행은 통과했다. Node 24.21.0/npm 11.19.0, 타입 검사·SQLite·Chrome·4174 검토 서버·원격 읽기/push dry-run을 확인했다. Git safe.directory는 D:/git/CRAFT 한 명령 범위로 사용했다. 새 세션은 해당 실행 환경의 실제 권한·오류를 확인한다.
 
-## 다음 작업 — 사용자 지시 후 단계 8
+## 다음 작업 — 사용자 지시 후 단계 9
 
 1. [새 세션 진입 순서](START_HERE.md#8-다른-세션에서-이어갈-때)에서 문서·HEAD·실행 환경을 확인한다.
-2. 사용자 진행 지시 후 [단계 8 계획](IMPLEMENTATION_PLAN.md#단계-8--소설과-게임-조회문맥-완성)에 따라 상태 평가, 시점·actor 비교와 도메인 문맥을 구현한다. 작업 재개 계약은 [작업 007](tasks/007-resume-skills-mcp.md)을 참고한다.
+2. 사용자 진행 지시 후 [단계 9 계획](IMPLEMENTATION_PLAN.md#단계-9--전체-통합장애성능배포-기준)에 따라 통합·장애·성능·배포 인수를 진행한다. 도메인 계약은 [작업 008](tasks/008-domain-queries.md)을 참고한다.
 
 ## 보존 상태
 

@@ -4,6 +4,7 @@ import { pathToFileURL } from 'node:url';
 import { Worker } from 'node:worker_threads';
 import { canonicalJson } from '../../domain/src/canonical.js';
 import { ValidationFailure } from '../../domain/src/model.js';
+import { readPerspective } from '../../domain/src/story.js';
 import type { Diagnostic } from '../../domain/src/model.js';
 import { captureFiles, fingerprint, hash, newId } from '../../project-fs/src/files.js';
 import { readCommittedFiles } from '../../project-fs/src/git-baseline.js';
@@ -162,9 +163,13 @@ export class ProjectIndex {
       throw error;
     } finally { this.rebuilding = false; }
   }
-  async query<T = unknown>(operation: 'catalog' | 'exact' | 'selected' | 'search' | 'analyze' | 'reverse' | 'diff' | 'tasks' | 'state' | 'state-input', args: Record<string, unknown>, options: QueryOptions): Promise<QueryEnvelope<T>> {
+  async query<T = unknown>(operation: import('./types.js').QueryOperation, args: Record<string, unknown>, options: QueryOptions): Promise<QueryEnvelope<T>> {
     this.authorize(options.scopeToken);
-    if (options.perspective !== undefined && options.perspective !== 'author') throw new IndexError('CONTEXT_FORBIDDEN');
+    let perspective: ReturnType<typeof readPerspective>;
+    try { perspective = readPerspective(options.perspective); }
+    catch (error) { throw new IndexError(error instanceof Error ? error.message : 'CONTEXT_FORBIDDEN'); }
+    if (perspective && options.scope && canonicalJson(options.scope) !== canonicalJson(perspective.scope ?? {})) throw new IndexError('CONTEXT_FORBIDDEN');
+    if (perspective && options.allowStale) throw new IndexError('INDEX_STALE');
     if (operation === 'analyze' && options.allowStale) throw new IndexError('INDEX_STALE');
     let state: IndexStatus;
     try { state = await this.status(options.scopeToken); }
@@ -174,8 +179,8 @@ export class ProjectIndex {
       await this.rebuild(options.scopeToken); state = await this.status(options.scopeToken);
       if (state.freshness !== 'fresh') throw new IndexError(state.freshness === 'rebuilding' ? 'WORKTREE_BUSY' : 'SOURCE_CHANGED');
     }
-    const result = await this.rpc<{ data: T; baselineFingerprint: string; baselineId: string; manifest: IndexManifest }>('query', { operation, args, ...(options.baselineId ? { baselineId: options.baselineId } : {}), ...(options.scope ? { scope: options.scope } : {}), perspective: options.perspective ?? 'author' });
-    const snapshotToken = hash(canonicalJson({ scopeKey: this.scopeKey, generationId: result.manifest.generationId, sourceFingerprint: result.manifest.sourceFingerprint, baselineId: result.baselineId, baselineFingerprint: result.baselineFingerprint }));
+    const result = await this.rpc<{ data: T; baselineFingerprint: string; baselineId: string; manifest: IndexManifest }>('query', { operation, args, ...(options.baselineId ? { baselineId: options.baselineId } : {}), ...(options.scope ? { scope: options.scope } : {}), perspective: perspective ?? 'author' });
+    const snapshotToken = hash(canonicalJson({ scopeKey: this.scopeKey, generationId: result.manifest.generationId, sourceFingerprint: result.manifest.sourceFingerprint, baselineId: result.baselineId, baselineFingerprint: result.baselineFingerprint, ...(perspective ? { perspective } : {}), ...(options.scope ? { queryScope: options.scope } : {}) }));
     if (options.expectedSnapshot && options.expectedSnapshot !== snapshotToken) throw new IndexError('BASE_CHANGED');
     await options.onPhase?.('queried');
     const final = await this.status(options.scopeToken);

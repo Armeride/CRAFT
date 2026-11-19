@@ -3,6 +3,9 @@ import staticFiles from '@fastify/static';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { mkdir, readdir } from 'node:fs/promises';
 import { join } from 'node:path';
+import type { QueryScope } from '../../packages/domain/src/analysis.js';
+import type { Perspective } from '../../packages/domain/src/story-contracts.js';
+import { queryOperations, type QueryOperation } from '../../packages/indexer/src/types.js';
 import { ProjectIndex, IndexError } from '../../packages/indexer/src/service.js';
 import { getRegistration, registerLocal } from '../../packages/tasks/src/projects.js';
 import { TaskService } from '../../packages/tasks/src/service.js';
@@ -66,7 +69,26 @@ export async function createWebApp(options: WebOptions) {
   });
   app.get('/api/session', async (_request, reply) => { reply.header('Set-Cookie', `${cookieName}=${session}; HttpOnly; SameSite=Strict; Path=/`); return { csrf, projects: [...choices.values()], demo: !!options.examples?.length }; });
   app.post<{ Body: { root: string } }>('/api/projects/open', { schema: { body: { type: 'object', additionalProperties: false, required: ['root'], properties: { root: { type: 'string', minLength: 1, maxLength: 4096 } } } } }, async request => { const registration = await registerLocal(options.appData, request.body.root); await addProject(registration.id); return choices.get(registration.id); });
-  app.post<{ Params: { id: string }; Body: { operation: 'catalog' | 'exact' | 'search' | 'analyze' | 'reverse' | 'diff' | 'tasks' | 'state'; args?: Record<string, unknown>; baselineId?: string } }>('/api/projects/:id/query', { schema: { params: idParams, body: { type: 'object', additionalProperties: false, required: ['operation'], properties: { operation: { enum: ['catalog', 'exact', 'search', 'analyze', 'reverse', 'diff', 'tasks', 'state'] }, args: { type: 'object', maxProperties: 12 }, baselineId: { type: 'string', minLength: 1, maxLength: 256 } } } } }, request => withIndex(request.params.id, index => index.query(request.body.operation, request.body.args ?? {}, { scopeToken: index.scopeToken, ...(request.body.baselineId ? { baselineId: request.body.baselineId } : {}) })));
+  const queryBody = { type: 'object', additionalProperties: false, required: ['operation'], properties: {
+    operation: { enum: queryOperations }, args: { type: 'object', maxProperties: 12 },
+    baselineId: { type: 'string', minLength: 1, maxLength: 256 }, expectedSnapshot: { type: 'string', pattern: '^[a-f0-9]{64}$' },
+    perspective: { anyOf: [{ const: 'author' }, { type: 'object', maxProperties: 3 }] },
+    scope: { type: 'object', additionalProperties: false, properties: Object.fromEntries(['continuity', 'platform', 'mode'].map(key => [key, { type: 'string', minLength: 1, maxLength: 256 }])) },
+  } };
+  type QueryBody = { operation: QueryOperation; args?: Record<string, unknown>; baselineId?: string; expectedSnapshot?: string; perspective?: 'author' | Perspective; scope?: QueryScope };
+  app.post<{ Params: { id: string }; Body: QueryBody }>('/api/projects/:id/query', { schema: { params: idParams, body: queryBody } }, request => {
+    const { operation, args, ...options } = request.body;
+    return withIndex(request.params.id, index => index.query(operation, args ?? {}, { scopeToken: index.scopeToken, ...options }));
+  });
+  app.post<{ Params: { id: string; view: 'basis' | 'working' }; Body: QueryBody }>('/api/runs/:id/query/:view', { schema: {
+    params: { type: 'object', required: ['id', 'view'], additionalProperties: false, properties: { id: { type: 'string', pattern: '^run_[a-f0-9-]+$' }, view: { enum: ['basis', 'working'] } } }, body: queryBody,
+  } }, async request => {
+    const { run } = await tasks.run(request.params.id); authorize(run.registrationId);
+    const { operation, args, ...queryOptions } = request.body;
+    const index = await ProjectIndex.run(options.appData, run.runId, request.params.view);
+    try { return await index.query(operation, args ?? {}, { scopeToken: index.scopeToken, ...queryOptions }); }
+    finally { await index.close(); }
+  });
   await registerDraftRoutes(app, { appData: options.appData, tasks, withIndex, authorize, changed });
   await registerManualRoutes(app, { appData: options.appData, authorize, changed, withProject });
   registerEventRoute(app, events, authorize);
