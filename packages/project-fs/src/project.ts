@@ -1,5 +1,6 @@
 import { canonicalJson, deepFreeze } from '../../domain/src/canonical.js';
 import { isProjectPath, resolveBodyPath } from '../../domain/src/path.js';
+import { imageReferences, managedAssetPattern, validateManagedImage } from './images.js';
 import { validateGraph } from '../../domain/src/validate.js';
 import { ValidationFailure } from '../../domain/src/model.js';
 import type { Diagnostic, EntityRecord, LocatedReference, ProjectSnapshot, RevisionRecord, SourceFile } from '../../domain/src/model.js';
@@ -158,6 +159,15 @@ export function parseProject(files: ReadonlyMap<string, SourceFile>): ProjectSna
       if (!bodyPath) { report('PATH_ESCAPE', 'body_path must stay inside its revision directory', path, '/body_path'); continue; }
       const body = files.get(bodyPath)?.text;
       if (body === undefined) { report('BODY_MISSING', 'Revision Markdown body is missing', path, '/body_path'); continue; }
+      for (const asset of imageReferences(body)) {
+        const image = files.get(asset.path);
+        if (!image || managedAssetPattern.exec(asset.path)?.[1] !== image.digest) {
+          report('ASSET_INVALID', 'Pinned image is missing or its bytes do not match the reference', bodyPath);
+        } else {
+          try { validateManagedImage(Buffer.from(image.contentBase64, 'base64')); }
+          catch { report('ASSET_INVALID', 'Pinned image is not a supported PNG', bodyPath); }
+        }
+      }
       if (!bodyPath.endsWith('.md')) report('BODY_FORMAT', 'Revision bodies must be plain Markdown files', path, '/body_path');
       if (/^---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)/.test(body)) report('BODY_FRONTMATTER', 'Body frontmatter cannot be a second metadata source', bodyPath);
       const bodyIssue = (code: string, message: string, offset: number): void => {

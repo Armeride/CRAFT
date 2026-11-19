@@ -6,6 +6,7 @@ import type { Task, Proposal } from '../../schema/src/generated.js';
 import { hash, fileFailure, fingerprint, newId, captureFiles, isCanonicalPath } from '../../project-fs/src/files.js';
 import { objectFile, rawObject } from '../../project-fs/src/content.js';
 import { loadCommittedProject, readCommittedFiles } from '../../project-fs/src/git-baseline.js';
+import { imageReferences, managedAssetPattern } from '../../project-fs/src/images.js';
 import { prepareChanges } from '../../project-fs/src/changes.js';
 import { applyTransaction } from '../../project-fs/src/writer.js';
 import { atomicText } from '../../workspace-runtime/src/state.js';
@@ -50,9 +51,11 @@ export class IntegrationService {
       if (target.fingerprint !== targetSnapshot.fingerprint) throw fileFailure('WORKTREE_DIRTY', 'Canonical working files differ from the committed target', 'project.yaml');
       const targetTask = targetSnapshot.files.has(taskPath) ? rawObject<Task>(targetSnapshot.files, taskPath) : null;
       if (targetTask?.consumed_proposals.some(value => proposalIds.includes(value))) throw fileFailure('PROPOSAL_ALREADY_CONSUMED', 'Proposal was already integrated', taskPath);
+      const includedAssets = new Set([...source.entities.values()].flatMap(entity => [...entity.revisions.values()].flatMap(revision => imageReferences(revision.body).map(image => image.path))));
       const files: SourceFile[] = [];
       for (const [path, file] of source.files) if (basis.files.get(path)?.digest !== file.digest) {
-        if (!/^(entities\/|baselines\/|reviews\/)/.test(path) && !path.startsWith(`tasks/${run.taskId}/`)) throw fileFailure('WRITE_SCOPE_FORBIDDEN', 'Result contains unrelated project changes', path);
+        if (managedAssetPattern.test(path) && !includedAssets.has(path)) continue;
+        if (!managedAssetPattern.test(path) && !/^(entities\/|baselines\/|reviews\/)/.test(path) && !path.startsWith(`tasks/${run.taskId}/`)) throw fileFailure('WRITE_SCOPE_FORBIDDEN', 'Result contains unrelated project changes', path);
         const current = targetSnapshot.files.get(path);
         if (current && current.digest !== file.digest && current.digest !== basis.files.get(path)?.digest) throw fileFailure('INTEGRATION_CONFLICT', 'Target and result both changed this file', path);
         if (current?.digest !== file.digest) files.push(file);
@@ -62,7 +65,7 @@ export class IntegrationService {
       const taskIndex = files.findIndex(file => file.path === taskPath); if (taskIndex >= 0) files.splice(taskIndex, 1); files.push(objectFile(taskPath, consumed));
       const reviewId = newId('review');
       files.push(objectFile(`tasks/${run.taskId}/working/ui-integration-${id}.json`, { version: 1, review_id: reviewId, source_commit: run.headCommit, target_commit: target.commit, proposals: proposalIds, role: 'integration-candidate' }));
-      const changes = files.map(file => ({ path: file.path, expectedDigest: targetSnapshot.files.get(file.path)?.digest ?? null, content: file.text! })), candidate = prepareChanges(targetSnapshot, { expectedSnapshot: targetSnapshot.fingerprint, changes });
+      const changes = files.map(file => ({ path: file.path, expectedDigest: targetSnapshot.files.get(file.path)?.digest ?? null, content: file.text ?? Buffer.from(file.contentBase64, 'base64') })), candidate = prepareChanges(targetSnapshot, { expectedSnapshot: targetSnapshot.fingerprint, changes });
       for (const baseline of candidate.baselines.values()) {
         const analysis = analysisOf(candidate, baseline.value.id);
         if (baseline.value.kind === 'release' && !analysis.releaseEligible) throw fileFailure('APPROVAL_BLOCKED', 'Release baseline has unresolved approval requirements', baseline.path);
@@ -71,7 +74,7 @@ export class IntegrationService {
       const path = join(this.appData, 'integrations', id), branch = `workbench/integration/${id}`;
       const workspace = await withMetadataLock(registration.root, () => createOwnedWorkspace(registration.root, this.appData, path, branch, target.commit));
       let candidateCommit = '';
-      await withWorktreeLock(path, async lease => { await applyTransaction(path, join(this.appData, 'manual-integrations', id), lease, { expectedSnapshot: targetSnapshot.fingerprint, changes }, { scopeId: id, allowedPrefixes: ['entities/', 'baselines/', 'reviews/', `tasks/${run.taskId}/`] }); candidateCommit = await withMetadataLock(registration.root, () => preserveWorkspace(workspace, target.commit, files.map(file => ({ path: file.path, file })), 'manual: integrate reviewed proposals')); });
+      await withWorktreeLock(path, async lease => { await applyTransaction(path, join(this.appData, 'manual-integrations', id), lease, { expectedSnapshot: targetSnapshot.fingerprint, changes }, { scopeId: id, allowedPrefixes: ['entities/', 'baselines/', 'reviews/', 'assets/craft/', `tasks/${run.taskId}/`] }); candidateCommit = await withMetadataLock(registration.root, () => preserveWorkspace(workspace, target.commit, files.map(file => ({ path: file.path, file })), 'manual: integrate reviewed proposals')); });
       const diff = (await runGit(registration.root, ['diff', '--no-ext-diff', '--no-textconv', '--binary', target.commit, candidateCommit, '--'])).stdout.toString('utf8');
       if (Buffer.byteLength(diff) > 1024 * 1024) throw fileFailure('DIFF_REVIEW_LIMIT', 'Review diff exceeds the supported display limit', 'project.yaml');
       await assertSourceUnchanged(target);

@@ -2,7 +2,7 @@ import { access, mkdir, readFile, realpath, unlink } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import type { Registration, Run, Operation } from '../../workspace-runtime/src/generated.js';
 import { atomicBytes, readState, writeState } from '../../workspace-runtime/src/state.js';
-import type { Task, Checkpoint, ContextManifest, Proposal, Revision } from '../../schema/src/generated.js';
+import type { Task, Checkpoint, ContextManifest, Proposal, Revision, SkillPin } from '../../schema/src/generated.js';
 import { canonicalJson } from '../../domain/src/canonical.js';
 import type { ProjectSnapshot, SourceFile } from '../../domain/src/model.js';
 import { ValidationFailure } from '../../domain/src/model.js';
@@ -18,6 +18,11 @@ import type { WriteOptions } from '../../project-fs/src/writer.js';
 import { assertOwnedPath, assertSourceUnchanged, checkedManagedRoot, repositoryGuard } from '../../git-workspace/src/worktree.js';
 import type { ScratchWorkspace } from '../../git-workspace/src/worktree.js';
 import { createOwnedWorkspace, preserveWorkspace } from '../../git-workspace/src/branches.js';
+import { imageReferences, validateManagedImage } from '../../project-fs/src/images.js';
+import { sourceFromChange } from '../../project-fs/src/changes.js';
+import { readResumeNotes } from './resume-contracts.js';
+import type { ResumeNotes } from './resume-contracts.js';
+import { externalOperations } from './external-records.js';
 import { gitText, runGit } from '../../git-workspace/src/git.js';
 import { gitLocations, withKernelLock, withMetadataLock, withWorktreeLock, worktreeScope } from '../../git-workspace/src/locks.js';
 import type { Lease } from '../../git-workspace/src/locks.js';
@@ -34,7 +39,7 @@ export class TaskService {
   constructor(appData: string) { this.appData = resolve(appData); }
   private directory(runId: string): string { if (!/^run_[a-f0-9-]+$/.test(runId)) throw new Error('Invalid run ID'); return join(this.appData, 'runs', runId); }
   private async save(run: Run): Promise<void> { await writeState(this.appData, join(this.directory(run.runId), 'run.json'), 'Run', run); }
-  private writeOptions(run: Run): WriteOptions { return { scopeId: run.runId, allowedPrefixes: [`tasks/${run.taskId}/`, 'entities/', 'baselines/', 'reviews/'] }; }
+  private writeOptions(run: Run): WriteOptions { return { scopeId: run.runId, allowedPrefixes: [`tasks/${run.taskId}/`, 'entities/', 'baselines/', 'reviews/', 'assets/craft/'] }; }
   private workspace(run: Run, registration: Registration): ScratchWorkspace { return { path: run.path, branch: run.branch, baseCommit: run.basisCommit, sourceRoot: registration.root }; }
   async run(runId: string, requireWorkspace = true): Promise<{ run: Run; registration: Registration }> {
     const run = await readState<Run>(this.appData, join(this.directory(runId), 'run.json'), 'Run');
@@ -120,7 +125,7 @@ export class TaskService {
       await withWorktreeLock(run.path, async lease => {
         const checkpointId = newId('cp');
         const task: Task = previous ? { ...previous, status: 'planned', latest_checkpoint: checkpointId } : { id: taskId, title: options.title ?? options.goal.slice(0, 80), status: 'planned', goal: options.goal, acceptance: options.acceptance ?? ['결과를 보존하고 사용자 검토를 받는다.'], base: { commit: basisCommit, schema_versions: { core: basis.project.schema_version, ...Object.fromEntries(Object.entries(basis.project.extensions).map(([name, value]) => [name, value.schema_version])) }, baseline_id: baselineId, baseline_fingerprint: basis.files.get(baseline.path)!.digest }, latest_checkpoint: checkpointId, skills: [], integration_profile: 'project-default', outputs: [], consumed_proposals: [] };
-        const cp = this.checkpointRecords(run, task, basis, checkpointId, previous ? '보존된 작업을 새 run으로 재개할 준비를 했다.' : '작업 목표와 초기 기준을 보존했다.');
+        const cp = this.checkpointRecords(run, previous ?? task, basis, checkpointId, previous ? '보존된 작업을 새 run으로 재개할 준비를 했다.' : '작업 목표와 초기 기준을 보존했다.');
         const files = [objectFile(`tasks/${taskId}/task.yaml`, task), ...cp];
         if (!previous) files.push(textFile(`tasks/${taskId}/brief.md`, `# ${task.title}\n\n${task.goal}\n`));
         const current = await loadProject(run.path);
@@ -136,7 +141,7 @@ export class TaskService {
     }
   }
 
-  private checkpointRecords(run: Run, task: Task, basis: ProjectSnapshot, id: string, summary: string, provider: NonNullable<Checkpoint['provider_hint']>['type'] = 'fake'): SourceFile[] {
+  private checkpointRecords(run: Run, task: Task, basis: ProjectSnapshot, id: string, summary: string, provider: NonNullable<Checkpoint['provider_hint']>['type'] = 'fake', history = basis): SourceFile[] {
     const inputPath = `tasks/${task.id}/checkpoints/${id}-inputs.yaml`;
     const selected = basis.baselines.get(task.base.baseline_id)!;
     const inputs: ContextManifest['inputs'] = Object.entries(selected.value.selected).map(([entityId, revisionId]) => {
@@ -145,11 +150,16 @@ export class TaskService {
       return { target: { entity_id: entityId, revision_id: revisionId }, source_path: record.bodyPath, source_digest: basis.files.get(record.bodyPath)!.digest, semantic_digest: semanticDigest(basis, entityId, revisionId) };
     });
     const manifest: ContextManifest = { snapshot_token: `git:${run.basisCommit}`, view: 'basis', baseline_id: task.base.baseline_id, baseline_fingerprint: basis.files.get(selected.path)!.digest, schema_versions: { core: basis.project.schema_version, ...Object.fromEntries(Object.entries(basis.project.extensions).map(([name, declaration]) => [name, declaration.schema_version])) }, builder_version: 'stage3-files-1', query: { perspective: 'author', run_id: run.runId }, inputs, skills: task.skills, omissions: [] };
-    const checkpoint: Checkpoint = { id, task_id: task.id, created_at: new Date().toISOString(), summary, working_files: task.outputs, decisions: [], open_questions: ['사용자 검토와 정본 통합은 아직 수행하지 않았다.'], next_actions: ['보존된 결과와 현재 기준을 검토한다.'], input_manifest_path: inputPath, provider_hint: { type: provider, session_id: run.runId } };
+    const priorPath = `tasks/${task.id}/checkpoints/${task.latest_checkpoint}.yaml`;
+    const prior = history.files.has(priorPath) ? rawObject<Checkpoint>(history.files, priorPath) : undefined;
+    const notesPath = `tasks/${task.id}/working/resume-notes.json`;
+    const notes = history.files.has(notesPath) ? readResumeNotes(rawObject<ResumeNotes>(history.files, notesPath)) : undefined;
+    const external = externalOperations(history, task.id);
+    const checkpoint: Checkpoint = { id, task_id: task.id, created_at: new Date().toISOString(), summary, working_files: task.outputs, decisions: notes?.decisions ?? prior?.decisions ?? [], open_questions: notes?.openQuestions ?? prior?.open_questions ?? ['사용자 검토와 정본 통합은 아직 수행하지 않았다.'], next_actions: notes?.nextActions ?? prior?.next_actions ?? ['보존된 결과와 현재 기준을 검토한다.'], input_manifest_path: inputPath, ...(external.length ? { external_operations: external } : {}), provider_hint: { type: provider, session_id: run.runId } };
     return [objectFile(inputPath, manifest), objectFile(`tasks/${task.id}/checkpoints/${id}.yaml`, checkpoint)];
   }
   private async write(run: Run, lease: Lease, current: ProjectSnapshot, files: readonly SourceFile[], onPhase?: WriteOptions['onPhase']): Promise<void> {
-    const changes: FileChange[] = files.map(file => ({ path: file.path, expectedDigest: current.files.get(file.path)?.digest ?? null, content: file.text! }));
+    const changes: FileChange<string | Uint8Array>[] = files.map(file => ({ path: file.path, expectedDigest: current.files.get(file.path)?.digest ?? null, content: file.text ?? Buffer.from(file.contentBase64, 'base64') }));
     await applyTransaction(run.path, this.directory(run.runId), lease, { expectedSnapshot: current.fingerprint, changes }, { ...this.writeOptions(run), ...(onPhase ? { onPhase } : {}) });
   }
   private async commit(run: Run, registration: Registration, expectedHead: string, message: string, lease: Lease): Promise<string> {
@@ -172,15 +182,49 @@ export class TaskService {
     });
   }
 
-  async checkpoint(runId: string, taskStatus: Task['status'] = 'paused', summary = '중간 결과를 보존했다.', runStatus: Run['status'] = 'interrupted', provider: NonNullable<Checkpoint['provider_hint']>['type'] = 'fake'): Promise<Run> {
+  async attachImage(runId: string, encoded: string, alt: string, expectedDigest: string | null): Promise<{ path: string; digest: string }> {
+    const bytes = Buffer.from(encoded, 'base64');
+    validateManagedImage(bytes);
+    if (bytes.toString('base64') !== encoded || !alt.trim() || alt.length > 200 || /[\r\n\[\]]/.test(alt)) {
+      throw fileFailure('ASSET_INVALID', 'Image bytes or alt text are invalid', 'project.yaml');
+    }
+    const path = `assets/craft/${hash(bytes)}.png`;
+    const file = sourceFromChange(path, bytes);
+    return this.withExecution(runId, async () => {
+      const { run } = await this.run(runId);
+      const draftPath = `tasks/${run.taskId}/working/ui-draft.md`;
+      const result = await withWorktreeLock(run.path, async lease => {
+        const current = await this.project(runId);
+        const draft = current.files.get(draftPath);
+        if ((draft?.digest ?? null) !== expectedDigest) throw fileFailure('FILE_CHANGED_EXTERNALLY', 'Preserve the current draft before attaching an image', draftPath);
+        if (imageReferences(draft?.text ?? '').some(image => image.path === path)) return { path, digest: draft!.digest };
+        const taskPath = `tasks/${run.taskId}/task.yaml`;
+        const task = rawObject<Task>(current.files, taskPath);
+        if (!task.outputs.includes(draftPath)) task.outputs = [...task.outputs, draftPath];
+        const text = draft?.text ?? '';
+        const separator = !text || text.endsWith('\n\n') ? '' : text.endsWith('\n') ? '\n' : '\n\n';
+        const next = textFile(draftPath, text + separator + `![${alt.trim()}](${path})\n`);
+        if (next.text!.length > 300000) throw fileFailure('SOURCE_SIZE_LIMIT', 'Draft exceeds the supported text limit', draftPath);
+        await this.write(run, lease, current, [file, next, objectFile(taskPath, task)]);
+        return { path, digest: next.digest };
+      });
+      await this.checkpoint(runId, 'paused', 'Image attachment preserved.');
+      return result;
+    });
+  }
+
+  async checkpoint(runId: string, taskStatus: Task['status'] = 'paused', summary = '중간 결과를 보존했다.', runStatus: Run['status'] = 'interrupted', provider: NonNullable<Checkpoint['provider_hint']>['type'] = 'fake', skills?: SkillPin[]): Promise<Run> {
     const { run, registration } = await this.run(runId);
     return withWorktreeLock(run.path, async lease => {
       await assertNoPending(this.directory(runId));
       const current = await this.project(runId);
       const task = rawObject<Task>(current.files, `tasks/${run.taskId}/task.yaml`);
-      const id = newId('cp'); task.latest_checkpoint = id; task.status = taskStatus;
+      const id = newId('cp'); task.status = taskStatus;
+      if (skills) task.skills = skills;
       const basis = await loadCommittedProject(registration.root, run.basisCommit);
-      await this.write(run, lease, current, [objectFile(`tasks/${task.id}/task.yaml`, task), ...this.checkpointRecords(run, task, basis, id, summary, provider)]);
+      const records = this.checkpointRecords(run, task, basis, id, summary, provider, current);
+      task.latest_checkpoint = id;
+      await this.write(run, lease, current, [objectFile(`tasks/${task.id}/task.yaml`, task), ...records]);
       const immutable = checkImmutability(await loadCommittedProject(run.path, run.initialCommit!), await this.project(runId));
       if (immutable.length) throw new ValidationFailure(immutable);
       const head = await this.commit(run, registration, run.headCommit!, 'task: preserve checkpoint', lease);
@@ -363,10 +407,12 @@ export class TaskService {
       if (current.fingerprint !== expectedSnapshot) throw fileFailure('BASE_CHANGED', 'Working snapshot changed before manual command', 'project.yaml');
       const task = rawObject<Task>(current.files, `tasks/${run.taskId}/task.yaml`), id = newId('cp');
       if (value.files.some(file => file.path === `tasks/${run.taskId}/task.yaml` || !this.writeOptions(run).allowedPrefixes.some(prefix => file.path.startsWith(prefix)))) throw fileFailure('WRITE_SCOPE_FORBIDDEN', 'Manual command is outside its task', 'project.yaml');
-      task.status = 'ready_for_review'; task.latest_checkpoint = id;
+      task.status = 'ready_for_review';
       task.outputs = [...new Set([...task.outputs, ...value.files.map(file => file.path)])];
       const basis = await loadCommittedProject(registration.root, run.basisCommit);
-      await this.write(run, lease, current, [...value.files, objectFile(`tasks/${task.id}/task.yaml`, task), ...this.checkpointRecords(run, task, basis, id, 'Manual changes preserved for user review.', provider)]);
+      const records = this.checkpointRecords(run, task, basis, id, 'Manual changes preserved for user review.', provider, current);
+      task.latest_checkpoint = id;
+      await this.write(run, lease, current, [...value.files, objectFile(`tasks/${task.id}/task.yaml`, task), ...records]);
       run.headCommit = await this.commit(run, registration, run.headCommit!, 'task: preserve manual changes', lease);
       run.checkpointId = id;
       if (!['running', 'waiting_for_input', 'cancelling'].includes(run.status)) run.status = 'interrupted';

@@ -320,6 +320,15 @@ details summary{cursor:pointer;line-height:1.8;font-size:.85em;color:var(--muted
 .search-results>button:hover,.saved-work-list>button:hover{border-color:var(--accent)}
 .saved-work-list small{display:block;margin-top:6px;color:var(--muted)}
 .saved-work-list>button>span{font-size:11px;color:var(--accent)}
+.phase-seven{margin-block:12px}
+.phase-seven summary{cursor:pointer}
+.phase-seven fieldset{display:grid;gap:8px;min-inline-size:0;margin:8px 0}
+.phase-seven fieldset label{display:block}
+.phase-seven textarea,.phase-seven input:not([type="checkbox"]){display:block;max-width:100%}
+.phase-seven textarea{width:100%;min-height:60px}
+.phase-seven pre,.phase-seven code{white-space:pre-wrap;overflow-wrap:anywhere}
+.managed-image{margin:12px 0}
+.managed-image img{display:block;max-width:100%;height:auto}
 .legacy-editor{margin-top:30px}
 .legacy-editor .draft-editor{display:block;margin:20px 0}
 .legacy-editor>article{margin-top:25px}

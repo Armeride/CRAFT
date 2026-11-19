@@ -1,6 +1,6 @@
 # 구현 상태
 
-갱신: 2026-11-18, Asia/Seoul. **단계 0~6 완료, 단계 7 착수 전 대기**. 사용자가 UI 초안 03을 승인하고 단계 5 잔여 기능까지 이번에 구현하도록 확정했다. [작업 005](tasks/005-manual-workflow.md)를 완료했다. 이후 새 UI 요구는 [별도 작업](tasks/README.md)으로 관리한다. 단계 7~9는 미착수, 10은 선택 확장이다. 사용자 opt-in 후 실제 Codex/Claude 시험과 최종 회귀를 완료했다.
+갱신: 2026-11-19, Asia/Seoul. **단계 0~7 완료, 단계 8 지시 대기**. 사용자가 UI 초안 03을 승인하고 단계 5 잔여 기능까지 이번에 구현하도록 확정했다. [작업 005](tasks/005-manual-workflow.md)를 완료했다. 이후 새 UI 요구는 [별도 작업](tasks/README.md)으로 관리한다. 단계 8~9는 미착수, 10은 선택 확장이다. 사용자 opt-in 후 실제 Codex/Claude 시험과 최종 회귀를 완료했다.
 
 ## 기준과 범위 구분
 
@@ -10,6 +10,12 @@
 - FR-021: 진단 code/messageKey/params와 fallback 문구를 분리했다. 단계 5 초안 01에서 ko/en catalog·언어 전환/선호·폼 상태 보존을 연결했다. 현재 구현한 웹 화면 인수는 작업 005에서 검증했으며 후속 화면도 같은 gate를 유지한다.
 - FR-022: state_model@1 파일·호환성·참조·입력 digest/색인까지 구현했다. 평가기·상태 결과·시점/actor 전후 비교는 단계 8이다. 현재 state/state-input은 evaluatorAvailable:false다.
 - 공개 core/narrative/game_design v1·core 생성 타입·기존 fixture/semantic model 1은 유지했다. 새 상태 확장과 fixture만 별도로 추가했다. 문서 v1.4도 제품 core v2가 아니다.
+
+## 단계 7 — 재개·스킬·외부 MCP 완료
+
+[작업 007](tasks/007-resume-skills-mcp.md)과 [ADR-017](adr/017-portable-continuation-and-managed-tools.md)에 범위와 검증을 보존한다. Git 체크포인트를 기준으로 기준 입력 차이·초안·결정·이전 실행 결과를 복원한다. 실행기 전환 때 보존 문맥과 선택한 스킬 사본으로 새 세션을 구성한다. 선택한 외부 MCP 도구는 사용자 승인, 요청 전 체크포인트, 작업 ID와 멱등 키, 외부 상태 조회를 거친다. 사용자 PNG 첨부는 원문 링크와 함께 복원·통합할 수 있다. [사용 안내](RESUME_AND_TOOLS.md).
+
+검증: 생성 스키마·타입 검사·서버/웹 빌드와 Vitest 23파일 208개, Chrome E2E 기존 14개 및 재개·PNG 신규 1개가 통과했다. 공급자 전환과 외부 변경은 로컬 시험에서 확인했다. 실제 이미지 공급자 연결은 별도 후속 작업이다.
 
 ## 단계 6 — 실행기와 내부 MCP 완료
 
@@ -30,7 +36,7 @@
 
 실제 설치에서 Codex의 MCP readOnly/side-effect 힌트와 experimentalApi 선언, Claude의 초기화 전달 미지원(지시 전 SDK 종료), native MCP 도구 이름의 점→밑줄 정규화 차이를 발견했다. Claude는 argv에 환경 참조만 전달하고 token은 자식 환경에 둔다. 버전 숫자만으로 초기화 지원을 추정하지 않는다. 인수 없는 MCP의 생략/null을 정규화하고, 공급자/도구 오류 원문은 토큰을 가려 보존·표시한다. 최종 전체 schema/typecheck/build/Vite/206개 Vitest를 통과했다. 기존 Chrome E2E 14개 전체 통과 후, 실제 호환 수정의 지시/승인·초안/통합과 중단/오류 상세/새 run·라이트/다크 접근성 3개도 다시 통과했다(3.4분). 실행기 실제 시험 결과 및 미해결 범위를 기록하고 단계 6을 종료한다. 단계 7은 시작하지 않았다.
 
-의존성 점검: npm audit --omit=dev는 0건이다. 전체 audit는 기존 개발 도구 체인의 high 6건(picomatch/fdir/tinyglobby와 Vite/Vitest/schema generator)을 보고한다. 자동 major 다운그레이드 제안은 적용하지 않았으며 도구 교체는 별도 검증 대상으로 남긴다. MCP client SDK 1.32.2는 exact dev dependency다. 원격 push는 이번 작업에 포함하지 않는다.
+의존성 점검: npm audit --omit=dev는 0건이다. 전체 audit는 기존 개발 도구 체인의 high 6건(picomatch/fdir/tinyglobby와 Vite/Vitest/schema generator)을 보고한다. 자동 major 다운그레이드 제안은 적용하지 않았으며 도구 교체는 별도 검증 대상으로 남긴다. MCP client SDK 1.32.2는 단계 6에서 exact dev dependency로 추가했고 단계 7에서 런타임 의존성으로 옮겼다. 원격 push는 이번 작업에 포함하지 않는다.
 
 ## 단계 5 — 수동 작업 흐름 완료
 
@@ -228,7 +234,7 @@ npm run workspace -- start --app-data <관리-경로> --registration <등록-ID>
 
 ## 현재 한계와 미결정
 
-- 단계 5의 수동 작성·검토·통합·자동 저장/충돌/복구·SSE·관리 UI를 구현했다. 실제 Codex/Claude 실행기와 내부 MCP는 단계 6, 스킬/외부 MCP·provider 교체는 단계 7의 목표다.
+- 단계 5의 수동 작성·검토·통합·자동 저장/충돌/복구·SSE·관리 UI를 구현했다. 실제 Codex/Claude 실행기와 내부 MCP는 단계 6, 스킬·외부 MCP와 체크포인트 기반 실행기 교체는 단계 7에서 구현했다.
 - 상태 파일/입력·참조는 검증하지만 trigger 실행·시점/actor 상태 비교·canon/plan·confirmed/working·POV 결과 필터는 단계 8이다. author만 지원하고 character/reader 요청은 거부한다.
 - 요소 비교는 metadata/ref 비교와 본문 단일 hunk를 제공하고 통합 검토는 전체 실제 Git diff를 제공한다. 승인 token·proposal 멱등성과 source/target 재검증을 구현했다. 다른 schema B/T/R·일반 텍스트 자동 3-way merge·전체 장애/규모 시험은 단계 9의 목표다.
 - 그래프 전체 재분석과 요청마다 원본 hash 확인은 현재의 계산 비용이다. watcher 힌트·갱신 UI를 구현했으며 영향 부분 최적화와 큰 자료 성능은 단계 9에서 판단한다.
@@ -238,10 +244,10 @@ npm run workspace -- start --app-data <관리-경로> --registration <등록-ID>
 - native 모듈은 해당 OS/ABI에서 재설치한다. remotePreserved는 local remote-tracking ref 관측이며 실시간 서버 보장이 아니다. local-only 결과는 새 clone에 없다.
 - 2026-11-13 ChatGPT 앱 전환 점검에서도 일반 셸의 helper_unknown_error/setup refresh 오류가 재현됐고 권한 검토를 거친 실행은 통과했다. Node 24.21.0/npm 11.19.0, 타입 검사·SQLite·Chrome·4174 검토 서버·원격 읽기/push dry-run을 확인했다. Git safe.directory는 D:/git/CRAFT 한 명령 범위로 사용했다. 새 세션은 해당 실행 환경의 실제 권한·오류를 확인한다.
 
-## 다음 작업 — 사용자 지시 후 단계 7
+## 다음 작업 — 사용자 지시 후 단계 8
 
 1. [새 세션 진입 순서](START_HERE.md#8-다른-세션에서-이어갈-때)에서 문서·HEAD·실행 환경을 확인한다.
-2. 사용자 진행 지시 후 [단계 7 계획](IMPLEMENTATION_PLAN.md#단계-7--재개스킬외부-mcp)에 따라 체크포인트 기반 재개, 기본 스킬, 외부 MCP를 구현한다. 기존 실행기 계약과 검증 결과는 [작업 006](tasks/006-agent-runners.md)을 참고한다.
+2. 사용자 진행 지시 후 [단계 8 계획](IMPLEMENTATION_PLAN.md#단계-8--소설과-게임-조회문맥-완성)에 따라 상태 평가, 시점·actor 비교와 도메인 문맥을 구현한다. 작업 재개 계약은 [작업 007](tasks/007-resume-skills-mcp.md)을 참고한다.
 
 ## 보존 상태
 

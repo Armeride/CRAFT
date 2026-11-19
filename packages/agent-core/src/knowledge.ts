@@ -139,7 +139,10 @@ export interface KnowledgeReceipt {
   }[];
 }
 
+import type { ManagedExternal } from './external.js';
+
 export class RunKnowledge {
+  external?: ManagedExternal;
   readonly tasks: TaskService;
   readonly receipts: KnowledgeReceipt[] = [];
   readonly managedFiles = new Map<string, string>();
@@ -363,6 +366,9 @@ export class RunKnowledge {
     input: Record<string, unknown>,
   ): Promise<unknown> {
     await this.assertManaged();
+    if (this.external && (name === 'external.call' || name === 'external.status')) {
+      return this.external.call(name, input, () => this.track([]));
+    }
     const valid = validators.get(name);
     if (!valid || !valid(input))
       throw fileFailure(

@@ -12,6 +12,7 @@ import {
   type AgentQuestion,
 } from "./contracts.js";
 import { knowledgeTools } from "./knowledge.js";
+import { externalTools } from './external.js';
 import { resolveProgram, terminateTree } from "./process.js";
 
 export async function consumeClaudeStream(
@@ -122,7 +123,7 @@ export function claudePermissionHandler(context: AdapterContext): CanUseTool {
         toolUseID: options.toolUseID,
       };
     }
-    const ownTool = knowledgeTools.some(
+    const ownTool = [...knowledgeTools, ...externalTools].some(
       (tool) =>
         name === "mcp__craft__" + tool.name ||
         name === "mcp__craft__" + tool.name.replaceAll(".", "_"),

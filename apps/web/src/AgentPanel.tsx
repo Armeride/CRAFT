@@ -7,6 +7,7 @@ import type {
   AgentRequest,
   ProviderId,
 } from "../../../packages/agent-core/src/contracts.js";
+import { ContinuationPanel, useContinuation } from './ContinuationPanel.js';
 import type { Draft } from "../../server/contracts.js";
 import { api, ApiError, remember, runCommand, stored } from "./api.js";
 
@@ -134,6 +135,7 @@ export function AgentPanel({
   openRun: (id: string) => void;
 }) {
   const { t, i18n } = useTranslation();
+  const preparation = useContinuation(draft.runId, report);
   const [installations, setInstallations] = useState<AgentInstallation[]>([]);
   const [provider, setProvider] = useState<ProviderId | "">(() => {
     const saved = stored("craft.agent.provider");
@@ -215,6 +217,7 @@ export function AgentPanel({
     const input = {
       provider,
       prompt: prompt.trim(),
+      ...preparation.input,
       ...(path.trim() ? { path: path.trim() } : {}),
       ...(model.trim() ? { model: model.trim() } : {}),
     };
@@ -269,6 +272,7 @@ export function AgentPanel({
     new Intl.NumberFormat(i18n.resolvedLanguage).format(value);
   return (
     <section className="agent-panel" aria-label={t("agent.controls")}>
+      <ContinuationPanel preparation={preparation} report={report} disabled={busy || running} />
       <label>
         {t("agent.provider")}
         <select
@@ -338,6 +342,7 @@ export function AgentPanel({
           running ||
           !prompt.trim() ||
           !installation?.available ||
+          !preparation.ready ||
           installation.authentication === "unauthenticated"
         }
         onClick={() => {
@@ -467,4 +472,21 @@ export function AgentPanel({
       })}
     </section>
   );
+}
+
+const noConnection = () => {};
+
+export function StandaloneAgent({ draft, report, openRun }: {
+  draft: Draft; report: (error: unknown) => void; openRun: (id: string) => void;
+}) {
+  const { t } = useTranslation();
+  const [prompt, setPrompt] = useState('');
+  const [opened, setOpened] = useState(false);
+  return <details className="phase-seven" onToggle={event => setOpened(event.currentTarget.open)}>
+    <summary>{t('agent.controls')}</summary>
+    {opened && <>
+      <label>{t('chat.prompt')}<textarea maxLength={12000} value={prompt} onChange={event => setPrompt(event.target.value)}/></label>
+      <AgentPanel draft={draft} prompt={prompt} sent={() => setPrompt('')} connection={noConnection} report={report} openRun={openRun}/>
+    </>}
+  </details>;
 }

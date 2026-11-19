@@ -1,4 +1,6 @@
 import type { FastifyInstance } from "fastify";
+import { externalTools } from '../../packages/agent-core/src/external.js';
+import { registerContinuationRoutes } from './continuation.js';
 import {
   AgentService,
   type AgentServiceOptions,
@@ -55,6 +57,8 @@ export async function registerAgentRoutes(
     return record;
   }
 
+  registerContinuationRoutes(app, { ...options, tasks });
+
   app.get("/api/agents", async () =>
     Promise.all(
       (["codex", "claude", "fake"] as const).map((provider) =>
@@ -103,6 +107,9 @@ export async function registerAgentRoutes(
             prompt: text(12000),
             path: text(4096),
             model: text(256),
+            resumeTarget: { type: 'string', pattern: '^(?:[a-f0-9]{40}|[a-f0-9]{64})$' },
+            skillKeys: { type: 'array', maxItems: 5, uniqueItems: true, items: text(100) },
+            externalProfileId: text(48),
           },
         },
       },
@@ -224,7 +231,7 @@ export async function registerAgentRoutes(
       },
     },
     async (request, reply) => {
-      service.authenticated(request.params.id, request.headers.authorization);
+      const knowledge = service.authenticated(request.params.id, request.headers.authorization);
       const { id, method } = request.body;
       reply.header("Cache-Control", "no-store");
       if (id === undefined) return reply.code(202).send();
@@ -240,7 +247,7 @@ export async function registerAgentRoutes(
         };
       if (method === "ping") return { jsonrpc: "2.0", id, result: {} };
       if (method === "tools/list")
-        return { jsonrpc: "2.0", id, result: { tools: knowledgeTools } };
+        return { jsonrpc: "2.0", id, result: { tools: [...knowledgeTools, ...(knowledge.external ? externalTools : [])] } };
       if (method !== "tools/call")
         return {
           jsonrpc: "2.0",

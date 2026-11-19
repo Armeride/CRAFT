@@ -1,0 +1,4 @@
+id: scene-writing
+version: '1.0.0'
+entrypoint: SKILL.md
+description: Write a scene with explicit context

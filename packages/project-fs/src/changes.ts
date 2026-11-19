@@ -3,23 +3,37 @@ import { isProjectPath } from '../../domain/src/path.js';
 import { ValidationFailure } from '../../domain/src/model.js';
 import type { Diagnostic, ProjectSnapshot, SourceFile } from '../../domain/src/model.js';
 import { fileFailure, hash } from './files.js';
+import { managedAssetPattern, validateManagedImage } from './images.js';
 import { parseProject } from './project.js';
 
-export interface FileChange {
+export interface FileChange<Content = string> {
   readonly path: string;
   readonly expectedDigest: string | null;
-  readonly content: string | null;
+  readonly content: Content | null;
 }
-export interface FileChangeSet {
+export interface FileChangeSet<Content = string> {
   readonly expectedSnapshot: string;
-  readonly changes: readonly FileChange[];
+  readonly changes: readonly FileChange<Content>[];
+}
+
+export function sourceFromChange(path: string, content: string | Uint8Array): SourceFile {
+  const bytes = typeof content === 'string' ? Buffer.from(content, 'utf8') : Buffer.from(content);
+  const asset = managedAssetPattern.exec(path);
+  if (typeof content !== 'string' || asset) {
+    if (!asset || typeof content === 'string' || asset[1] !== hash(bytes)) {
+      throw fileFailure('ASSET_INVALID', 'Binary writes require a content-addressed managed image path', path);
+    }
+    validateManagedImage(bytes);
+  }
+  return { path, contentBase64: bytes.toString('base64'), digest: hash(bytes),
+    ...(typeof content === 'string' ? { text: content } : {}) };
 }
 
 /** No migration exception yet: stage 2 will require a verified attestation. */
 export function checkImmutability(before: ProjectSnapshot, after: ProjectSnapshot): Diagnostic[] {
   const diagnostics: Diagnostic[] = [];
   for (const [path, original] of before.files) {
-    const immutable = /^entities\/[^/]+\/revisions\//.test(path) || /^reviews\/[^/]+\.yaml$/.test(path) || /^tasks\/[^/]+\/checkpoints\//.test(path);
+    const immutable = managedAssetPattern.test(path) || /^entities\/[^/]+\/revisions\//.test(path) || /^reviews\/[^/]+\.yaml$/.test(path) || /^tasks\/[^/]+\/checkpoints\//.test(path);
     if (immutable && after.files.get(path)?.digest !== original.digest) diagnostics.push({ code: 'IMMUTABLE_RECORD_CHANGED', message: 'Existing revisions, reviews and checkpoints cannot be overwritten/deleted', path, pointer: '', severity: 'error' });
   }
   for (const [id, entity] of before.entities) {
@@ -30,7 +44,7 @@ export function checkImmutability(before: ProjectSnapshot, after: ProjectSnapsho
 }
 
 /** Build and validate a candidate entirely in memory. Disk application/locking is stage 3. */
-export function prepareChanges(snapshot: ProjectSnapshot, changeSet: FileChangeSet): ProjectSnapshot {
+export function prepareChanges(snapshot: ProjectSnapshot, changeSet: FileChangeSet<string | Uint8Array>): ProjectSnapshot {
   if (snapshot.fingerprint !== changeSet.expectedSnapshot) throw fileFailure('BASE_CHANGED', 'Snapshot fingerprint does not match the expected basis', 'project.yaml');
   if (!snapshot.writable && changeSet.changes.length) throw fileFailure('PROJECT_READ_ONLY', 'Required extension support is missing', 'project.yaml');
   const files = new Map(snapshot.files);
@@ -47,7 +61,7 @@ export function prepareChanges(snapshot: ProjectSnapshot, changeSet: FileChangeS
     }
     if (change.content === null) files.delete(change.path);
     else {
-      const file: SourceFile = { path: change.path, text: change.content, contentBase64: Buffer.from(change.content, 'utf8').toString('base64'), digest: hash(change.content) };
+      const file = sourceFromChange(change.path, change.content);
       files.set(change.path, file);
     }
   }

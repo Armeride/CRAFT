@@ -34,4 +34,5 @@ npm run ui:preview
 - [화면과 설정](docs/UI_PREVIEW.md)
 - [직접 편집·검토·통합·복구](docs/MANUAL_WORKFLOW.md)
 - [AI 실행과 중단](docs/AGENT_WORKFLOW.md)
+- [작업 재개·스킬·외부 연결·PNG 첨부](docs/RESUME_AND_TOOLS.md)
 - [전체 문서 목록](docs/README.md)

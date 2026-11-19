@@ -1,6 +1,6 @@
 # 새 Codex 세션에서 개발 시작하기
 
-작성일: 2026-11-10, 갱신: 2026-11-18. 명세 v1.4 반영본. 현재 단계 0~6 완료, 단계 7 착수 전 대기다. UI 초안 03을 승인 기준선으로 [작업 005](tasks/005-manual-workflow.md)의 잔여 수동 기능을 완성했다. 현재 전체 Vitest 206개와 Chrome E2E 14개가 통과했다. 실행기·내부 MCP와 실제 Codex/Claude opt-in 시험은 작업 006·ADR-016에서 완료했다. 공급자 세션 재개·스킬·외부 MCP는 7, 상태 평가/시점·actor 비교는 8에 남아 있다. 새 UI 요구는 별도 작업으로 진행하며 **한 단계 완료 후 멈추고 대기** 지시를 유지한다. 최신 검증 범위와 한계는 상태 문서를 따른다.
+작성일: 2026-11-10, 갱신: 2026-11-19. 명세 v1.4 반영본. 현재 단계 0~7을 완료했으며 단계 8 지시를 기다린다. UI 초안 03을 승인 기준선으로 [작업 005](tasks/005-manual-workflow.md)의 잔여 수동 기능을 완성했다. 전체 검증 수치와 시험 범위는 구현 상태를 따른다. 실행기·내부 MCP와 실제 Codex/Claude opt-in 시험은 작업 006·ADR-016에서 완료했다. Git 체크포인트 재개·스킬·외부 MCP는 [작업 007](tasks/007-resume-skills-mcp.md)에서 완료했다. 상태 평가·시점/actor 비교는 8의 목표다. 새 UI 요구는 별도 작업으로 진행하며 **한 단계 완료 후 멈추고 대기** 지시를 유지한다. 최신 검증 범위와 한계는 상태 문서를 따른다.
 
 ## 1. 전달할 파일
 
@@ -35,7 +35,7 @@ REVIEW_NOTES.md도 읽어서 버전·참조·복원·마이그레이션의 함�
 
 먼저 실제 작업 저장소, AGENTS.md, 기존 변경, 런타임을 확인해.
 기존 파일을 덮어쓰지 말고, 개발 위치가 정해지지 않았다면 그 정보만 확인해.
-현재 단계 0~6은 완료했어. UI 초안 03을 승인 기준선으로 docs/tasks/005-manual-workflow.md의 수동 revision/review/baseline·autosave/충돌·실제 diff 승인/통합·clone/import/migration 관리·SSE를 완성했어. docs/MANUAL_WORKFLOW.md와 ADR-015를 확인해. 단계 6의 작업 006/ADR-016·두 실제 공급자 smoke 증거도 확인해. 단계 7은 사용자 진행 지시 전 착수하지 말고 대기해. 새 실제 호출은 승인된 범위를 먼저 확인해. 이후 새 UI 변경은 새 작업을 만들어 진행해.
+현재 단계 0~7은 완료했어. UI 초안 03을 승인 기준선으로 docs/tasks/005-manual-workflow.md의 수동 revision/review/baseline·autosave/충돌·실제 diff 승인/통합·clone/import/migration 관리·SSE를 완성했어. docs/MANUAL_WORKFLOW.md와 ADR-015를 확인해. 단계 6의 작업 006/ADR-016·두 실제 공급자 smoke 증거도 확인해. 단계 7은 작업 007과 ADR-017을 확인해. 단계 8은 사용자 진행 지시 전까지 대기해. 새 실제 호출은 승인된 범위를 먼저 확인해. 이후 새 UI 변경은 새 작업을 만들어 진행해.
 이번 지시가 기획 변경이면 문서만 반영하고 구현을 시작하지 마.
 각 단계는 순서대로 진행하되 한 단계 완료 후 반드시 멈추고 대기해.
 UI나 모델 호출 데모보다 파일 형식·검증·마이그레이션을 먼저 완성해.
@@ -164,13 +164,13 @@ ADR은 선택 이유와 트레이드오프를 남긴다. 단순 진행 로그로
 
 현재 요구는 FR 26개·AT 68개다. FR-026/AT-67~68에 외부 검토·엔진 선택·중심 배치/군집·캔버스 탐색을 기록했다. FR-023~025/AT-61~66으로 추가 UI 요구를 기록하고 확정 요구·설계 선택·후순위를 분리했다.
 
-UI 초안 03은 사용자 승인을 받았다. 수동 작성·검토·실제 diff 승인 통합·자동 저장/충돌/복구·관리/SSE까지 작업 005에서 완성했다. 단계 6에서 실행기·내부 MCP·웹 제어와 실제 두 공급자 시험까지 완료했다. 다음은 단계 7이지만 사용자 진행 지시 전 대기한다. [작업 006](tasks/006-agent-runners.md)·[ADR-016](adr/016-isolated-agent-runners-and-internal-mcp.md)·[AI 안내](AGENT_WORKFLOW.md)를 따른다. 상태 평가·시점/actor 비교는 단계 8의 목표다.
+UI 초안 03은 사용자 승인을 받았다. 수동 작성·검토·실제 diff 승인 통합·자동 저장/충돌/복구·관리/SSE까지 작업 005에서 완성했다. 단계 6에서 실행기·내부 MCP·웹 제어와 실제 두 공급자 시험까지 완료했다. 단계 7의 체크포인트 재개·스킬·외부 MCP와 PNG 첨부를 완료했다. 다음 개발 단계는 8이며 사용자 진행 지시를 기다린다. [작업 006](tasks/006-agent-runners.md)·[ADR-016](adr/016-isolated-agent-runners-and-internal-mcp.md)·[AI 안내](AGENT_WORKFLOW.md)를 따른다. 상태 평가·시점/actor 비교는 단계 8의 목표다.
 
 문서 버전 1.4도 제품 schema v2 출시가 아니다. 공개 core/narrative/game_design v1·기존 fixture를 유지하며 별도 state_model@1 계약을 추가했다. 상세 지원/실행법은 docs/STATE_MODEL_V1.md와 docs/INDEXING.md를 따른다.
 
 ## 8. 다른 세션에서 이어갈 때
 
-이 문서 다음에는 현재 구현 상태, 전체 프로젝트 명세와 설계 검토 기록, 요구사항 분류와 단계 7 계획을 순서대로 읽는다. 실행기 경계는 ADR-004, 작업 격리는 ADR-008, 조회 scope는 ADR-011, 수동 검토/통합은 ADR-015에 근거를 남겼다. [현재 구현 상태](IMPLEMENTATION_STATUS.md), [요구사항 구분](REQUIREMENTS.md), [단계 7 계획](IMPLEMENTATION_PLAN.md#단계-7--재개스킬외부-mcp)
+이 문서 다음에는 현재 구현 상태, 전체 프로젝트 명세와 설계 검토 기록, 요구사항 분류와 단계 8 계획을 이어서 읽는다. 실행기 경계는 ADR-004, 작업 격리는 ADR-008, 조회 scope는 ADR-011, 수동 검토/통합은 ADR-015에 근거를 남겼다. [현재 구현 상태](IMPLEMENTATION_STATUS.md), [요구사항 구분](REQUIREMENTS.md), [단계 8 계획](IMPLEMENTATION_PLAN.md#단계-8--소설과-게임-조회문맥-완성)
 
 | 재사용할 기반 | 코드와 계약 |
 |---|---|
@@ -195,4 +195,4 @@ node_modules/dist는 재생성할 수 있다. .tmp/ui-preview에는 사용자가
 
 2026-11-13 ChatGPT 앱 전환 점검에서 일반 셸은 helper_unknown_error와 setup refresh 오류를 보였고 권한 검토를 거친 실행은 통과했다. 새 세션에서는 실제 오류와 권한 설정을 확인해 실행 경로를 판단한다. Git 소유권 오류가 발생하면 해당 명령의 safe.directory에 실제 checkout 경로를 지정할 수 있다. 이 세션에서는 D:/git/CRAFT 한 명령 범위로 사용했다. 타입 검사·SQLite·Chrome·검토 서버·Git 원격 읽기/push dry-run을 확인했다.
 
-단계 6은 구현과 실제 공급자 시험까지 완료했다. 단계 7 진행 지시를 받으면 작업 006/ADR-016·AI 사용 안내·검증 증거를 읽고 checkpoint 재문맥화, 기본 스킬의 출처/version/digest, 외부 MCP 프로필과 부작용 중복 방지 순서로 구체화한다. 현재 native provider resume capability는 false다. 실제 호출은 승인 범위를 확인하고 모델 없는 fixture를 먼저 사용한다. 한 단계 완료 후 멈추는 규칙은 계속 유지한다.
+단계 6의 실제 실행기 시험은 작업 006을, 단계 7의 체크포인트 기반 실행기 교체·스킬·외부 MCP는 작업 007과 ADR-017을 확인한다. 공급자 고유 세션 재사용 capability는 false이며 보존 자료로 새 공급자 세션을 구성한다. 단계 8 진행 지시를 받은 뒤 상태 평가와 시점·actor 비교를 시작한다. 실제 모델 호출은 사용자 동의 범위를 확인하고 모델 없는 시험을 먼저 사용한다. 한 단계 완료 후 멈추는 규칙을 유지한다.
