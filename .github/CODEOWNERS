@@ -1,0 +1,5 @@
+# Every change needs the maintainer's approval. The main ruleset requires 1 approval
+# and Code Owner review, so an approval from one agent's GitHub App on another agent's
+# PR does not count. The maintainer's own PRs merge through the ruleset bypass
+# (repository admin, pull requests only).
+* @Armeride
