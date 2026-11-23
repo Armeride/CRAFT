@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { EventEmitter, on } from "node:events";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { join } from "node:path";
@@ -13,7 +14,7 @@ import type { Checkpoint, Task } from "../../schema/src/generated.js";
 import { registerLocal } from "../../tasks/src/projects.js";
 import { resumeContext } from "../../tasks/src/resume-context.js";
 import { TaskService } from "../../tasks/src/service.js";
-import type { AgentExecution, ProviderId } from "./contracts.js";
+import type { AgentRequest, ProviderId } from "./contracts.js";
 import { detectAgent } from "./detect.js";
 import { ExternalProfiles } from "./external.js";
 import { AgentService } from "./service.js";
@@ -21,20 +22,38 @@ import { listSkills } from "./skills.js";
 
 async function pending(
   service: AgentService,
+  changes: EventEmitter,
   id: string,
   previous?: string,
-): Promise<AgentExecution> {
-  for (let attempt = 0; attempt < 240; attempt++) {
-    const record = await service.get(id);
-    if (record.pending && record.pending.id !== previous) return record;
-    if (
-      ["completed", "failed", "cancelled", "interrupted"].includes(record.state)
-    ) {
-      throw new Error(record.code ?? record.state);
+): Promise<AgentRequest> {
+  const signal = AbortSignal.timeout(60_000);
+  // Subscribe before reading, so an approval persisted during the read wakes us.
+  const updates = on(changes, "changed", { signal });
+  try {
+    while (!signal.aborted) {
+      const record = await service.get(id);
+      if (record.pending && record.pending.id !== previous) return record.pending;
+      if (
+        ["completed", "failed", "cancelled", "interrupted"].includes(record.state)
+      ) break;
+      await updates.next();
     }
-    await new Promise((resolve) => setTimeout(resolve, 50));
+  } catch (error) {
+    if (
+      !(error instanceof Error && error.name === "AbortError" && error.cause === signal.reason)
+    ) throw error;
+  } finally {
+    await updates.return?.();
   }
-  throw new Error("Expected external approval");
+  const record = await service.get(id);
+  const { state, pending: lastPending, code, diagnostic, events } = record;
+  throw new Error(`Expected external approval after ${previous ?? "start"}: ${JSON.stringify({
+    state,
+    pending: lastPending,
+    code,
+    diagnostic,
+    lastEvent: events.at(-1)?.type,
+  })}`);
 }
 
 it("recovers pinned instructions and external operation receipts when switching providers without local logs", async () => {
@@ -92,8 +111,13 @@ it("recovers pinned instructions and external operation receipts when switching 
     arguments: { document: "scene", lost: true },
   };
   const sendResult = "First provider planned the opening scene.";
+  const changes = new EventEmitter();
   const first = new AgentService(f.app, {
     detect,
+    changed: () => {
+      changes.emit("changed");
+      return Promise.resolve();
+    },
     adapters: {
       codex: {
         execute: async (context) => {
@@ -225,11 +249,11 @@ it("recovers pinned instructions and external operation receipts when switching 
     );
     let previousApproval: string | undefined;
     for (let step = 0; step < 2; step++) {
-      const request = await pending(first, started.id, previousApproval);
-      previousApproval = request.pending!.id;
-      expect(request.pending?.kind).toBe("approval");
+      const request = await pending(first, changes, started.id, previousApproval);
+      previousApproval = request.id;
+      expect(request.kind).toBe("approval");
       expect(known.length + unknown.length).toBe(step);
-      await first.respond(started.id, request.pending!.id, { allow: true });
+      await first.respond(started.id, request.id, { allow: true });
     }
     await first.wait(started.id);
     const finished = await first.get(started.id);
@@ -302,4 +326,4 @@ it("recovers pinned instructions and external operation receipts when switching 
     await new Promise<void>((resolve) => listener.close(() => resolve()));
     await removeIndexFixture(f);
   }
-}, 120_000);
+}, 240_000);

@@ -35,11 +35,13 @@ type Search = { hits: { type: string; entityId?: string; revisionId?: string; sn
 
 describe('rebuildable scoped SQLite index', () => {
   it('makes the actual stage-3 reader refuse writes to the new required state contract', async () => {
-    const f = await fixture('state-model'), legacy = join(f.home, 'legacy-reader'), archive = join(f.home, 'legacy.tar');
+    const f = await fixture('state-model'), legacy = join(f.home, 'legacy-reader');
     await mkdir(legacy);
-    await runGit(process.cwd(), ['archive', '--format=tar', `--output=${archive}`, '2220dc5', 'packages']);
+    // Export the historical files without touching the repository's index.
+    const indexEnv = { GIT_INDEX_FILE: join(f.home, 'legacy-reader.index') };
+    await runGit(process.cwd(), ['read-tree', '--prefix=packages/', '2220dc5:packages'], undefined, indexEnv);
+    await runGit(process.cwd(), ['checkout-index', '--all', `--prefix=${legacy}/`], undefined, indexEnv);
     const execute = promisify(execFile);
-    await execute('tar', ['-xf', archive, '-C', legacy]);
     const config = join(legacy, 'tsconfig.json');
     await writeFile(config, JSON.stringify({ extends: resolve('tsconfig.json'), compilerOptions: { rootDir: legacy, outDir: join(legacy, 'dist'), declaration: false, sourceMap: false }, include: ['packages/**/*.ts'], exclude: ['**/*.test.ts', '**/test-helpers.ts'] }));
     await execute(process.execPath, [resolve('node_modules/typescript/bin/tsc'), '-p', config]);
