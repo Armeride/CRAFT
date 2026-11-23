@@ -13,9 +13,31 @@
 | 작업 단위를 끝내기 전 (커밋·완료 보고 전) | `npm run check`, `npm run check:security` | 둘 다 exit 0 |
 
 - 실패를 남긴 채 "완료"로 보고하지 않는다. 실패하면 코드를 고친다.
-- Windows에서는 cwd의 드라이브 문자가 대문자(`D:\git\CRAFT`)인 셸(PowerShell)에서 실행한다. Git Bash의 소문자 `/d/...`에서는 Vitest가 모듈을 이중으로 로드해 테스트가 실패한다.
 - `git commit --no-verify`를 사용하지 않는다. 같은 검사가 CI에서 다시 실행된다.
-- 커밋은 로컬까지만 한다. `git push`, PR 생성, PR 라벨 변경은 하지 않는다. 관리자가 diff를 확인한 뒤 직접 push하고 PR을 연다.
+
+### 실행 환경 (WSL)
+
+- 에이전트는 WSL(Linux)에서 작업한다. 저장소는 WSL 파일시스템(예: `~/git/CRAFT`)에 클론한다. `/mnt/c`, `/mnt/d` 아래의 Windows 경로에서 작업하지 않는다. 느리고, 파일 권한과 줄바꿈이 섞인다.
+- Node와 npm은 `.node-version`과 `tools/quality/package.json`의 `engines`에 적힌 버전을 쓴다.
+- `npm run quality:setup` 전에 Semgrep을 설치한다: `uv tool install semgrep==1.185.0`. gitleaks와 osv-scanner는 setup이 Linux용 바이너리를 내려받아 sha256으로 검증한다.
+- Windows 전용 동작(경로, 프로세스 종료, 코드 페이지)을 바꿨다면 Linux에서 통과해도 CI의 Windows `check` 결과를 확인한다.
+
+### Git과 PR
+
+에이전트는 자기 GitHub App(봇 계정) 자격 증명으로 **브랜치 push와 PR 생성까지만** 한다. 머지는 관리자가 리뷰하고 승인한 뒤에 한다.
+
+- 작업은 `main`에서 갈라진 새 브랜치에서 한다. 이름은 `<에이전트>/<주제>` 형식이다(예: `codex/fix-indexer-tar-path`, `claude/web-draft-panel`).
+- 자기 브랜치에만 push한다. `main`에 push하지 않고, 다른 에이전트나 관리자의 브랜치에 push하거나 force push하지 않는다.
+- PR 본문에 다음을 적는다.
+  - 무엇을 왜 바꿨는지
+  - 실행한 검사(`check`, `check:security`)와 결과
+  - 추가한 `eslint-disable`의 위치와 이유
+  - 오탐이라고 판단한 항목(아래 형식)
+- 하지 않는 것:
+  - PR 승인·리뷰 제출, 머지, 라벨 변경, 다른 PR 닫기
+  - 저장소 설정·ruleset·Actions 설정 변경
+  - 관리자 계정의 자격 증명(`gh` 로그인, 개인 토큰, SSH 키) 사용
+- CI가 실패하면 같은 브랜치에 수정 커밋을 push한다. 원인이 앱 코드 밖(러너 환경, 게이트 설정)이라고 판단되면 고치지 말고 PR 코멘트로 보고한다.
 
 ### 금지
 
@@ -29,10 +51,10 @@
 
 ### 수정 금지 파일 (관리자 전용)
 
-다음 파일은 읽기만 한다. 로컬에서는 pre-commit 훅이, PR에서는 CI의 `guard` 검사가 이 파일들의 변경을 차단한다.
+다음 파일은 읽기만 한다. 로컬에서는 pre-commit 훅이 이 파일들의 변경을 차단한다. PR에서는 `guard`가 변경 목록을 경고로 표시하고, 관리자의 Code Owner 승인 없이는 머지되지 않는다.
 
 - `tools/quality/**`: 린트·구조 규칙, 베이스라인, suppression, 임계값, 러너
-- `.semgrep/**`, `.semgrepignore`, `lefthook.yml`, `.github/**`, `AGENTS.md`, `.npmrc`
+- `.semgrep/**`, `.semgrepignore`, `lefthook.yml`, `.github/**`(`CODEOWNERS`, 워크플로), `.codex/**`, `AGENTS.md`, `.npmrc`
 - `tsconfig*.json`, `apps/web/tsconfig.json`
 - `package.json`의 `check`, `check:fast`, `check:security`, `lint`, `lint:prune`, `quality:setup` 스크립트. 의존성과 다른 스크립트는 수정해도 된다.
 
@@ -49,6 +71,6 @@
 
 ### 오탐이라고 판단될 때
 
-규칙을 끄거나, 설정·베이스라인을 고치거나, 코드를 비틀어 검사를 피하지 않는다. 대신 다음을 완료 보고에 적고 관리자 판단을 기다린다.
+규칙을 끄거나, 설정·베이스라인을 고치거나, 코드를 비틀어 검사를 피하지 않는다. 대신 다음을 PR 본문(또는 완료 보고)에 적고 관리자 판단을 기다린다.
 
 - `파일:줄`, 규칙 ID, 오탐이라고 보는 이유, 제안하는 처리 방법

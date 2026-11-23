@@ -3,7 +3,7 @@
 
 [[IgnoredVulns]]
 id = "GHSA-g3hv-75wg-m249"
-ignoreUntil = 2027-02-17T00:00:00Z
+effectiveUntil =2027-02-17T00:00:00Z
 reason = """
 minimatch 10.2.6 (ReDoS via glob-part amplification) appears only in tools/quality/package-lock.json,
 pulled in by eslint, typescript-eslint, eslint-plugin-sonarjs and type-coverage (dev-only quality tooling).

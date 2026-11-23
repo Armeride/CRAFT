@@ -304,15 +304,17 @@ function countSuppressions(text) {
   return out;
 }
 
-// Maintainer intent signal. Locally: QUALITY_GATE_OVERRIDE=1 on the commit.
-// On CI: the PR carries the `quality-gate-change` label (workflow sets QUALITY_GATE_LABEL=1).
-// The repo has a single GitHub account, so PR approval/CODEOWNERS cannot be used;
-// agents never push or create PRs, so the label is a human-only action.
+// Two modes:
+// - Local (pre-commit, staged changes): blocks unless the maintainer commits with
+//   QUALITY_GATE_OVERRIDE=1. Gives agents immediate feedback before they commit.
+// - PR (--base): report only. Agents push and open PRs through GitHub Apps, which can
+//   also label PRs, so a label cannot prove maintainer intent. Enforcement is the main
+//   ruleset (1 approval + Code Owner review, .github/CODEOWNERS); this mode lists what
+//   the reviewer must look at, as annotations and in the job summary.
 function guard() {
   const base = optionValue('--base');
-  heading(base ? `guard (changes since ${base})` : 'guard (staged changes)');
-  const allowed = base ? process.env.QUALITY_GATE_LABEL === '1' : process.env.QUALITY_GATE_OVERRIDE === '1';
-  const how = base ? 'add the `quality-gate-change` label to the PR (maintainer only)' : 'maintainers commit with QUALITY_GATE_OVERRIDE=1';
+  heading(base ? `guard (changes since ${base}, report only)` : 'guard (staged changes)');
+  const allowed = !base && process.env.QUALITY_GATE_OVERRIDE === '1';
   const changed = lines(base ? git(['diff', '--name-only', `${base}...HEAD`]) : git(['diff', '--cached', '--name-only']));
   const show = spec => { const r = run('git', ['show', spec], { capture: true }); return r.status === 0 ? r.stdout : ''; };
   const violations = [];
@@ -338,8 +340,25 @@ function guard() {
   if (touched.length) violations.push(`${touched.length} protected file(s) changed`);
 
   if (violations.length === 0) { pass('guard', 'no protected changes'); return; }
+  if (base) { reportGuard(violations, touched); return; }
   if (allowed) { console.log(color('33', `  maintainer-approved gate change: ${violations.join('; ')}`)); pass('guard', 'allowed by maintainer signal'); return; }
-  fail('guard', `${violations.join('; ')}. Quality-gate files are maintainer-only (AGENTS.md): report instead of editing; to apply intentionally, ${how}.`);
+  fail('guard', `${violations.join('; ')}. Quality-gate files are maintainer-only (AGENTS.md): report instead of editing; to apply intentionally, maintainers commit with QUALITY_GATE_OVERRIDE=1.`);
+}
+
+function reportGuard(violations, touched) {
+  const title = 'Quality-gate change: maintainer review required';
+  if (process.env.GITHUB_ACTIONS === 'true') {
+    const esc = s => s.replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A');
+    for (const f of touched) console.log(`::warning file=${esc(f)},title=${esc(title)}::Protected file changed (AGENTS.md)`);
+    for (const v of violations) console.log(`::warning title=${esc(title)}::${esc(v)}`);
+  }
+  const summary = process.env.GITHUB_STEP_SUMMARY;
+  if (summary) {
+    const body = [`## ${title}`, '', ...violations.map(v => `- ${v}`), '', ...touched.map(f => `- \`${f}\``), ''].join('\n');
+    writeFileSync(summary, body, { flag: 'a' });
+  }
+  console.log(color('33', `  ${title}: ${violations.join('; ')}`));
+  pass('guard', 'reported (enforced by CODEOWNERS review)');
 }
 
 // ---------------------------------------------------------------- setup
