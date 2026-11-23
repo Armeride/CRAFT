@@ -106,16 +106,23 @@ function loadCurrentInsideTransaction() {
   return current;
   } catch (error) { if ((error as { code?: string }).code?.startsWith('SQLITE_')) throw error; corrupt(); }
 }
+function immutableBasis(payload: CapturedSource, previous: ProjectSnapshot | undefined, files: ReadonlyMap<string, SourceFile>): ProjectSnapshot | undefined {
+  if (!payload.immutableFiles.length) return undefined;
+  const immutable = restoreFiles(payload.immutableFiles), immutableFingerprint = fingerprint(immutable);
+  if (immutableFingerprint === payload.source.fileFingerprint) return undefined;
+  const before = immutableFingerprint === previous?.fingerprint ? previous : parseProject(immutable);
+  const invalid = checkImmutability(before, { ...before, files });
+  if (invalid.length) throw new ValidationFailure(invalid);
+  return before;
+}
 function prepare(payload: CapturedSource & { full?: boolean }) {
   const started = performance.now(), previous = loadCurrent();
   const files = restoreFiles(payload.files);
   if (fingerprint(files) !== payload.source.fileFingerprint || sourceFingerprint(configuration.scopeKey, payload.source) !== payload.sourceFingerprint) throw new Error('SOURCE_CHANGED');
-  if (payload.immutableFiles.length) {
-    const before = parseProject(restoreFiles(payload.immutableFiles));
-    const invalid = checkImmutability(before, { ...before, files });
-    if (invalid.length) throw new ValidationFailure(invalid);
-  }
+  const before = immutableBasis(payload, previous?.snapshot, files);
   const snapshot = parseProject(files);
+  const invalid = before ? checkImmutability(before, snapshot) : [];
+  if (invalid.length) throw new ValidationFailure(invalid);
   if (snapshot.project.project_id !== configuration.projectId) throw new Error('PROJECT_SCOPE_MISMATCH');
   if (previous?.manifest.sourceFingerprint === payload.sourceFingerprint && !payload.full) return { noop: true, manifest: previous.manifest };
   const oldFiles = previous?.snapshot.files ?? new Map<string, SourceFile>();
@@ -138,8 +145,8 @@ function publish(payload: { token: string; failBeforeCommit?: boolean }) {
     if ((getMeta<IndexManifest>('manifest')?.generationId ?? null) !== candidate.parent) throw new Error('BASE_CHANGED');
     if (manifest.mode === 'full') value.exec('DELETE FROM source_files; DELETE FROM revisions; DELETE FROM names; DELETE FROM document_fts;');
     const upsertFile = value.prepare('INSERT INTO source_files VALUES (?, ?, ?) ON CONFLICT(path) DO UPDATE SET digest=excluded.digest, data=excluded.data');
-    for (const path of manifest.changedFiles) { const file = snapshot.files.get(path); if (file) upsertFile.run(path, file.digest, JSON.stringify(file)); else value.prepare('DELETE FROM source_files WHERE path=?').run(path); }
     if (manifest.mode === 'full') for (const [path, file] of snapshot.files) upsertFile.run(path, file.digest, JSON.stringify(file));
+    else for (const path of manifest.changedFiles) { const file = snapshot.files.get(path); if (file) upsertFile.run(path, file.digest, JSON.stringify(file)); else value.prepare('DELETE FROM source_files WHERE path=?').run(path); }
     const next = records(snapshot);
     for (const key of [...manifest.updatedRevisions, ...manifest.removedRevisions]) { value.prepare('DELETE FROM revisions WHERE key=?').run(key); value.prepare('DELETE FROM names WHERE key=?').run(key); value.prepare('DELETE FROM document_fts WHERE revision_key=?').run(key); }
     const revisionInsert = value.prepare('INSERT INTO revisions VALUES (?, ?, ?, ?, ?)'), nameInsert = value.prepare('INSERT OR IGNORE INTO names VALUES (?, ?, ?)'), textInsert = value.prepare('INSERT INTO document_fts VALUES (?, ?)');

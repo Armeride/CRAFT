@@ -20,6 +20,7 @@
     "lint": "node tools/quality/run.mjs lint",
     "lint:prune": "node tools/quality/run.mjs lint --prune",
     "bench": "vitest bench --root bench --reporter verbose",
+    "bench:index": "node dist/tools/index-scale.js",
     "quality:setup": "node tools/quality/run.mjs setup",
     "schema:types": "node tools/schema-types.mjs",
     "schema:check": "node tools/schema-types.mjs --check",
@@ -31,6 +32,7 @@
     "index": "node dist/tools/index-cli.js",
     "typecheck:core": "tsc --noEmit",
     "ui:build": "vite build --config apps/web/vite.config.ts --logLevel warn",
+    "start": "node dist/tools/start.js",
     "ui:preview": "npm run build && npm run ui:build && node dist/tools/ui-preview.js",
     "test:ui": "playwright test"
   },

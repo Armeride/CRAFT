@@ -14,10 +14,12 @@ Windows x64에서 Git, Node.js **24.21.0**, npm **11.19.0**을 준비합니다. 
 
 ```powershell
 npm ci
-npm run ui:preview
+npm run build
+npm run ui:build
+npm start
 ```
 
-브라우저에서 [http://127.0.0.1:4173](http://127.0.0.1:4173)을 엽니다. 처음 실행하면 바로 둘러볼 수 있는 예시 프로젝트가 생성됩니다. 예시와 앱 데이터의 기본 위치는 `.tmp/ui-preview`입니다. 서버를 종료한 뒤 다시 실행하면 같은 작업을 열 수 있습니다.
+브라우저에서 [http://127.0.0.1:4173](http://127.0.0.1:4173)을 열고 프로젝트를 등록합니다. 앱 데이터의 기본 위치는 Windows에서 `%LOCALAPPDATA%\CRAFT`입니다. 예시 프로젝트로 둘러보려면 `npm run ui:preview`를 실행합니다. 예시와 작업은 `.tmp/ui-preview`에 보존됩니다.
 
 ## 프로젝트에서 작업하기
 
@@ -33,6 +35,7 @@ npm run ui:preview
 ## 사용 안내
 
 - [화면과 설정](docs/UI_PREVIEW.md)
+- [설치·업데이트·백업과 복구](docs/LOCAL_RELEASE.md)
 - [직접 편집·검토·통합·복구](docs/MANUAL_WORKFLOW.md)
 - [AI 실행과 중단](docs/AGENT_WORKFLOW.md)
 - [작업 재개·스킬·외부 연결·PNG 첨부](docs/RESUME_AND_TOOLS.md)

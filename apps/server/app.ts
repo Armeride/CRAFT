@@ -64,7 +64,7 @@ export async function createWebApp(options: WebOptions) {
   app.setErrorHandler((error: Error & { code?: string; validation?: unknown }, request, reply) => {
     const diagnostics = error instanceof ValidationFailure ? error.diagnostics : [];
     const code = diagnostics[0]?.code ?? (error.validation ? 'REQUEST_INVALID' : error.code ?? 'REQUEST_FAILED');
-    const status = ['CONTEXT_FORBIDDEN'].includes(code) ? 403 : ['BASE_CHANGED', 'FILE_CHANGED_EXTERNALLY', 'WORKTREE_BUSY', 'SOURCE_CHANGED', 'INTEGRATION_CONFLICT', 'REVIEW_TOKEN_INVALID', 'APPROVAL_BLOCKED', 'CHECKPOINT_REQUIRED', 'PROPOSAL_ALREADY_CONSUMED'].includes(code) ? 409 : 400;
+    const status = ['CONTEXT_FORBIDDEN'].includes(code) ? 403 : ['BASE_CHANGED', 'FILE_CHANGED_EXTERNALLY', 'WORKTREE_BUSY', 'SOURCE_CHANGED', 'INTEGRATION_CONFLICT', 'INTEGRATION_SEMANTIC_CONFLICT', 'MIGRATION_MERGE_UNSUPPORTED', 'REVIEW_TOKEN_INVALID', 'APPROVAL_BLOCKED', 'CHECKPOINT_REQUIRED', 'PROPOSAL_ALREADY_CONSUMED'].includes(code) ? 409 : 400;
     reply.code(status).send({ code, message: 'The request could not be completed', details: { diagnostics }, retryable: ['WORKTREE_BUSY', 'SOURCE_CHANGED'].includes(code), request_id: request.id });
   });
   app.get('/api/session', async (_request, reply) => { reply.header('Set-Cookie', `${cookieName}=${session}; HttpOnly; SameSite=Strict; Path=/`); return { csrf, projects: [...choices.values()], demo: !!options.examples?.length }; });

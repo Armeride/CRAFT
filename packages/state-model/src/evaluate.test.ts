@@ -198,6 +198,25 @@ it("evaluates player and NPC independently, distinguishes a missing event and un
   expect(cell(player, "actor:door", "open")?.value).toBe(true);
   expect(cell(npc, "actor:door", "open")?.value).toBe(false);
   expect(game(snapshot, scenario, []).trace).toEqual([]);
+  expect(game(snapshot, scenario, ["enter_player", "enter_player"]).trace).toEqual(player.trace);
+
+  const newOccurrence = scenario.occurrences.find(({ id }) => id === "enter_npc");
+  if (!newOccurrence) throw Error("expected an NPC occurrence");
+  const withBoundaryNpcs: Scenario = {
+    ...scenario,
+    actors: {
+      ...scenario.actors,
+      npc_below: { prototype: "actor", values: { level: 9, quest_completed: true } },
+      npc_boundary: { prototype: "actor", values: { level: 10, quest_completed: true } },
+    },
+    occurrences: [
+      ...scenario.occurrences,
+      { ...newOccurrence, id: "npc_below", event_order: 3, bindings: { actor: "npc_below", target: "door" } },
+      { ...newOccurrence, id: "npc_boundary", event_order: 4, bindings: { actor: "npc_boundary", target: "door" } },
+    ],
+  };
+  expect(game(snapshot, withBoundaryNpcs, ["npc_below"]).trace[0]?.condition).toBe("false");
+  expect(game(snapshot, withBoundaryNpcs, ["npc_boundary"]).trace[0]?.condition).toBe("true");
 
   const files = new Map(snapshot.files);
   const primitive = record(snapshot, "ent_actor");

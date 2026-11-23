@@ -1,11 +1,19 @@
 # 구현 상태
 
-갱신: 2026-11-19, Asia/Seoul. **단계 0~8 완료, 단계 9 지시 대기**. 사용자가 UI 초안 03을 승인하고 단계 5 잔여 기능까지 이번에 구현하도록 확정했다. [작업 005](tasks/005-manual-workflow.md)를 완료했다. 이후 새 UI 요구는 [별도 작업](tasks/README.md)으로 관리한다. 단계 9는 착수 전이며 10은 선택 확장이다. 사용자 opt-in 후 실제 Codex/Claude 시험과 최종 회귀를 완료했다.
+갱신: 2026-11-23, Asia/Seoul. **단계 0~8 완료. 단계 9 구현과 WSL2 검증, Windows 인수 확인 대기.** 최신 인수 근거와 남은 확인 항목은 [작업 009](tasks/009-release-acceptance.md)를 따른다. 새 UI 요구는 [별도 작업](tasks/README.md)으로 관리한다.
+
+## 단계 9 — 통합·장애·성능·로컬 배포
+
+- `e79ceb2`에서 만든 `codex/stage-9-acceptance`에서 작업했다. Git 공통 조상의 확인, 채택 선택 단위의 3-way, 조합에서 생긴 의미 충돌과 검토 안내, 원래 commit·diff에 결속된 승인을 구현했다. 등록 변환의 B/R 정규화는 실제 Git fixture로 검증했다. 현 제품 스키마는 core 1이며 지원하지 않는 3-way 변환은 보존 가능한 상태로 보류한다.
+- `npm start`로 예시 없이 로컬 앱을 실행한다. 임시 Git 프로젝트에서 HTTP 등록과 정확 조회, Git bundle의 정본과 작업 참조 복원을 확인했다. 설치·업데이트·지원표·백업·복구는 [로컬 배포 안내](LOCAL_RELEASE.md)에 있다.
+- 최종 WSL2 회귀에서 `npm run check:fast`, `npm run check`(Vitest 27파일 225개), `npm run check:security`, Chrome E2E 19개가 통과했다. [AT-01~68의 시나리오와 근거](tasks/009-release-acceptance.md#at-회귀-근거)를 기록했다.
+- 1,000요소/10,000리비전과 8,000참조에서 실제 worktree의 파일 검증을 포함해 측정했다. 목표와 비교한 결과와 재현 명령은 [작업 009의 성능 기록](tasks/009-release-acceptance.md#성능-재현)을 따른다.
+- 두 실제 모델의 지원 근거는 사용자 승인 후 실행한 2026-11-18 기록이다. 이번 작업은 Linux에서 모델 없이 회귀했다. 현재 브랜치의 Windows CI와 새 공급자 실호출은 이번 검증에 포함되지 않았다.
 
 ## 기준과 범위 구분
 
 - 목표: PROJECT_SPEC.md v1.4 전체, REVIEW_NOTES.md. [확정 요구·설계 기준·미결정](REQUIREMENTS.md)을 구분한다. FR 26개·AT 68개는 제품 전체 기준이며 아래 테스트 수와 다르다.
-- 앱 소스는 main이다. 단계 0·1은 3847002, 2는 6a83094, 3은 906e996, 추가 기획은 2220dc5, 단계 4는 1fe44d2, UI 초안 01은 2bbd8cf, 초안 02는 6391781, 초안 03은 50b5b6c, 단계 5 완료 구현은 96847f4다. origin은 https://github.com/Armeride/CRAFT.git이며 단계 5와 인계 문서는 fcc9635까지 원격 보존했다. 단계 6의 실제 실행기 검증은 08415d2, 단계 7은 7338b81, 단계 8은 74cc91a에 보존했다. 최신 구현과 인계 문서는 원격 main의 Git 이력에서 확인한다.
+- 원격 main에 단계 0~8이 보존돼 있다. 단계 0·1은 3847002, 2는 6a83094, 3은 906e996, 추가 기획은 2220dc5, 단계 4는 1fe44d2, UI 초안 01은 2bbd8cf, 초안 02는 6391781, 초안 03은 50b5b6c, 단계 5 완료 구현은 96847f4다. origin은 https://github.com/Armeride/CRAFT.git이며 단계 5와 인계 문서는 fcc9635까지 원격 보존했다. 단계 6의 실제 실행기 검증은 08415d2, 단계 7은 7338b81, 단계 8은 74cc91a에 보존했다.
 - 실행 기준: Windows x64, Node 24.21.0/npm 11.19.0과 exact lockfile. 전역 설정·소유권·인증을 변경하지 않는다.
 - FR-021: 진단 code/messageKey/params와 fallback 문구를 분리했다. 단계 5 초안 01에서 ko/en catalog·언어 전환/선호·폼 상태 보존을 연결했다. 현재 구현한 웹 화면 인수는 작업 005에서 검증했으며 후속 화면도 같은 gate를 유지한다.
 - FR-022: state_model@1 파일과 색인 위에 시점·개체·가정·조건 평가 결과와 비교를 구현했다. 평가 정책과 입력 digest를 결과에 기록한다. [상태 v1](STATE_MODEL_V1.md).
@@ -242,18 +250,18 @@ npm run workspace -- start --app-data <관리-경로> --registration <등록-ID>
 
 - 단계 5의 수동 작성·검토·통합·자동 저장/충돌/복구·SSE·관리 UI를 구현했다. 실제 Codex/Claude 실행기와 내부 MCP는 단계 6, 스킬·외부 MCP와 체크포인트 기반 실행기 교체는 단계 7에서 구현했다.
 - 관점 제한은 공급자에게 제공하는 도구와 자료의 경계에서 검증했다. 실제 모델 호출 및 운영체제 수준의 원본 읽기 격리는 별도 범위다. 실제 게임 실행과 연결하는 기능은 제공하지 않으며 상태 결과는 파일에서 계산한다.
-- 요소 비교는 metadata/ref 비교와 본문 단일 hunk를 제공하고 통합 검토는 전체 실제 Git diff를 제공한다. 승인 token·proposal 멱등성과 source/target 재검증을 구현했다. 다른 schema B/T/R·일반 텍스트 자동 3-way merge·전체 장애/규모 시험은 단계 9의 목표다.
-- 그래프 전체 재분석과 요청마다 원본 hash 확인은 현재의 계산 비용이다. watcher 힌트·갱신 UI를 구현했으며 영향 부분 최적화와 큰 자료 성능은 단계 9에서 판단한다.
+- 요소 비교는 metadata/ref 비교와 본문 단일 hunk를 제공하고 통합 검토는 전체 실제 Git diff를 제공한다. 같은 경로의 텍스트 경합은 보존하고 명시적으로 해결한다. 채택 기준은 요소 선택 단위로 병합하고 미지원 스키마는 통합을 보류한다.
+- 그래프 전체 재분석과 요청마다 원본 hash 확인은 작업용 색인 성능의 주요 비용이다. 단계 9에서 전체 재구축 목표는 달성했다. 작업 폴더 exact 조회와 증분 점검에는 추가 성능 개선 여지가 있다.
 - product migration registry는 core 1만 지원한다. fixture core 2를 제품 업그레이드로 사용하지 않는다. 새 상태 계약은 선택적 추가 확장이며 자동 의미 migration은 없다.
-- CLI recover는 task run용이고 UI는 작업 저장 복구와 중단된 승인 통합의 완료/원복을 제공한다. import 등 HTTP 관리 명령의 불명 결과는 보존된 결과를 확인하며 세부 경계는 MANUAL_WORKFLOW.md를 따른다. 운영 데이터 전체 손실·전원/디스크 장애는 단계 9의 검증 대상이다.
-- OS lock/expected hash는 협력 앱의 경합을 다룬다. worktree는 OS sandbox가 아니다. 네트워크 볼륨/다른 OS·전원/디스크 장애 내구성은 단계 9에서 확대 검증한다.
+- CLI recover는 task run용이고 UI는 작업 저장 복구와 중단된 승인 통합의 완료/원복을 제공한다. import 등 HTTP 관리 명령의 불명 결과는 보존된 결과를 확인하며 세부 경계는 MANUAL_WORKFLOW.md를 따른다. Git만 남은 재개와 주입된 쓰기 장애를 시험했다.
+- OS lock/expected hash는 협력 앱의 경합을 다룬다. worktree는 OS sandbox가 아니다. 물리적 전원 차단·불량 매체·네트워크 볼륨의 내구성은 이번 Linux 시험 범위 밖이다.
 - native 모듈은 해당 OS/ABI에서 재설치한다. remotePreserved는 local remote-tracking ref 관측이며 실시간 서버 보장이 아니다. local-only 결과는 새 clone에 없다.
 - 2026-11-13 ChatGPT 앱 전환 점검에서도 일반 셸의 helper_unknown_error/setup refresh 오류가 재현됐고 권한 검토를 거친 실행은 통과했다. Node 24.21.0/npm 11.19.0, 타입 검사·SQLite·Chrome·4174 검토 서버·원격 읽기/push dry-run을 확인했다. Git safe.directory는 D:/git/CRAFT 한 명령 범위로 사용했다. 새 세션은 해당 실행 환경의 실제 권한·오류를 확인한다.
 
-## 다음 작업 — 사용자 지시 후 단계 9
+## 다음 확인 — 단계 9 인수
 
-1. [새 세션 진입 순서](START_HERE.md#8-다른-세션에서-이어갈-때)에서 문서·HEAD·실행 환경을 확인한다.
-2. 사용자 진행 지시 후 [단계 9 계획](IMPLEMENTATION_PLAN.md#단계-9--전체-통합장애성능배포-기준)에 따라 통합·장애·성능·배포 인수를 진행한다. 도메인 계약은 [작업 008](tasks/008-domain-queries.md)을 참고한다.
+1. [작업 009](tasks/009-release-acceptance.md)의 검증 범위를 확인하고 이 브랜치의 Windows `check`와 Windows 설치·시작을 검증한다.
+2. 작업 파일 2중 확인 비용을 줄이는 색인 변경은 외부 편집·symlink·부분 journal 경계와 함께 다시 측정한다. 단계 10은 별도 선택 확장이다.
 
 ## 보존 상태
 

@@ -1,19 +1,17 @@
 import { mkdir, open, readFile, unlink } from 'node:fs/promises';
 import { renameWithRetry } from '../../git-workspace/src/fs.js';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join } from 'node:path';
 import { Ajv2020 } from 'ajv/dist/2020.js';
 import { canonicalJson } from '../../domain/src/canonical.js';
-import { isProjectPath } from '../../domain/src/path.js';
 import { ValidationFailure } from '../../domain/src/model.js';
-import type { SourceFile } from '../../domain/src/model.js';
 import { readCommittedFiles } from '../../project-fs/src/git-baseline.js';
 import { captureFiles, fileFailure, fingerprint, hash, newId } from '../../project-fs/src/files.js';
-import { parseYaml } from '../../project-fs/src/yaml.js';
 import { assertOwnedPath, assertSourceUnchanged, checkedManagedRoot, commitMigration, createMigrationWorktree, materializeFiles, repositoryGuard, withRepositoryLock } from '../../git-workspace/src/worktree.js';
 import type { RepositoryGuard, ScratchWorkspace } from '../../git-workspace/src/worktree.js';
 import { canonicalFiles, MigrationRegistry } from './registry.js';
-import { objectFile, textFile } from './source.js';
+import { objectFile } from './source.js';
 import { validateAudit } from './audit.js';
+import { applyStep } from './step-changes.js';
 import { verifyMigration } from './verify.js';
 import type { DecisionMap, DecisionRequest, MigrationPlan, MigrationReport, MigrationSnapshot, VersionSet } from './types.js';
 import type { Journal as AuditJournal } from './generated-audit.js';
@@ -61,19 +59,6 @@ async function writeAudit(root: string, path: string, definition: string, value:
 }
 async function saveJournal(context: RunContext): Promise<void> { await writeAudit(context.managedRoot, join(context.runDirectory, 'run.json'), 'Journal', context.journal); }
 
-function applyStep(input: MigrationSnapshot, changes: Awaited<ReturnType<import('./types.js').MigrationStep['transform']>>, expectedFiles: readonly string[]): ReadonlyMap<string, SourceFile> {
-  if (changes.expectedSnapshot !== fingerprint(input.files)) throw fileFailure('BASE_CHANGED', 'Step input fingerprint changed', 'project.yaml');
-  const files = new Map(input.files);
-  const seen = new Set<string>();
-  for (const change of changes.changes) {
-    if (!isProjectPath(change.path) || !expectedFiles.includes(change.path) || seen.has(change.path)) throw fileFailure('MIGRATION_CHANGE_OUT_OF_PLAN', 'Step wrote a duplicate, unsafe or undeclared path', change.path);
-    seen.add(change.path);
-    if ((files.get(change.path)?.digest ?? null) !== change.expectedDigest) throw fileFailure('FILE_CHANGED_EXTERNALLY', 'Step expected source digest differs', change.path);
-    if (change.content === null) files.delete(change.path);
-    else files.set(change.path, textFile(change.path, change.content));
-  }
-  return files;
-}
 function answerErrors(requests: readonly DecisionRequest[], answers: DecisionMap): string[] {
   const errors: string[] = [];
   for (const request of requests) {
