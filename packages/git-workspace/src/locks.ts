@@ -5,6 +5,7 @@ import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileFailure, hash, newId } from '../../project-fs/src/files.js';
 import { gitText, runGit } from './git.js';
 import { ValidationFailure } from '../../domain/src/model.js';
+import { countMetric, measured } from '../../domain/src/instrumentation.js';
 import { renameWithRetry } from './fs.js';
 
 interface Owner {
@@ -45,6 +46,7 @@ export async function withKernelLock<T>(path: string, scope: string, action: (le
   let granted = false;
   try {
     granted = native.tryLock(file.fd);
+    if (!granted) countMetric(`lock.busy.${scope.split(':')[0] ?? 'unknown'}`);
     if (!granted) throw fileFailure('WORKTREE_BUSY', 'Another process holds this OS lock; lease expiry never overrides it', 'project.yaml');
     const ownerPath = path + '.owner.json';
     let previous: Partial<Owner> | undefined;
@@ -60,7 +62,7 @@ export async function withKernelLock<T>(path: string, scope: string, action: (le
       heartbeat = heartbeat.then(async () => { owner.heartbeatAt = new Date().toISOString(); await writeOwner(ownerPath, owner); }).catch(error => lease.fail(error));
     }, 1000);
     timer.unref();
-    try { return await action(lease); }
+    try { return await measured(`lock.held.${scope.split(':')[0] ?? 'unknown'}`, () => action(lease)); }
     finally {
       clearInterval(timer);
       await heartbeat;

@@ -2,6 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { lstat, open, readdir, realpath } from 'node:fs/promises';
 import { join, resolve, sep } from 'node:path';
 import { canonicalJson } from '../../domain/src/canonical.js';
+import { measured } from '../../domain/src/instrumentation.js';
 import { isProjectPath } from '../../domain/src/path.js';
 import { ValidationFailure } from '../../domain/src/model.js';
 import type { SourceFile } from '../../domain/src/model.js';
@@ -60,7 +61,12 @@ async function readRegularSource(absolute: string, path: string, reserve?: (byte
   }
 }
 
-export async function captureFiles(root: string, canonicalOnly = true): Promise<ReadonlyMap<string, SourceFile>> {
+/** Walks and reads every project file. Each call is counted as `fs.captureFiles` (units: files). */
+export function captureFiles(root: string, canonicalOnly = true): Promise<ReadonlyMap<string, SourceFile>> {
+  return measured(canonicalOnly ? 'fs.captureFiles.canonical' : 'fs.captureFiles.all', () => collectFiles(root, canonicalOnly), files => files.size);
+}
+
+async function collectFiles(root: string, canonicalOnly: boolean): Promise<ReadonlyMap<string, SourceFile>> {
   const absoluteRoot = await realpath(root);
   const result = new Map<string, SourceFile>();
   const portablePaths = new Set<string>();

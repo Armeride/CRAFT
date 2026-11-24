@@ -1,4 +1,5 @@
 import { canonicalJson, deepFreeze } from '../../domain/src/canonical.js';
+import { measuredSync } from '../../domain/src/instrumentation.js';
 import { isProjectPath, resolveBodyPath } from '../../domain/src/path.js';
 import { imageReferences, managedAssetPattern, validateManagedImage } from './images.js';
 import { validateGraph } from '../../domain/src/validate.js';
@@ -31,7 +32,12 @@ interface ExtensionSupport {
 }
 
 /** All validation works on captured bytes. This function never reads/writes project files. */
+/** Parses and validates a full snapshot. Counted as `project.parse` (units: files). */
 export function parseProject(files: ReadonlyMap<string, SourceFile>): ProjectSnapshot {
+  return measuredSync('project.parse', () => parseSnapshot(files), () => files.size);
+}
+
+function parseSnapshot(files: ReadonlyMap<string, SourceFile>): ProjectSnapshot {
   const validator = new SchemaValidator();
   const sources = new Map<string, ParsedSource>();
   const documents = new Map<string, unknown>();

@@ -21,6 +21,7 @@
     "lint:prune": "node tools/quality/run.mjs lint --prune",
     "bench": "vitest bench --root bench --reporter verbose",
     "bench:index": "node dist/tools/index-scale.js",
+    "bench:sourcebook": "node dist/tools/sourcebook-scale.js",
     "quality:setup": "node tools/quality/run.mjs setup",
     "schema:types": "node tools/schema-types.mjs",
     "schema:check": "node tools/schema-types.mjs --check",
