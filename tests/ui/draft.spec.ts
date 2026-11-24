@@ -35,13 +35,30 @@ test('graph engines persist and the canvas supports zoom, pan, fit and exact-pin
   await canvas.locator('.graph-node').filter({ hasText: '국경 지역' }).focus(); await page.keyboard.press('Enter'); await expect(page.getByRole('heading', { name: '국경 지역', exact: true })).toBeVisible(); await expect(page.getByRole('combobox', { name: '리비전', exact: true })).toHaveValue('rev_border');
 });
 test('settings are categorized/searchable and font enumeration runs only after a user gesture', async ({ page }) => {
-  await page.addInitScript(() => { Object.assign(window, { fontQueries: 0, queryLocalFonts: async () => { const target = window as Window & { fontQueries: number }; target.fontQueries++; return [{ family: 'Arial' }, { family: 'Arial' }, { family: '맑은 고딕' }]; } }); });
+  await page.addInitScript(() => { Object.assign(window, { fontQueries: 0, queryLocalFonts: () => { const target = window as Window & { fontQueries: number }; target.fontQueries++; return Promise.resolve([{ family: 'Arial' }, { family: 'Arial' }, { family: '맑은 고딕' }]); } }); });
   await loaded(page); const dialog = await settings(page); expect(await page.evaluate(() => (window as Window & { fontQueries: number }).fontQueries)).toBe(0);
   await dialog.getByRole('button', { name: '글꼴과 읽기', exact: true }).click(); await expect(dialog.getByRole('combobox', { name: '화면 모드', exact: true })).toHaveCount(0);
   await dialog.getByRole('button', { name: '설치된 글꼴 불러오기', exact: true }).click(); expect(await page.evaluate(() => (window as Window & { fontQueries: number }).fontQueries)).toBe(1);
   await dialog.getByRole('combobox', { name: '한국어 기본 글꼴', exact: true }).selectOption('Arial'); await expect(dialog.getByRole('combobox', { name: '한국어 기본 글꼴', exact: true })).toHaveValue('Arial');
   await dialog.getByRole('textbox', { name: '설정 검색' }).fill('행간'); await expect(dialog.getByRole('slider', { name: '문서 행간', exact: true })).toBeVisible(); await dialog.getByRole('slider', { name: '문서 행간', exact: true }).fill('2'); await dialog.getByRole('button', { name: '닫기', exact: true }).click();
   await page.reload(); await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--font-ko'))).toContain('Arial'); await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--document-leading'))).toBe('2');
+});
+test('font access denial leaves direct entry and the recommended fallback available (AT-62)', async ({ page }) => {
+  await page.addInitScript(() => {
+    Object.defineProperty(window, 'queryLocalFonts', {
+      value: () => Promise.reject(new DOMException('Permission denied', 'NotAllowedError')),
+      configurable: true,
+    });
+  });
+  await loaded(page);
+  await locale(page, 'en');
+  const dialog = await settings(page, true);
+  await dialog.getByRole('button', { name: 'Fonts & reading' }).click();
+  await dialog.getByRole('button', { name: 'Load installed fonts' }).click();
+  await expect(dialog.getByRole('alert')).toHaveText('Could not load installed fonts. Check browser permissions or enter a name.');
+  await dialog.getByRole('textbox', { name: 'Enter a font name · English font', exact: true }).fill('CRAFT Uninstalled Test Font');
+  await expect(dialog.getByText('If the font is unavailable, the recommended font is used.')).toHaveCount(2);
+  await expect.poll(() => page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--font-en'))).toContain('"CRAFT Uninstalled Test Font", "Inter Variable"');
 });
 test('large mocked category lists scroll internally and do not push other navigation offscreen', async ({ page }) => {
   await page.route('**/api/projects/*/query', async route => { if (route.request().postDataJSON().operation !== 'catalog') return route.continue(); const response = await route.fetch(), value = await response.json(), seed = value.data.entities.find((entity: { kind: string }) => entity.kind === 'location'); for (let n = 0; n < 80; n++) value.data.entities.push({ ...seed, entityId: 'ent_layout_' + n, revisions: seed.revisions.map((revision: object) => ({ ...revision, title: '긴 목록의 지역 설정 ' + n })) }); await route.fulfill({ response, json: value }); });

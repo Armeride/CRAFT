@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { lstat, open, readdir, realpath } from 'node:fs/promises';
-import { join, relative, resolve, sep } from 'node:path';
+import { join, resolve, sep } from 'node:path';
 import { canonicalJson } from '../../domain/src/canonical.js';
 import { isProjectPath } from '../../domain/src/path.js';
 import { ValidationFailure } from '../../domain/src/model.js';
@@ -32,16 +32,22 @@ export async function readSource(root: string, path: string): Promise<SourceFile
     current = join(current, segment);
     if ((await lstat(current)).isSymbolicLink()) throw fileFailure('PATH_SYMLINK', 'Project symlinks/junctions are not supported', path);
   }
+  return readRegularSource(absolute, path);
+}
+
+async function readRegularSource(absolute: string, path: string, reserve?: (bytes: number) => void): Promise<SourceFile> {
   const before = await lstat(absolute);
+  if (before.isSymbolicLink() || await realpath(absolute) !== absolute) throw fileFailure('PATH_SYMLINK', 'Project symlinks/junctions are not supported', path);
   if (!before.isFile() || before.size > limits.fileBytes) throw fileFailure('SOURCE_SIZE_LIMIT', 'Not a regular file or exceeds byte limit', path);
+  reserve?.(before.size);
   const handle = await open(absolute, 'r');
   try {
     const opened = await handle.stat();
-    if (opened.ino !== before.ino || opened.dev !== before.dev || opened.size > limits.fileBytes) throw fileFailure('SOURCE_CHANGED', 'Source identity changed during open', path);
+    if (opened.ino !== before.ino || opened.dev !== before.dev || opened.size !== before.size) throw fileFailure('SOURCE_CHANGED', 'Source identity changed during open', path);
     const bytes = await handle.readFile();
     const after = await handle.stat();
     const pathAfter = await lstat(absolute);
-    if (bytes.byteLength > limits.fileBytes || opened.size !== after.size || opened.mtimeMs !== after.mtimeMs || opened.ctimeMs !== after.ctimeMs || pathAfter.isSymbolicLink() || pathAfter.ino !== opened.ino || pathAfter.dev !== opened.dev || await realpath(absolute) !== absolute) throw fileFailure('SOURCE_CHANGED', 'Source changed while reading', path);
+    if (bytes.byteLength !== opened.size || opened.size !== after.size || opened.mtimeMs !== after.mtimeMs || opened.ctimeMs !== after.ctimeMs || pathAfter.isSymbolicLink() || pathAfter.ino !== opened.ino || pathAfter.dev !== opened.dev || await realpath(absolute) !== absolute) throw fileFailure('SOURCE_CHANGED', 'Source changed while reading', path);
     let text: string | undefined;
     if (path !== 'assets' && !path.startsWith('assets/') && /\.(?:yaml|yml|json|md|txt)$/.test(path)) {
       try { text = new TextDecoder('utf-8', { fatal: true }).decode(bytes); }
@@ -57,8 +63,16 @@ export async function captureFiles(root: string, canonicalOnly = true): Promise<
   const absoluteRoot = await realpath(root);
   const result = new Map<string, SourceFile>();
   const portablePaths = new Set<string>();
+  const pending: { absolute: string; path: string }[] = [];
   let total = 0;
-  const walk = async (directory: string, depth: number): Promise<void> => {
+  const flush = async (): Promise<void> => {
+    const batch = await Promise.all(pending.splice(0).map(({ absolute, path }) => readRegularSource(absolute, path, bytes => {
+      total += bytes;
+      if (total > limits.totalBytes) throw fileFailure('SOURCE_SIZE_LIMIT', 'Project exceeds capture limit', path);
+    })));
+    for (const file of batch) result.set(file.path, file);
+  };
+  const walk = async (directory: string, prefix: string, depth: number): Promise<void> => {
     if (depth > limits.depth) throw fileFailure('SOURCE_SIZE_LIMIT', 'Directory nesting exceeds limit', directory);
     const entries = await readdir(directory, { withFileTypes: true });
     entries.sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
@@ -66,23 +80,23 @@ export async function captureFiles(root: string, canonicalOnly = true): Promise<
       if (depth === 0 && entry.name.toLowerCase() === '.git') continue;
       if (canonicalOnly && depth === 0 && !(roots.has(entry.name) || rootFiles.has(entry.name))) continue;
       const absolute = join(directory, entry.name);
-      const path = relative(absoluteRoot, absolute).split(sep).join('/');
+      const path = prefix ? `${prefix}/${entry.name}` : entry.name;
       if (entry.name.toLowerCase() === '.git') throw fileFailure('PATH_ESCAPE', 'Nested Git metadata is not canonical project data', path);
       if (!isProjectPath(path)) throw fileFailure('PATH_ESCAPE', 'Invalid portable path', path);
       const portable = path.normalize('NFC').toLowerCase();
       if (portablePaths.has(portable)) throw fileFailure('PATH_COLLISION', 'Case/Unicode path collision', path);
       portablePaths.add(portable);
       if (entry.isSymbolicLink()) throw fileFailure('PATH_SYMLINK', 'Project symlinks/junctions are not supported', path);
-      if (entry.isDirectory()) await walk(absolute, depth + 1);
+      if (entry.isDirectory()) await walk(absolute, path, depth + 1);
       else if (entry.isFile()) {
-        const file = await readSource(absoluteRoot, path);
-        total += Buffer.byteLength(file.contentBase64, 'base64');
-        if (total > limits.totalBytes || result.size >= limits.files) throw fileFailure('SOURCE_SIZE_LIMIT', 'Project exceeds capture limit', path);
-        result.set(path, file);
+        if (result.size + pending.length >= limits.files) throw fileFailure('SOURCE_SIZE_LIMIT', 'Project exceeds capture limit', path);
+        pending.push({ absolute, path });
+        if (pending.length === 16) await flush();
       } else throw fileFailure('SOURCE_NOT_REGULAR', 'Special files are not supported', path);
     }
   };
-  await walk(absoluteRoot, 0);
+  await walk(absoluteRoot, '', 0);
+  await flush();
   return result;
 }
 

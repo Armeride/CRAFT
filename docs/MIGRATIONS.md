@@ -50,7 +50,9 @@ migrations/
 └─ attestations/<id>.json  # source/semantic/dependency/review/context mapping
 ```
 
-자기 자신을 포함하는 commit hash나 자기 바이트 hash를 요구하지 않는다. payloadDiffDigest는 변환 payload의 정확한 변경 목록이며 새 감사 파일은 제외한다. 전체 결과 바이트는 최종 Git tree/commit에 고정된다. 통합용 전체 diff 승인 토큰은 후속 기능이다.
+자기 자신을 포함하는 commit hash나 자기 바이트 hash를 요구하지 않는다. payloadDiffDigest는 변환 payload의 정확한 변경 목록이며 새 감사 파일을 제외한다. 전체 결과 바이트는 최종 Git tree/commit에 고정된다.
+
+작업 통합에서 버전이 다르면 Git 공통 조상과 결과를 대상 버전으로 변환해 비교한다. 자동 정규화에는 등록 변환과 의미 보존 검증이 필요하다. 검증할 수 없는 변환이나 수동 결정이 필요한 변환은 `MIGRATION_MERGE_UNSUPPORTED`로 보류하며, 이전 체크포인트를 유지한 채 호환 앱의 현재 기준에서 작업을 다시 작성할 수 있다. 승인 토큰은 검토한 target/source commit과 실제 통합 diff에 연결된다. [단계 9의 정규화·통합 검증](tasks/009-release-acceptance.md).
 
 Git에 넣지 않는 managed root:
 

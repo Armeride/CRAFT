@@ -5,13 +5,15 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { indexFixture, removeIndexFixture, commitFixture } from '../../indexer/src/test-helpers.js';
 import type { IndexFixture } from '../../indexer/src/test-helpers.js';
 import { repositoryGuard } from '../../git-workspace/src/worktree.js';
-import { gitText } from '../../git-workspace/src/git.js';
+import { gitText, runGit } from '../../git-workspace/src/git.js';
 import { loadProject } from '../../project-fs/src/project.js';
 import { registerLocal } from './projects.js';
 import { ManualService } from './manual.js';
 import { IntegrationService } from './integration.js';
 import { assertIntegrationReady } from './integration-state.js';
 import { ProjectIndex } from '../../indexer/src/service.js';
+import { objectFile } from '../../project-fs/src/content.js';
+import type { Reference } from '../../schema/src/generated.js';
 const fixtures: IndexFixture[] = [];
 afterEach(async () => { for (const fixture of fixtures.splice(0)) await removeIndexFixture(fixture); });
 async function setup() { const fixture = await indexFixture(); fixtures.push(fixture); const registration = await registerLocal(fixture.app, fixture.root), service = new ManualService(fixture.app), run = await service.tasks.start(registration.id, { goal: 'Manual workflow acceptance' }); return { ...fixture, registration, service, run, integrations: new IntegrationService(fixture.app) }; }
@@ -79,5 +81,95 @@ describe('manual revision, review and integration workflow', () => {
     await commitFixture(f.root); await expect(f.integrations.apply(prepared.id, prepared.token)).rejects.toThrow(/BASE_CHANGED/);
     const latest = await f.service.inspect(f.run.runId); await f.service.execute(f.run.runId, latest.snapshot, randomUUID(), { type: 'review', entityId: created.entityId!, revisionId: created.revisionId!, outcome: 'rejected' });
     await expect(f.integrations.apply(prepared.id, prepared.token)).rejects.toThrow(/BASE_CHANGED/);
+  }, 90_000);
+  it('merges disjoint baseline selections and rejects approval of a changed source checkpoint (AT-45)', async () => {
+    const f = await setup();
+    const input = { title: 'Independent document', status: 'draft', scope: {}, references: [], extensions: {}, tags: [], body: 'Parallel text', baselineId: 'baseline_main', select: true } as const;
+    const command = { type: 'revision' as const, value: { ...input, references: [], tags: [] } };
+    const work = await f.service.execute(f.run.runId, (await f.service.inspect(f.run.runId)).snapshot, randomUUID(), command);
+    if (!work.proposalId || !work.entityId) throw new Error('Expected a proposed revision');
+    const parallel = await f.service.tasks.start(f.registration.id, { goal: 'Parallel changes' });
+    const other = await f.service.execute(parallel.runId, (await f.service.inspect(parallel.runId)).snapshot, randomUUID(), command);
+    if (!other.proposalId || !other.entityId) throw new Error('Expected a parallel revision');
+    const first = await f.integrations.prepare(parallel.runId, randomUUID(), [other.proposalId]);
+    await f.integrations.apply(first.id, first.token);
+    const prepared = await f.integrations.prepare(f.run.runId, randomUUID(), [work.proposalId]);
+    await f.service.tasks.saveDraft(f.run.runId, 'ui-draft.md', 'Changed after the approval preview', null);
+    await f.service.tasks.checkpoint(f.run.runId);
+    await expect(f.integrations.apply(prepared.id, prepared.token)).rejects.toThrow(/BASE_CHANGED/);
+    const next = await f.integrations.prepare(f.run.runId, randomUUID(), [work.proposalId]);
+    expect(next.diffDigest).not.toBe(prepared.diffDigest);
+    await f.integrations.apply(next.id, next.token);
+    const selected = (await loadProject(f.root)).baselines.get('baseline_main')?.value.selected;
+    expect(selected).toMatchObject({ [other.entityId]: other.revisionId, [work.entityId]: work.revisionId });
+  }, 90_000);
+
+  it('rejects a dependency mismatch introduced by combining independently valid selections (AT-12)', async () => {
+    const f = await setup();
+    const input = { title: 'New overview', status: 'draft' as const, scope: {}, references: [], extensions: {}, tags: [], body: 'New text', baselineId: 'baseline_main', select: true };
+    const reference: Reference = { reference_id: 'ref_overview', relation: 'depends_on', propagation: 'blocking', update_policy: 'track_all', target: { entity_id: 'ent_overview', revision_id: 'rev_overview_a' } };
+    const work = await f.service.execute(f.run.runId, (await f.service.inspect(f.run.runId)).snapshot, randomUUID(), { type: 'revision', value: { ...input, title: 'Consumer', references: [reference] } });
+    if (!work.proposalId) throw new Error('Expected a proposed consumer');
+    const parallel = await f.service.tasks.start(f.registration.id, { goal: 'Advance the selected overview' });
+    const other = await f.service.execute(parallel.runId, (await f.service.inspect(parallel.runId)).snapshot, randomUUID(), { type: 'revision', value: { ...input, entityId: 'ent_overview', parentRevision: 'rev_overview_a' } });
+    if (!other.proposalId) throw new Error('Expected a proposed overview');
+    const first = await f.integrations.prepare(parallel.runId, randomUUID(), [other.proposalId]);
+    await f.integrations.apply(first.id, first.token);
+    const target = await repositoryGuard(f.root), source = await repositoryGuard(f.run.path);
+    await expect(f.integrations.prepare(f.run.runId, randomUUID(), [work.proposalId])).rejects.toThrow(/INTEGRATION_SEMANTIC_CONFLICT.*BASELINE_DEPENDENCY_MISMATCH/s);
+    expect(await repositoryGuard(f.root)).toEqual(target);
+    expect(await repositoryGuard(f.run.path)).toEqual(source);
+  }, 90_000);
+
+  it('reports a new reference update even when Git merges the two changes without a conflict (AT-12)', async () => {
+    const f = await setup();
+    const input = { title: 'New overview', status: 'draft' as const, scope: {}, references: [], extensions: {}, tags: [], body: 'New text', baselineId: 'baseline_main', select: false };
+    const reference: Reference = { reference_id: 'ref_overview', relation: 'related_to', propagation: 'none', update_policy: 'track_all', target: { entity_id: 'ent_overview', revision_id: 'rev_overview_a' } };
+    const work = await f.service.execute(f.run.runId, (await f.service.inspect(f.run.runId)).snapshot, randomUUID(), { type: 'revision', value: { ...input, title: 'Consumer', references: [reference], select: true } });
+    if (!work.proposalId || !work.entityId || !work.revisionId) throw new Error('Expected a proposed consumer');
+    const parallel = await f.service.tasks.start(f.registration.id, { goal: 'Add an unselected successor' });
+    const other = await f.service.execute(parallel.runId, (await f.service.inspect(parallel.runId)).snapshot, randomUUID(), { type: 'revision', value: { ...input, entityId: 'ent_overview', parentRevision: 'rev_overview_a' } });
+    if (!other.proposalId) throw new Error('Expected a proposed successor');
+    const first = await f.integrations.prepare(parallel.runId, randomUUID(), [other.proposalId]);
+    await f.integrations.apply(first.id, first.token);
+    const source = await gitText(f.run.path, ['rev-parse', 'HEAD']);
+    await runGit(f.root, ['merge-tree', '--write-tree', first.candidateCommit, source]);
+    const preview = await f.integrations.prepare(f.run.runId, randomUUID(), [work.proposalId]);
+    expect(preview.advisories?.map(({ baselineId, issue }) => [baselineId, issue.code, issue.params['candidates']])).toEqual([
+      ['baseline_main', 'NEW_REVISION', [other.revisionId]],
+    ]);
+    await f.integrations.apply(preview.id, preview.token);
+    expect((await loadProject(f.root)).entities.get(work.entityId)?.revisions.get(work.revisionId)?.references[0]?.value.target).toEqual(reference.target);
+  }, 90_000);
+
+  it('defers an old task on a newer unsupported target without changing either branch (AT-17, AT-41)', async () => {
+    const f = await prepared();
+    const manifest = objectFile('project.yaml', { ...(await loadProject(f.root)).project, schema_version: 2 });
+    if (!manifest.text) throw new Error('Expected project manifest text');
+    await writeFile(join(f.root, manifest.path), manifest.text);
+    await commitFixture(f.root);
+    const target = await repositoryGuard(f.root), source = await repositoryGuard(f.run.path);
+    await expect(f.integrations.prepare(f.run.runId, randomUUID(), f.record.proposalIds)).rejects.toThrow(/MIGRATION_MERGE_UNSUPPORTED/);
+    expect(await repositoryGuard(f.root)).toEqual(target);
+    expect(await repositoryGuard(f.run.path)).toEqual(source);
+  }, 90_000);
+
+  it('preserves target selections that were omitted only in the selected dirty task basis', async () => {
+    const f = await setup();
+    const baseline = (await loadProject(f.root)).baselines.get('baseline_main');
+    if (!baseline) throw new Error('Expected the main baseline');
+    const baselinePath = join(f.root, baseline.path);
+    const committed = await readFile(baselinePath);
+    const local = objectFile(baseline.path, { ...baseline.value, selected: {} });
+    if (!local.text) throw new Error('Expected baseline text');
+    await writeFile(baselinePath, local.text);
+    const work = await f.service.tasks.start(f.registration.id, { goal: 'Use only the local baseline as context', includeWorkingPaths: [baseline.path] });
+    await writeFile(baselinePath, committed);
+    const proposal = await f.service.execute(work.runId, (await f.service.inspect(work.runId)).snapshot, randomUUID(), { type: 'revision', value: { title: 'New draft', status: 'draft', scope: {}, references: [], extensions: {}, tags: [], body: 'New text', baselineId: 'baseline_main', select: true } });
+    if (!proposal.proposalId || !proposal.entityId) throw new Error('Expected a proposed draft');
+    const preview = await f.integrations.prepare(work.runId, randomUUID(), [proposal.proposalId]);
+    await f.integrations.apply(preview.id, preview.token);
+    const selected = (await loadProject(f.root)).baselines.get('baseline_main')?.value.selected;
+    expect(selected).toMatchObject({ ...baseline.value.selected, [proposal.entityId]: proposal.revisionId });
   }, 90_000);
 });

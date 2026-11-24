@@ -174,16 +174,23 @@ describe('OS leases and recoverable file transactions', () => {
     expect(() => new Lease('test-owner', 'forged').assert('test-owner')).toThrow('LOCK_LEASE_INVALID');
   }, 30_000);
 
-  it.each(['prepared', 'written'] as const)('blocks reads after %s interruption and recovers all files before a new checkpoint', async phase => {
+  it.each([
+    { phase: 'prepared', fault: 'SIMULATED_CRASH' },
+    { phase: 'written', fault: 'SIMULATED_CRASH' },
+    { phase: 'written', fault: 'ENOSPC' },
+  ] as const)('blocks reads after $phase / $fault and recovers before a new checkpoint', async ({ phase, fault }) => {
     const f = await ready(), run = await f.service.start(f.registration.id, { goal: '부분 쓰기 복구' });
+    const source = await repositoryGuard(f.root);
     const body = phase === 'prepared' ? '가'.repeat(400_000) + '\n' : '중간 원문\n'; // journal exceeds the 2 MiB project YAML limit
-    await expect(f.service.saveDraft(run.runId, '부분.md', body, null, async current => { if (current === phase) throw new Error('SIMULATED_CRASH'); })).rejects.toThrow('SIMULATED_CRASH');
+    const error = Object.assign(new Error(fault), { code: fault });
+    await expect(f.service.saveDraft(run.runId, '부분.md', body, null, async current => { if (current === phase) throw error; })).rejects.toBe(error);
     await code(f.service.project(run.runId), 'RECOVERY_REQUIRED');
     expect((await pendingTransactions(join(f.app, 'runs', run.runId))).length).toBe(1);
     const recovered = await f.service.recover(run.runId); expect(recovered.status).toBe('interrupted');
     expect((await f.service.project(run.runId)).files.get(`tasks/${run.taskId}/working/부분.md`)!.text).toBe(body);
     expect(await pendingTransactions(join(f.app, 'runs', run.runId))).toHaveLength(0);
     expect(recovered.headCommit).not.toBe(run.headCommit);
+    expect(await repositoryGuard(f.root)).toEqual(source);
   }, 90_000);
 
   it('reconciles a preserved Git checkpoint after loss of the final runtime journal update', async () => {

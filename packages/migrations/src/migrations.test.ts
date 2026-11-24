@@ -17,6 +17,7 @@ import { objectFile, rawObject, textFile } from './source.js';
 import { startMigration, resumeMigration } from './engine.js';
 import { validateAudit } from './audit.js';
 import { verifyMigration } from './verify.js';
+import { normalizeMergeInputs } from './normalize-merge.js';
 import { commitFixtureEdit, fixtureRepository, removeTestRepository } from './test-helpers.js';
 import type { FixtureRepository } from './test-helpers.js';
 import type { DecisionMap, MigrationSnapshot, MigrationStep } from './types.js';
@@ -122,6 +123,30 @@ describe('registered versions and independent fixtures', () => {
 });
 
 describe('isolated migration worktrees and preservation', () => {
+  it('normalizes the Git common ancestor and old result against the migrated target (AT-41)', async () => {
+    const fixture = await setup(), settings = await options(fixture);
+    const migration = await startMigration(settings);
+    if (!migration.commit) throw new Error('Expected committed target migration');
+    const changedPath = 'tasks/task_outline/working/outline.md';
+    await writeFile(join(fixture.root, changedPath), '보존해야 하는 작업 결과\n');
+    await commitFixtureEdit(fixture.root);
+    const common = await gitText(fixture.root, ['merge-base', migration.commit, 'HEAD']);
+    const [basis, result, target] = await Promise.all([
+      readCommittedFiles(fixture.root, common), readCommittedFiles(fixture.root, 'HEAD'), readCommittedFiles(fixture.root, migration.commit),
+    ]);
+    const normalized = await normalizeMergeInputs(settings.registry, { basis, target, result });
+    expect([normalized.basis.snapshot.versions.core, normalized.target.versions.core, normalized.result.snapshot.versions.core]).toEqual([2, 2, 2]);
+    const revision = 'entities/ent_overview/revisions/rev_overview_a/meta.yaml';
+    const converted = normalized.result.snapshot.files.get(revision);
+    expect(converted?.digest).toBe(target.get(revision)?.digest);
+    expect(converted?.text).toMatch(/^heading:/m);
+    expect(converted?.text).not.toMatch(/^title:/m);
+    expect(normalized.result.snapshot.files.get(changedPath)?.digest).toBe(result.get(changedPath)?.digest);
+    expect(normalized.result.snapshot.files.get(changedPath)?.digest).not.toBe(normalized.basis.snapshot.files.get(changedPath)?.digest);
+    expect(normalized.result.report.reviewMappings[0]?.status).toBe('semantic_continuity_verified');
+    await code(normalizeMergeInputs(createProductionRegistry(), { basis, target, result }), 'MIGRATION_MERGE_UNSUPPORTED');
+  }, 30_000);
+
   it('commits a complete result on a separate branch, retains old Git bytes and writes mappings (AT-39)', async () => {
     const fixture = await setup();
     const before = await repositoryGuard(fixture.root);
