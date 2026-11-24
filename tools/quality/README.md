@@ -45,14 +45,14 @@
 1. **`main` ruleset** (2026-11-23 설정)
    - 브랜치 대상: 기본 브랜치
    - PR 필수, 승인 1, Code Owner 리뷰 필수, 새 커밋이 오면 기존 승인 취소, 마지막 push 이후 승인 필수
-   - 필수 상태 검사: `security`
+   - 필수 상태 검사: `check`, `security` (`check`는 2026-11-24 추가)
    - force push와 삭제 금지
    - bypass: Repository admin, *pull request에서만*. 관리자가 직접 연 PR(게이트 수정 등)은 승인해 줄 사람이 없으므로 bypass로 머지한다. App은 bypass에 넣지 않는다.
 2. **`CODEOWNERS`가 `* @Armeride`인 이유**: App이 둘이라 한 App이 다른 App의 PR을 승인할 수 있다. Code Owner 리뷰를 요구하면 관리자의 승인만 인정된다.
 3. **`guard`는 보고 전용이다.** App은 PR 라벨도 붙일 수 있으므로 라벨로는 관리자의 의도를 증명할 수 없다. 그래서 PR에서는 게이트 파일 변경, ESLint suppression 증가, `package.json` 게이트 스크립트 변경을 경고 주석과 job summary로 보여주기만 한다. 막는 것은 위 승인 규칙이다. 로컬 pre-commit의 `guard`는 그대로 커밋을 막는다.
 4. **App 권한**: Contents, Pull requests는 read/write, Metadata는 read만 준다. Workflows, Administration, Actions, Secrets는 주지 않는다. Workflows 권한이 없으면 `.github/workflows/**`를 바꾼 push는 GitHub이 거부한다.
 5. **저장소 설정**: Actions의 기본 토큰 권한은 read로 두고, "Allow GitHub Actions to create and approve pull requests"는 끈다.
-6. **`check`를 필수 검사에 추가할 시점**: 아래 "알려진 환경 이슈"의 Windows 러너 테스트 실패 2건이 고쳐진 뒤에 추가한다.
+6. **`quality.yml`에 `paths` 필터를 넣지 않는다.** 필수 검사가 필터 때문에 실행되지 않으면 그 PR은 검사를 기다리다 머지할 수 없게 된다.
 
 리뷰할 때 `guard`가 경고를 남긴 PR은 해당 파일의 diff를 반드시 확인한다. 에이전트가 게이트를 바꾸려는 이유는 PR 본문에 적혀 있어야 한다(AGENTS.md "오탐이라고 판단될 때").
 
@@ -100,9 +100,8 @@ Codex는 `.codex/hooks.json`의 `PostToolUse`(matcher `apply_patch|Edit|Write`)�
 
 ## 알려진 환경 이슈
 
-- **GitHub Windows 러너에서 앱 테스트 2건이 실패한다**(2026-11-20, PR #1). 로컬 Windows에서는 통과한다.
-  - `packages/indexer/src/indexer.test.ts` stage-3 reader 테스트: 한글이 든 임시 경로(`stage4 검증 …`)를 시스템 `tar`에 넘기는데, 러너의 코드 페이지에서 `??`로 깨진다. 결정적 실패다.
-  - `packages/agent-core/src/phase7.test.ts:228` provider 전환 복구 테스트: `Expected external approval`로 64초 만에 실패했다. 느린 러너에서의 타이밍 문제로 보인다.
+- **해결됨(#3, 2026-11-23): GitHub Windows 러너에서 앱 테스트 2건이 실패하던 문제.**
+  - `packages/indexer/src/indexer.test.ts` stage-3 reader 테스트: 한글이 든 임시 경로를 시스템 `tar`에 넘기다 러너의 코드 페이지에서 경로가 깨졌다. tar 대신 `git read-tree`와 `checkout-index`로 바꿨다.
+  - `packages/agent-core/src/phase7.test.ts` provider 전환 복구 테스트: 승인 대기가 느린 러너에서 시간 초과됐다.
 - 관리자가 Windows에서 직접 검사를 돌릴 때는 대문자 드라이브 cwd(`D:\git\CRAFT`)의 PowerShell을 쓴다. 에이전트는 WSL에서 실행한다(AGENTS.md).
 - Git Bash의 소문자 드라이브 cwd(`d:\git\CRAFT`)에서는 Vitest가 "failed to find the current suite/runner"로 모든 테스트가 실패한다. 대문자(`D:\`) cwd 또는 PowerShell에서는 정상이다. 이 때문에 벤치는 `--root bench`로 실행한다.
-- Git Bash에서는 `packages/indexer/src/indexer.test.ts`의 stage-3 reader 테스트가 GNU tar 때문에 실패한다(`D:` 콜론을 원격 호스트로 해석). PowerShell에서는 통과한다.
