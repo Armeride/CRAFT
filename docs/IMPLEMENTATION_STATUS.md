@@ -1,14 +1,15 @@
 # 구현 상태
 
-갱신: 2026-11-23, Asia/Seoul. **단계 0~8 완료. 단계 9 구현과 WSL2 검증, Windows 인수 확인 대기.** 최신 인수 근거와 남은 확인 항목은 [작업 009](tasks/009-release-acceptance.md)를 따른다. 새 UI 요구는 [별도 작업](tasks/README.md)으로 관리한다.
+갱신: 2026-11-24, Asia/Seoul. **단계 0~8 완료. 단계 9의 WSL2·Windows 로컬 인수 통과, Windows CI 미확인.** 최신 인수 근거와 남은 확인 항목은 [작업 009](tasks/009-release-acceptance.md)를 따른다. 새 UI 요구는 [별도 작업](tasks/README.md)으로 관리한다.
 
 ## 단계 9 — 통합·장애·성능·로컬 배포
 
 - `e79ceb2`에서 만든 `codex/stage-9-acceptance`에서 작업했다. Git 공통 조상의 확인, 채택 선택 단위의 3-way, 조합에서 생긴 의미 충돌과 검토 안내, 원래 commit·diff에 결속된 승인을 구현했다. 등록 변환의 B/R 정규화는 실제 Git fixture로 검증했다. 현 제품 스키마는 core 1이며 지원하지 않는 3-way 변환은 보존 가능한 상태로 보류한다.
 - `npm start`로 예시 없이 로컬 앱을 실행한다. 임시 Git 프로젝트에서 HTTP 등록과 정확 조회, Git bundle의 정본과 작업 참조 복원을 확인했다. 설치·업데이트·지원표·백업·복구는 [로컬 배포 안내](LOCAL_RELEASE.md)에 있다.
 - 최종 WSL2 회귀에서 `npm run check:fast`, `npm run check`(Vitest 27파일 225개), `npm run check:security`, Chrome E2E 19개가 통과했다. [AT-01~68의 시나리오와 근거](tasks/009-release-acceptance.md#at-회귀-근거)를 기록했다.
+- 2026-11-23 Windows x64에서 `3d8baa7`의 `npm ci`, `npm run check`(Vitest 27파일 225개), `npm run check:security`, Chrome E2E 19개가 통과했다. `npm start`로 실행한 앱에서 HTTP 200, 초기 화면, 로컬 Git 프로젝트 등록, 리비전 조회를 확인했다. 2026-11-24 GitHub Actions 조회에서 이 브랜치의 실행 기록은 없었다. [Windows 검증 기록](tasks/009-release-acceptance.md#windows-로컬-인수)
 - 1,000요소/10,000리비전과 8,000참조에서 실제 worktree의 파일 검증을 포함해 측정했다. 목표와 비교한 결과와 재현 명령은 [작업 009의 성능 기록](tasks/009-release-acceptance.md#성능-재현)을 따른다.
-- 두 실제 모델의 지원 근거는 사용자 승인 후 실행한 2026-11-18 기록이다. 이번 작업은 Linux에서 모델 없이 회귀했다. 현재 브랜치의 Windows CI와 새 공급자 실호출은 이번 검증에 포함되지 않았다.
+- 두 실제 모델의 지원 근거는 사용자 승인 후 실행한 2026-11-18 기록이다. 단계 9의 WSL2·Windows 회귀는 로컬 테스트 실행기와 공급자 프로토콜 fixture를 사용했다.
 
 ## 기준과 범위 구분
 
@@ -260,7 +261,7 @@ npm run workspace -- start --app-data <관리-경로> --registration <등록-ID>
 
 ## 다음 확인 — 단계 9 인수
 
-1. [작업 009](tasks/009-release-acceptance.md)의 검증 범위를 확인하고 이 브랜치의 Windows `check`와 Windows 설치·시작을 검증한다.
+1. GitHub Actions의 Windows `check` 결과를 확인한다. Windows 로컬 설치·회귀·배포 실행 결과는 [작업 009](tasks/009-release-acceptance.md#windows-로컬-인수)에 기록했다.
 2. 작업 파일 2중 확인 비용을 줄이는 색인 변경은 외부 편집·symlink·부분 journal 경계와 함께 다시 측정한다. 단계 10은 별도 선택 확장이다.
 
 ## 보존 상태

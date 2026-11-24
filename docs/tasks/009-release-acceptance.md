@@ -56,4 +56,18 @@ WSL2 Ubuntu 24.04와 Node 24.21.0에서 21,007파일·10,000리비전·8,000참�
 
 ## 로컬 배포 확인
 
-빈 임시 디렉터리에서 잠금 파일로 `npm ci --offline`을 실행해 패키지 설치와 네이티브 SQLite FTS5 trigram을 확인했다. 임시 Git 저장소로 배포 서버를 시작해 HTTP 200, 예시가 없는 세션, 등록과 fresh exact 조회를 확인했다. 이 저장소의 작업 branch를 `git bundle --all`로 저장하고 검증한 뒤 새 경로에 복제했다. 새 앱 데이터에서 정본 검증, 원격 추적 작업 참조 재발견, 같은 checkpoint의 새 worktree 재개를 확인했다. Windows 배포 시작, 현재 브랜치의 Windows CI, 물리적 저장 매체 장애는 별도 환경 검증이 남아 있다.
+WSL2의 빈 임시 디렉터리에서 잠금 파일로 `npm ci --offline`을 실행해 패키지 설치와 네이티브 SQLite FTS5 trigram을 확인했다. 임시 Git 저장소로 배포 서버를 시작해 HTTP 200, 예시가 없는 세션, 등록과 fresh exact 조회를 확인했다. 이 저장소의 작업 branch를 `git bundle --all`로 저장하고 검증한 뒤 새 경로에 복제했다. 새 앱 데이터에서 정본 검증, 원격 추적 작업 참조 재발견, 같은 checkpoint의 새 worktree 재개를 확인했다.
+
+## Windows 로컬 인수
+
+2026-11-23(Asia/Seoul) 별도 Windows 세션에서 `3d8baa7`을 Windows x64, Node 24.21.0, npm 11.19.0으로 검증했다.
+
+| 명령 | 결과 |
+|---|---|
+| `npm ci` | 잠금 파일로 설치 성공 |
+| `npm run check` | 빌드·정적 검사 및 Vitest 27파일 225개 통과 |
+| `npm run check:security` | 통과 |
+| `npm run test:ui` | Chrome E2E 19개 통과 |
+| `npm start` | HTTP 200, Chrome 초기 화면·로컬 Git 프로젝트 등록·리비전 조회 확인 |
+
+배포 앱에는 별도 앱 데이터 경로를 사용했다. 브라우저·서버 오류 출력은 없었고 확인 후 서버를 종료했다. 2026-11-24 GitHub Actions 조회에서 `codex/stage-9-acceptance`의 실행 기록은 없었다. Windows CI와 물리 저장 매체 장애는 별도 확인 항목이다.
