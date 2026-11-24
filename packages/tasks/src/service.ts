@@ -18,7 +18,7 @@ import type { WriteOptions } from '../../project-fs/src/writer.js';
 import { assertOwnedPath, assertSourceUnchanged, checkedManagedRoot, repositoryGuard } from '../../git-workspace/src/worktree.js';
 import type { ScratchWorkspace } from '../../git-workspace/src/worktree.js';
 import { createOwnedWorkspace, preserveWorkspace } from '../../git-workspace/src/branches.js';
-import { imageReferences, validateManagedImage } from '../../project-fs/src/images.js';
+import { appendImageReference, INLINE_PNG_MAX_BYTES } from '../../project-fs/src/images.js';
 import { sourceFromChange } from '../../project-fs/src/changes.js';
 import { readResumeNotes } from './resume-contracts.js';
 import type { ResumeNotes } from './resume-contracts.js';
@@ -184,9 +184,8 @@ export class TaskService {
 
   async attachImage(runId: string, encoded: string, alt: string, expectedDigest: string | null): Promise<{ path: string; digest: string }> {
     const bytes = Buffer.from(encoded, 'base64');
-    validateManagedImage(bytes);
-    if (bytes.toString('base64') !== encoded || !alt.trim() || alt.length > 200 || /[\r\n\[\]]/.test(alt)) {
-      throw fileFailure('ASSET_INVALID', 'Image bytes or alt text are invalid', 'project.yaml');
+    if (bytes.length > INLINE_PNG_MAX_BYTES || bytes.toString('base64') !== encoded) {
+      throw fileFailure('ASSET_INVALID', 'Invalid or oversized inline PNG', 'project.yaml');
     }
     const path = `assets/craft/${hash(bytes)}.png`;
     const file = sourceFromChange(path, bytes);
@@ -197,13 +196,12 @@ export class TaskService {
         const current = await this.project(runId);
         const draft = current.files.get(draftPath);
         if ((draft?.digest ?? null) !== expectedDigest) throw fileFailure('FILE_CHANGED_EXTERNALLY', 'Preserve the current draft before attaching an image', draftPath);
-        if (imageReferences(draft?.text ?? '').some(image => image.path === path)) return { path, digest: draft!.digest };
+        const body = appendImageReference(draft?.text ?? '', alt, path);
+        if (draft?.text === body) return { path, digest: draft.digest };
         const taskPath = `tasks/${run.taskId}/task.yaml`;
         const task = rawObject<Task>(current.files, taskPath);
         if (!task.outputs.includes(draftPath)) task.outputs = [...task.outputs, draftPath];
-        const text = draft?.text ?? '';
-        const separator = !text || text.endsWith('\n\n') ? '' : text.endsWith('\n') ? '\n' : '\n\n';
-        const next = textFile(draftPath, text + separator + `![${alt.trim()}](${path})\n`);
+        const next = textFile(draftPath, body);
         if (next.text!.length > 300000) throw fileFailure('SOURCE_SIZE_LIMIT', 'Draft exceeds the supported text limit', draftPath);
         await this.write(run, lease, current, [file, next, objectFile(taskPath, task)]);
         return { path, digest: next.digest };

@@ -1841,7 +1841,7 @@
   },
   "packages/tasks/src/manual.ts": {
     "@typescript-eslint/no-non-null-assertion": {
-      "count": 2
+      "count": 1
     },
     "@typescript-eslint/no-unused-vars": {
       "count": 2
@@ -1892,19 +1892,13 @@
   },
   "packages/tasks/src/service.ts": {
     "@typescript-eslint/no-non-null-assertion": {
-      "count": 12
+      "count": 11
     },
     "@typescript-eslint/no-unused-vars": {
       "count": 3
     },
     "no-await-in-loop": {
       "count": 4
-    },
-    "no-useless-escape": {
-      "count": 1
-    },
-    "regexp/no-useless-escape": {
-      "count": 1
     },
     "security/detect-non-literal-regexp": {
       "count": 1
@@ -1913,9 +1907,6 @@
       "count": 1
     },
     "sonarjs/no-alphabetical-sort": {
-      "count": 1
-    },
-    "sonarjs/no-nested-conditional": {
       "count": 1
     },
     "sonarjs/no-unenclosed-multiline-block": {

@@ -29,6 +29,13 @@ const schema = (
   required: string[] = [],
 ) => ({ type: "object", additionalProperties: false, properties, required });
 
+const proposalImages = {
+  type: "array",
+  maxItems: 8,
+  description: "Attach original PNGs from the task's starting files. Provide exact relative source paths and alt text. CRAFT adds the managed links to the body and copies the bytes locally.",
+  items: schema({ sourcePath: boundedText(1024), alt: boundedText(200) }, ["sourcePath", "alt"]),
+};
+
 export const knowledgeTools = [
   {
     name: "knowledge.search",
@@ -94,14 +101,23 @@ export const knowledgeTools = [
       {
         requestId: { type: "string", format: "uuid" },
         expectedSnapshot: { type: "string", pattern: "^[a-f0-9]{64}$" },
+        kind: {
+          ...boundedText(256),
+          pattern: "^[a-z][a-z0-9_]*(?:\\.[a-z][a-z0-9_]*)*$",
+          description: "Kind of the new entity. Defaults to document. Revisions of an existing entity keep its kind. narrative.character requires the narrative extension.",
+        },
         title: boundedText(1000),
         body: { type: "string", maxLength: 300000 },
+        images: proposalImages,
         references: {
           type: "array",
           maxItems: 1000,
           items: { type: "object" },
         },
-        extensions: { type: "object" },
+        extensions: {
+          type: "object",
+          description: "Metadata validated using the project's enabled extensions. For narrative.character supply narrative: {profile: {...}, initial_state: {world_tick: integer, values: {...}}}. Leave unknown facts out of the property objects.",
+        },
         scope: { type: "object" },
         tags: {
           type: "array",
@@ -125,6 +141,7 @@ export const knowledgeTools = [
 export const povKnowledgeTools = knowledgeTools.filter(tool => ['knowledge.search', 'entity.get', 'references.reverse', 'context.build'].includes(tool.name));
 
 const validator = new Ajv2020({ strict: false, validateFormats: false });
+const validProposalImages = validator.compile<{ sourcePath: string; alt: string }[]>(proposalImages);
 const validators = new Map(
   knowledgeTools.map((tool) => [
     tool.name,
@@ -466,6 +483,7 @@ export class RunKnowledge {
           context,
           workingFingerprint: snapshot.fingerprint,
           baselineId: this.execution.baselineId,
+          projectExtensions: snapshot.project.extensions,
           source,
           draft:
             snapshot.files.get(`tasks/${run.taskId}/working/ui-draft.md`)
@@ -485,19 +503,31 @@ export class RunKnowledge {
         return { checkpointId: run.checkpointId, commit: run.headCommit };
       }
       case "changes.propose": {
+        const images = input["images"];
+        if (images !== undefined && !validProposalImages(images)) {
+          throw fileFailure("REQUEST_INVALID", "Unsupported proposal image arguments", "project.yaml");
+        }
+        const attachments = (images ?? []).map(({ sourcePath, alt }) => {
+          const source = this.initialFiles?.get(sourcePath);
+          if (!source || !/\.png$/i.test(sourcePath)) {
+            throw fileFailure("ASSET_INVALID", "PNG is absent from the task's starting files", sourcePath);
+          }
+          return { source, alt };
+        });
         const snapshot = await this.tasks.project(this.execution.runId);
         const source = this.execution.source;
-        const parent = source
-          ? snapshot.entities
-              .get(source.entityId)
-              ?.revisions.get(source.revisionId)?.meta
-          : undefined;
+        const entity = source && snapshot.entities.get(source.entityId);
+        const parent = source && entity?.revisions.get(source.revisionId)?.meta;
+        const kind = typeof input["kind"] === "string" ? input["kind"] : undefined;
+        if (kind && entity && kind !== entity.value.kind) {
+          throw fileFailure("IMMUTABLE_ENTITY_KIND", "Revisions must retain the existing entity kind", entity.path);
+        }
         const command = {
           type: "revision" as const,
           value: {
             ...(source
               ? { entityId: source.entityId, parentRevision: source.revisionId }
-              : { kind: "document" }),
+              : { kind: kind ?? "document" }),
             title: input["title"] as string,
             body: input["body"] as string,
             status: "draft" as const,
@@ -519,6 +549,7 @@ export class RunKnowledge {
           input["requestId"] as string,
           command,
           this.execution.provider,
+          attachments,
         );
         const { run } = await this.tasks.run(this.execution.runId);
         await this.track([
@@ -527,6 +558,7 @@ export class RunKnowledge {
           `entities/${result.entityId}/revisions/${result.revisionId}/content.md`,
           `tasks/${run.taskId}/proposals/${result.proposalId}.yaml`,
           `tasks/${run.taskId}/working/ui-operation-${input["requestId"]}.json`,
+          ...(result.imagePaths ?? []),
         ]);
         return result;
       }

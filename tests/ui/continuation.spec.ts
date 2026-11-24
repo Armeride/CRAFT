@@ -1,5 +1,39 @@
 import { test, expect } from "@playwright/test";
 
+test("shows one AI panel when switching between saved drafts", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "작업 초안", exact: true }).click();
+
+  const editor = page.locator(".legacy-editor");
+  const ai = editor.locator("summary").filter({ hasText: /^AI 실행$/ });
+  const goalInput = page.getByRole("textbox", { name: "작업 목표", exact: true });
+  const suffix = Date.now().toString();
+  const first = `AI 패널 전환 A ${suffix}`;
+  const second = `AI 패널 전환 B ${suffix}`;
+
+  async function createDraft(goal: string) {
+    await goalInput.fill(goal);
+    await page.getByRole("button", { name: "새 수동 작업", exact: true }).click();
+    await expect(editor.getByRole("heading", { name: goal, exact: true })).toBeVisible();
+  }
+
+  async function openDraftAndType(goal: string) {
+    await page.locator(".saved-work-list button").filter({ hasText: goal }).click();
+    await expect(editor.getByRole("heading", { name: goal, exact: true })).toBeVisible();
+    await expect(ai).toHaveCount(1);
+    await ai.click();
+    const prompt = editor.getByRole("textbox", { name: "이 요소에 대한 작업 요청", exact: true });
+    await expect(prompt).toHaveValue("");
+    await prompt.fill(goal);
+  }
+
+  await createDraft(first);
+  await createDraft(second);
+  await openDraftAndType(first);
+  await openDraftAndType(second);
+  await openDraftAndType(first);
+});
+
 test("keeps continuation notes and a PNG visible after reopening the task", async ({
   page,
 }) => {

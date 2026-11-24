@@ -2,6 +2,8 @@ import { crc32 } from "node:zlib";
 import { fileFailure } from "./files.js";
 
 export const managedAssetPattern = /^assets\/craft\/([a-f0-9]{64})\.png$/;
+export const INLINE_PNG_MAX_BYTES = 256 * 1024;
+const managedPngMaxBytes = 8 * 1024 * 1024;
 const embeddedImage =
   /^!\[([^\]\r\n]{1,200})\]\((assets\/craft\/[a-f0-9]{64}\.png)\)$/;
 
@@ -19,11 +21,22 @@ export function imageReferences(text: string) {
   });
 }
 
+export function appendImageReference(body: string, alt: string, path: string): string {
+  const label = alt.trim();
+  if (!label || alt.length > 200 || /[\r\n[\]]/.test(alt)) {
+    throw fileFailure("ASSET_INVALID", "Enter valid image alt text", path);
+  }
+  if (imageReferences(body).some(image => image.path === path)) return body;
+  const separator = body.endsWith("\n") ? "\n" : "\n\n";
+  const gap = !body || body.endsWith("\n\n") ? "" : separator;
+  return body + gap + `![${label}](${path})\n`;
+}
+
 export function validateManagedImage(bytes: Buffer): void {
   const png = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
   if (
     bytes.length < 45 ||
-    bytes.length > 256 * 1024 ||
+    bytes.length > managedPngMaxBytes ||
     !bytes.subarray(0, 8).equals(png) ||
     bytes.readUInt32BE(8) !== 13 ||
     bytes.toString("ascii", 12, 16) !== "IHDR" ||

@@ -33,6 +33,11 @@ const mergeConflicts = new Set(['BASELINE_DEPENDENCY_MISMATCH', 'SCOPE_MISMATCH'
 const mergeWarnings = new Set(['NEW_REVISION', 'NEW_APPROVED_REVISION', 'DIVERGENT_REVISIONS']);
 const diagnosticIdentity = ({ code, path, pointer, params }: ReturnType<typeof analysisOf>['diagnostics'][number]) => canonicalJson([code, path, pointer, params]);
 const schemaIdentity = (snapshot: ProjectSnapshot) => canonicalJson([snapshot.project.extensions, snapshot.documents.get('schemas/lock.json')]);
+async function reviewDiff(root: string, target: string, candidate: string, format: IntegrationRecord['diffFormat']) {
+  const binary = format === 'binary-summary' ? '--full-index' : '--binary';
+  return (await runGit(root, ['diff', '--no-ext-diff', '--no-textconv', binary, target, candidate, '--'])).stdout.toString('utf8');
+}
+
 async function comparisonInputs(basis: ReadonlyMap<string, SourceFile>, target: ReadonlyMap<string, SourceFile>, result: ReadonlyMap<string, SourceFile>) {
   const versions = canonicalJson(inspectVersions(target));
   if (versions === canonicalJson(inspectVersions(basis)) && versions === canonicalJson(inspectVersions(result))) {
@@ -114,11 +119,12 @@ export class IntegrationService {
       const workspace = await withMetadataLock(registration.root, () => createOwnedWorkspace(registration.root, this.appData, path, branch, target.commit));
       let candidateCommit = '';
       await withWorktreeLock(path, async lease => { await applyTransaction(path, join(this.appData, 'manual-integrations', id), lease, { expectedSnapshot: targetSnapshot.fingerprint, changes }, { scopeId: id, allowedPrefixes: ['entities/', 'baselines/', 'reviews/', 'assets/craft/', `tasks/${run.taskId}/`] }); candidateCommit = await withMetadataLock(registration.root, () => preserveWorkspace(workspace, target.commit, files.map(file => ({ path: file.path, file })), 'manual: integrate reviewed proposals')); });
-      const diff = (await runGit(registration.root, ['diff', '--no-ext-diff', '--no-textconv', '--binary', target.commit, candidateCommit, '--'])).stdout.toString('utf8');
+      const diffFormat = 'binary-summary';
+      const diff = await reviewDiff(registration.root, target.commit, candidateCommit, diffFormat);
       if (Buffer.byteLength(diff) > 1024 * 1024) throw fileFailure('DIFF_REVIEW_LIMIT', 'Review diff exceeds the supported display limit', 'project.yaml');
       await assertSourceUnchanged(target);
       const diffDigest = hash(diff), token = hash(canonicalJson({ source: run.headCommit, target: target.commit, diffDigest, reviewId, candidate: candidateCommit, nonce: newId('approval') }));
-      const record: IntegrationRecord = { version: 1, id, registrationId: run.registrationId, runId, requestId, requestDigest, state: 'prepared', sourceCommit, sourceSnapshot: source.fingerprint, targetRef, target, candidateCommit, candidateSnapshot: candidate.fingerprint, candidateFilesFingerprint: fingerprint(await readCommittedFiles(path, candidateCommit, false)), reviewId, diffDigest, token, proposalIds, diff, advisories };
+      const record: IntegrationRecord = { version: 1, id, registrationId: run.registrationId, runId, requestId, requestDigest, state: 'prepared', sourceCommit, sourceSnapshot: source.fingerprint, targetRef, target, candidateCommit, candidateSnapshot: candidate.fingerprint, candidateFilesFingerprint: fingerprint(await readCommittedFiles(path, candidateCommit, false)), reviewId, diffFormat, diffDigest, token, proposalIds, diff, advisories };
       await this.save(record); return record;
     });
   }
@@ -145,7 +151,7 @@ export class IntegrationService {
         if (active.run.registrationId !== record.registrationId || active.run.headCommit !== record.sourceCommit || await gitText(run.path, ['rev-parse', 'HEAD']) !== record.sourceCommit || (await this.tasks.project(run.runId)).fingerprint !== record.sourceSnapshot) throw fileFailure('BASE_CHANGED', 'Task result changed after review', 'project.yaml');
         const candidateRoot = join(this.appData, 'integrations', id); await repositoryGuard(candidateRoot);
         if (await gitText(candidateRoot, ['rev-parse', 'HEAD']) !== record.candidateCommit || fingerprint(await captureFiles(candidateRoot, false)) !== record.candidateFilesFingerprint) throw fileFailure('BASE_CHANGED', 'Integration candidate changed after review', 'project.yaml');
-        const diff = (await runGit(registration.root, ['diff', '--no-ext-diff', '--no-textconv', '--binary', record.target.commit, record.candidateCommit, '--'])).stdout.toString('utf8');
+        const diff = await reviewDiff(registration.root, record.target.commit, record.candidateCommit, record.diffFormat);
         if (hash(diff) !== record.diffDigest) throw fileFailure('BASE_CHANGED', 'Reviewed diff changed', 'project.yaml');
         const candidateTree = await gitText(registration.root, ['rev-parse', record.candidateCommit + '^{tree}']), stagedCandidate = record.state === 'applying' && currentFiles === record.candidateSnapshot && await gitText(registration.root, ['write-tree']) === candidateTree;
         if (!stagedCandidate) {

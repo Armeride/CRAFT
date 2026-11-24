@@ -22,8 +22,14 @@ const provenanceSchema = {
   properties: { source_path: { type: 'string', minLength: 1 }, source_commit: { type: 'string', pattern: '^(?:[a-f0-9]{40}|[a-f0-9]{64})$' }, source_digest: { type: 'string', pattern: '^[a-f0-9]{64}$' }, body_transform: { const: 'literal-markers-lf-v1' } },
 };
 
+function includeNarrative(project: Project, lock: SchemaLock, enabled: boolean): void {
+  if (!enabled || Object.hasOwn(project.extensions, 'narrative')) return;
+  project.extensions['narrative'] = { required: true, schema_version: 1 };
+  Object.assign(lock.extensions, builtinLock(['narrative']).extensions);
+}
+
 /** Explicit document import only. Source files, existing revisions and approval state are never rewritten. */
-export async function importDocuments(appData: string, registrationId: string, selectedPaths: readonly string[], name = '가져온 프로젝트'): Promise<Operation> {
+export async function importDocuments(appData: string, registrationId: string, selectedPaths: readonly string[], name = '가져온 프로젝트', narrative = false): Promise<Operation> {
   const registration = await getRegistration(appData, registrationId);
   if (!['ready', 'import_required'].includes(registration.status)) throw new Error('IMPORT_REQUIRES_COMMITTED_SUPPORTED_REPOSITORY');
   if (!selectedPaths.length || new Set(selectedPaths).size !== selectedPaths.length) throw new Error('IMPORT_SELECTION_REQUIRED');
@@ -37,6 +43,7 @@ export async function importDocuments(appData: string, registrationId: string, s
     const baselineId = existing?.project.default_baseline_id ?? newId('baseline');
     const project: Project = existing ? structuredClone(existing.project) : { project_id: newId('prj'), name, language: 'ko', schema_version: 1, default_baseline_id: baselineId, extensions: {}, policies: { implicit_latest_reference: 'forbidden', missing_reference: 'error', approval_blocks_on_dependency_states: ['draft', 'discussing', 'in_review'] } };
     const lock: SchemaLock = existing ? rawObject<SchemaLock>(existing.files, 'schemas/lock.json') : builtinLock([]);
+    includeNarrative(project, lock, narrative);
     const schemaPath = 'schemas/extensions/craft.import/v1/schema.json';
     const schemaFile = objectFile(schemaPath, provenanceSchema);
     if (project.extensions[namespace] && (lock.extensions[namespace]?.schema_id !== provenanceSchema.$id || lock.extensions[namespace]?.digest !== schemaFile.digest)) throw new Error('IMPORT_EXTENSION_CONFLICT');

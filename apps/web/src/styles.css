@@ -145,6 +145,7 @@ details summary{cursor:pointer;line-height:1.8;font-size:.85em;color:var(--muted
 .library-panel>.dashboard-card{margin:24px 0}
 .import-selection{max-height:280px;overflow:auto;margin:16px 0}
 .import-selection label{flex-direction:row;align-items:center;margin:10px 0;overflow-wrap:anywhere}
+.library-panel label.library-option{flex-direction:row;align-items:center;margin:12px 0}
 .checkpoint-row{margin:18px 0;border-top:1px solid var(--line);padding-top:14px;overflow-wrap:anywhere}
 @media(max-width:700px){.manual-fields{grid-template-columns:1fr}.manual-workspace{padding-top:18px}.manual-context{align-items:stretch}.manual-review,.manual-baseline,.manual-validation,.integration-review{padding:12px}}
 .graph-viewport{position:relative;overflow:hidden;height:440px;min-width:0;border:1px solid var(--line);background:var(--subtle);border-radius:8px;touch-action:none;cursor:grab}
