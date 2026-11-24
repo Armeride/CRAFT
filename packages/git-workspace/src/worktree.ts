@@ -69,7 +69,7 @@ export async function checkedManagedRoot(path: string, sourceRoot: string): Prom
   if (actual !== expected || (await lstat(expected)).isSymbolicLink()) throw fileFailure('MANAGED_ROOT_INVALID', 'Managed root must not be a symlink/junction', 'project.yaml');
   return actual;
 }
-export async function assertOwnedPath(managedRoot: string, target: string): Promise<void> {
+export async function assertOwnedPath(managedRoot: string, target: string): Promise<string> {
   const base = await realpath(managedRoot);
   const absolute = resolve(target);
   if (absolute === base || !absolute.startsWith(base + sep)) throw new Error('Managed path escape');
@@ -79,6 +79,7 @@ export async function assertOwnedPath(managedRoot: string, target: string): Prom
     try { if ((await lstat(current)).isSymbolicLink()) throw new Error('Managed path contains a link'); }
     catch (error) { if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error; }
   }
+  return absolute;
 }
 
 /** The caller owns this newly created tree. No checkout filters/hooks or source writes. */

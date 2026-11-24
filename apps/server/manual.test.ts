@@ -78,4 +78,15 @@ describe('manual HTTP boundary and recovery', () => {
     expect((await f.send(`/api/projects/${f.registration.id}/migration`, { target: { core: 2 }, run: false })).json().code).toBe('SCHEMA_UNSUPPORTED'); expect(await repositoryGuard(f.root)).toEqual(before);
     expect((await f.send('/api/library/clone', { url: 'file:///D:/untrusted' })).statusCode).toBe(400);
   }, 120000);
+  it('limits bursts of import requests while keeping other library routes available', async () => {
+    const f = await setup();
+    const body = { registrationId: 'reg_missing', paths: ['README.md'], name: 'Import' };
+    const replies = await Promise.all(Array.from({ length: 12 }, () => f.send('/api/library/import', body)));
+    expect(replies.filter(reply => reply.statusCode === 403)).toHaveLength(10);
+    const limited = replies.filter(reply => reply.statusCode === 429);
+    expect(limited).toHaveLength(2);
+    expect(limited[0]?.headers['retry-after']).toMatch(/^\d+$/);
+    expect(limited[0]?.json<{ code: string }>().code).toBe('RATE_LIMIT_EXCEEDED');
+    expect((await f.send('/api/library/inspect', { root: f.root })).statusCode).toBe(200);
+  }, 120000);
 });
