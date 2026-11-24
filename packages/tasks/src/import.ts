@@ -3,7 +3,7 @@ import type { Project, Baseline, Revision, SchemaLock } from '../../schema/src/g
 import type { Operation } from '../../workspace-runtime/src/generated.js';
 import { writeState } from '../../workspace-runtime/src/state.js';
 import { isProjectPath } from '../../domain/src/path.js';
-import { captureFiles, fingerprint, isCanonicalPath, newId } from '../../project-fs/src/files.js';
+import { captureFiles, fileFailure, fingerprint, isCanonicalPath, newId } from '../../project-fs/src/files.js';
 import { objectFile, rawObject, textFile } from '../../project-fs/src/content.js';
 import { builtinLock, loadProject, parseProject } from '../../project-fs/src/project.js';
 import { readCommittedFiles } from '../../project-fs/src/git-baseline.js';
@@ -15,6 +15,7 @@ import { withMetadataLock, withWorktreeLock } from '../../git-workspace/src/lock
 import { getRegistration } from './projects.js';
 
 const namespace = 'craft.import';
+export const isImportDocumentPath = (path: string) => isProjectPath(path) && /\.(?:md|txt)$/i.test(path);
 const provenanceSchema = {
   $schema: 'https://json-schema.org/draft/2020-12/schema', $id: 'urn:craft:import-provenance:1', type: 'object', additionalProperties: false,
   required: ['source_path', 'source_commit', 'source_digest', 'body_transform'],
@@ -30,7 +31,7 @@ export async function importDocuments(appData: string, registrationId: string, s
   return withWorktreeLock(registration.root, async () => {
     const source = await repositoryGuard(registration.root, false);
     const original = await readCommittedFiles(registration.root, source.commit, false);
-    for (const path of selectedPaths) if (!isProjectPath(path) || !/\.(md|txt)$/i.test(path) || original.get(path)?.text === undefined) throw new Error(`IMPORT_SOURCE_INVALID: ${path}`);
+    for (const path of selectedPaths) if (!isImportDocumentPath(path) || original.get(path)?.text === undefined) throw fileFailure('IMPORT_SOURCE_INVALID', 'Choose a committed UTF-8 Markdown or text document', path);
     const existing = original.has('project.yaml') ? parseProject(new Map([...original].filter(([path]) => isCanonicalPath(path)))) : undefined;
     if (existing && !existing.writable) throw new Error('IMPORT_PROJECT_READ_ONLY');
     const baselineId = existing?.project.default_baseline_id ?? newId('baseline');

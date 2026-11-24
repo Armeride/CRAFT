@@ -2,6 +2,7 @@ import type { ChildProcessWithoutNullStreams } from "node:child_process";
 import {
   AgentError,
   type AgentAdapter,
+  type AgentEvent,
   type AdapterContext,
   type AgentQuestion,
 } from "./contracts.js";
@@ -180,6 +181,27 @@ function questions(value: unknown): AgentQuestion[] {
   );
 }
 
+function readObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function toolNotification(item: unknown, completed: boolean): Omit<AgentEvent, "sequence" | "createdAt"> | undefined {
+  if (!readObject(item)) return;
+  const type = item["type"];
+  if (type !== "mcpToolCall" && type !== "commandExecution" && type !== "fileChange") return;
+  const result = item["result"];
+  const error = item["error"];
+  // CRAFT records calls at the server. A transport failure can occur without a tool response.
+  if (type === "mcpToolCall" && item["server"] === "craft" && !(completed && error && result == null)) return;
+  const failure = completed && (error ?? (readObject(result) && result["isError"] === true ? result["content"] : undefined));
+  const name = item["tool"] ?? item["name"];
+  return {
+    type: completed ? "tool.completed" : "tool.started",
+    tool: typeof name === "string" ? name : type,
+    ...(failure ? { code: "AGENT_TOOL_FAILED", text: JSON.stringify(failure) } : {}),
+  };
+}
+
 // config/read includes null-valued optional fields. The thread config override
 // converts JSON to TOML, where null has no representation.
 export function disabledMcpServers(
@@ -287,34 +309,8 @@ export class CodexAdapter implements AgentAdapter {
           message.method === "item/started" ||
           message.method === "item/completed"
         ) {
-          const item = params["item"] as
-            | {
-                type?: string;
-                name?: string;
-                tool?: string;
-                error?: unknown;
-                result?: { isError?: boolean; content?: unknown };
-              }
-            | undefined;
-          if (
-            item?.type === "mcpToolCall" ||
-            item?.type === "commandExecution" ||
-            item?.type === "fileChange"
-          )
-            await context.emit({
-              type:
-                message.method === "item/started"
-                  ? "tool.started"
-                  : "tool.completed",
-              tool: item.tool ?? item.name ?? item.type,
-              ...(message.method === "item/completed" &&
-              (item.error || item.result?.isError)
-                ? {
-                    code: "AGENT_TOOL_FAILED",
-                    text: JSON.stringify(item.error ?? item.result?.content),
-                  }
-                : {}),
-            });
+          const event = toolNotification(params["item"], message.method === "item/completed");
+          if (event) await context.emit(event);
         }
         if (message.method === "thread/tokenUsage/updated") {
           const usage = params["tokenUsage"] as

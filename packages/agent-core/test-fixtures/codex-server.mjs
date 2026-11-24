@@ -83,6 +83,16 @@ for await (const line of lines) {
   }
   if (message.id === "approval_fixture") {
     if (message.result?.decision !== "decline") throw Error("Decline missing");
+    for (const item of [
+      { type: "mcpToolCall", server: "craft", tool: "changes.propose", result: { content: [] }, error: null },
+      { type: "mcpToolCall", server: "craft", tool: "context.build", result: { content: [], isError: true }, error: null },
+      { type: "mcpToolCall", server: "craft", tool: "entity.get", result: null, error: { message: "Transport disconnected" } },
+      { type: "mcpToolCall", server: "external", tool: "external_read", result: { content: [] }, error: null },
+      { type: "commandExecution" },
+    ]) {
+      notify("item/started", { item: { ...item, result: null, error: null } });
+      notify("item/completed", { item });
+    }
     notify("thread/tokenUsage/updated", {
       tokenUsage: { total: { inputTokens: 10, outputTokens: 3 } },
     });

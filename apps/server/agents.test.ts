@@ -192,6 +192,12 @@ describe("internal MCP and browser agent boundary", () => {
         name: "context.build",
         arguments: {},
       });
+      const activity = (await app.inject({ url: `/api/agent-executions/${record.id}`, headers })).json<AgentExecution>().events;
+      const builds = activity.filter(event => event.tool === "context.build");
+      expect(builds.filter(event => event.type === "tool.started")).toHaveLength(4);
+      expect(builds.filter(event => event.type === "tool.completed").map(event => event.code ?? null)).toEqual([
+        "REQUEST_INVALID", null, null, null,
+      ]);
       const read = JSON.parse(
         (built.content as { text: string }[])[0]!.text,
       ) as { workingFingerprint: string };

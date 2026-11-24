@@ -51,11 +51,11 @@ export async function consumeClaudeStream(
           hasText = true;
           await context.emit({ type: "message.delta", text: block.text });
         }
-        if (block.type === "tool_use")
+        if (block.type === "tool_use" && !block.name.startsWith("mcp__craft__"))
           await context.emit({ type: "tool.started", tool: block.name });
       }
     }
-    if (message.type === "tool_progress")
+    if (message.type === "tool_progress" && !message.tool_name.startsWith("mcp__craft__"))
       await context.emit({ type: "tool.started", tool: message.tool_name });
     if (message.type === "result") {
       if (message.subtype !== "success" || message.is_error)

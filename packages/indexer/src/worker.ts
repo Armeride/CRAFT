@@ -9,7 +9,7 @@ import { exactRevision, revisionKey, ValidationFailure } from '../../domain/src/
 import type { ProjectSnapshot, SourceFile } from '../../domain/src/model.js';
 import { isProjectPath } from '../../domain/src/path.js';
 import { checkImmutability, dependencyManifestDigest, semanticDigest } from '../../project-fs/src/changes.js';
-import { FILE_LIMITS, fingerprint, hash, isCanonicalPath, newId } from '../../project-fs/src/files.js';
+import { FILE_LIMITS, fingerprint, hash, isCanonicalPath, isProjectTextPath, newId } from '../../project-fs/src/files.js';
 import { parseProject } from '../../project-fs/src/project.js';
 import { stateOptions, stateEvaluation, stateComparison } from '../../project-fs/src/state-query.js';
 import { readPerspective, readStoryQuery, storyContext, storySequences } from '../../domain/src/story.js';
@@ -77,7 +77,7 @@ function restoreFiles(input: readonly SourceFile[]): Map<string, SourceFile> {
     const bytes = Buffer.from(file.contentBase64, 'base64'), key = file.path.normalize('NFC').toLowerCase(); total += bytes.length;
     if (!isProjectPath(file.path) || !isCanonicalPath(file.path) || paths.has(key) || bytes.length > FILE_LIMITS.fileBytes || total > FILE_LIMITS.totalBytes || hash(bytes) !== file.digest) corrupt();
     paths.add(key);
-    const text = !file.path.startsWith('assets/') && /\.(yaml|yml|json|md|txt)$/.test(file.path) ? new TextDecoder('utf8', { fatal: true }).decode(bytes) : undefined;
+    const text = isProjectTextPath(file.path) ? new TextDecoder('utf8', { fatal: true }).decode(bytes) : undefined;
     files.set(file.path, { path: file.path, contentBase64: file.contentBase64, digest: file.digest, ...(text === undefined ? {} : { text }) });
   }
   return files;

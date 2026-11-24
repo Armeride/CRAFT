@@ -5,7 +5,7 @@ import { repositoryGuard, assertSourceUnchanged } from '../../packages/git-works
 import { HttpCommands } from './commands.js';
 import { join } from 'node:path';
 import { getRegistration, registerLocal, cloneProject } from '../../packages/tasks/src/projects.js';
-import { importDocuments } from '../../packages/tasks/src/import.js';
+import { importDocuments, isImportDocumentPath } from '../../packages/tasks/src/import.js';
 import { discoverTasks } from '../../packages/tasks/src/discovery.js';
 import { TaskService } from '../../packages/tasks/src/service.js';
 import { readCommittedFiles } from '../../packages/project-fs/src/git-baseline.js';
@@ -22,7 +22,7 @@ const string = { type: 'string', minLength: 1, maxLength: 4096 }, identifier = {
 export async function registerLibraryRoutes(app: FastifyInstance, options: Options) {
   const commands = new HttpCommands(options.appData);
   const inspected = new Set<string>(), tasks = new TaskService(options.appData);
-  async function inspection(id: string) { inspected.add(id); const registration = await getRegistration(options.appData, id), files = registration.head ? await readCommittedFiles(registration.root, registration.head, false) : new Map(); const documents = [...files.values()].filter(file => /\.(md|txt)$/i.test(file.path) && file.text !== undefined).map(file => file.path).slice(0, 2000); const choice = registration.status === 'ready' ? await options.attach(id) : null; return { registration, documents, choice }; }
+  async function inspection(id: string) { inspected.add(id); const registration = await getRegistration(options.appData, id), files = registration.head ? await readCommittedFiles(registration.root, registration.head, false) : new Map(); const documents = [...files.values()].filter(file => isImportDocumentPath(file.path) && file.text !== undefined).map(file => file.path).slice(0, 2000); const choice = registration.status === 'ready' ? await options.attach(id) : null; return { registration, documents, choice }; }
   function authorized(id: string) { if (!inspected.has(id)) options.authorize(id); }
   app.post<{ Body: { root: string } }>('/api/library/inspect', { schema: { body: { type: 'object', additionalProperties: false, required: ['root'], properties: { root: string } } } }, async request => inspection((await registerLocal(options.appData, request.body.root)).id));
   app.post<{ Body: { url: string } }>('/api/library/clone', { schema: { body: { type: 'object', additionalProperties: false, required: ['url'], properties: { url: string } } } }, async request => commands.execute(request.headers['x-craft-request-id'], 'clone', request.body, async () => inspection((await cloneProject(options.appData, request.body.url)).id)));

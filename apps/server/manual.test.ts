@@ -1,14 +1,14 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { createWebApp } from './app.js';
-import { indexFixture, removeIndexFixture } from '../../packages/indexer/src/test-helpers.js';
+import { commitFixture, indexFixture, removeIndexFixture } from '../../packages/indexer/src/test-helpers.js';
 import type { IndexFixture } from '../../packages/indexer/src/test-helpers.js';
 import { registerLocal } from '../../packages/tasks/src/projects.js';
 import { repositoryGuard } from '../../packages/git-workspace/src/worktree.js';
 import type { Draft, Catalog } from './contracts.js';
 import type { QueryEnvelope } from '../../packages/indexer/src/types.js';
 import type { ManualInspection, ManualResult } from '../../packages/tasks/src/manual-contracts.js';
-import { writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { TaskService } from '../../packages/tasks/src/service.js';
 const fixtures: IndexFixture[] = [], apps: Awaited<ReturnType<typeof createWebApp>>[] = [];
@@ -48,9 +48,27 @@ describe('manual HTTP boundary and recovery', () => {
     const artifact = await f.send(`/api/runs/${runId}/artifact?path=${encodeURIComponent(resolved.json<{ backup: string }>().backup)}`); expect(artifact.json<{ text: string }>().text).toContain('다른 속성');
     expect((await f.send(`/api/runs/${runId}/artifact?path=project.yaml`)).statusCode).toBe(403);
   }, 120000);
-  it('imports selected committed documents into a separate baseline and exposes production migration plans without inventing v2', async () => {
-    const f = await setup(), before = await repositoryGuard(f.root), inspected = await f.send('/api/library/inspect', { root: f.root }); expect(inspected.statusCode, inspected.body).toBe(200); const documents = inspected.json<{ documents: string[] }>().documents; expect(documents.length).toBeGreaterThan(0);
-    const imported = await f.send('/api/library/import', { registrationId: f.registration.id, paths: [documents[0]!], name: '선택 문서 가져오기' }); expect(imported.statusCode, imported.body).toBe(200); const value = imported.json<{ choice: { id: string }; baselineId: string }>(); expect(value.choice.id).not.toBe(f.registration.id); expect(value.baselineId).toMatch(/^baseline_/);
+  it('discovers and imports uppercase committed documents, and exposes the production migration plan', async () => {
+    const f = await setup(), paths = ['설정 초안.MD', '기획 노트.TXT'], original = Buffer.from('\ufeff한국어 원문\r\n');
+    await Promise.all(paths.map(path => writeFile(join(f.root, path), original)));
+    await commitFixture(f.root);
+    const before = await repositoryGuard(f.root), inspected = await f.send('/api/library/inspect', { root: f.root });
+    expect(inspected.statusCode, inspected.body).toBe(200);
+    const documents = inspected.json<{ documents: string[] }>().documents;
+    for (const path of paths) expect(documents).toContain(path);
+    const missing = '이동한 원문.MD';
+    const invalid = await f.send('/api/library/import', { registrationId: f.registration.id, paths: [missing], name: '선택 문서 가져오기' });
+    expect(invalid.statusCode).toBe(400);
+    const error = invalid.json<{ code: string; details: { diagnostics: { path: string }[] } }>();
+    expect(error.code).toBe('IMPORT_SOURCE_INVALID');
+    expect(error.details.diagnostics[0]?.path).toBe(missing);
+    const imported = await f.send('/api/library/import', { registrationId: f.registration.id, paths, name: '선택 문서 가져오기' });
+    expect(imported.statusCode, imported.body).toBe(200);
+    const value = imported.json<{ operation: { path: string }; choice: { id: string }; baselineId: string }>();
+    expect(value.choice.id).not.toBe(f.registration.id);
+    expect(value.baselineId).toMatch(/^baseline_/);
+    const preserved = await Promise.all(paths.map(path => readFile(join(value.operation.path, path))));
+    expect(preserved).toEqual([original, original]);
     const catalog = await f.send(`/api/projects/${value.choice.id}/query`, { operation: 'catalog', baselineId: value.baselineId }); expect(catalog.statusCode, catalog.body).toBe(200); expect(catalog.json<QueryEnvelope<Catalog>>().data.baselines.some(baseline => baseline.id === value.baselineId)).toBe(true);
     const migration = await f.send(`/api/projects/${f.registration.id}/migration`); expect(migration.statusCode, migration.body).toBe(200); const current = migration.json<{ current: Record<string, number>; plan: { steps: unknown[] } }>(); expect(current.plan.steps).toEqual([]);
     const noop = await f.send(`/api/projects/${f.registration.id}/migration`, { target: current.current, run: true }); expect(noop.statusCode, noop.body).toBe(200); expect(noop.json().state).toBe('noop');

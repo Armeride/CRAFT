@@ -161,16 +161,13 @@
     "@typescript-eslint/require-await": {
       "count": 1
     },
-    "regexp/no-unused-capturing-group": {
-      "count": 1
-    },
     "sonarjs/no-alphabetical-sort": {
       "count": 1
     }
   },
   "apps/server/manual.test.ts": {
     "@typescript-eslint/no-non-null-assertion": {
-      "count": 4
+      "count": 3
     },
     "@typescript-eslint/no-unnecessary-type-assertion": {
       "count": 1
@@ -1313,9 +1310,6 @@
     "@typescript-eslint/restrict-template-expressions": {
       "count": 1
     },
-    "regexp/no-unused-capturing-group": {
-      "count": 1
-    },
     "sonarjs/cognitive-complexity": {
       "count": 3
     },
@@ -1794,9 +1788,6 @@
       "count": 1
     },
     "@typescript-eslint/no-unused-vars": {
-      "count": 1
-    },
-    "regexp/no-unused-capturing-group": {
       "count": 1
     },
     "sonarjs/unused-import": {
