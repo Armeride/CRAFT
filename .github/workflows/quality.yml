@@ -1,5 +1,5 @@
-# CRAFT quality gate. Protected file (see AGENTS.md). Required checks on main: security
-# (check is added once its two Windows-runner test failures are fixed; see tools/quality/README.md).
+# CRAFT quality gate. Protected file (see AGENTS.md). Required checks on main: check, security.
+# Do not add `paths` filters: a required check that never runs blocks the PR forever.
 # Third-party actions are pinned to commit SHAs (tag in the trailing comment).
 name: quality
 
