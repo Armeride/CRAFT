@@ -1,17 +1,23 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { randomUUID } from "node:crypto";
+import { randomBytes, randomUUID } from "node:crypto";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { createServer } from "node:net";
+import { join } from "node:path";
+import { crc32 } from "node:zlib";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { createWebApp } from "./app.js";
 import {
   indexFixture,
+  commitFixture,
   removeIndexFixture,
   type IndexFixture,
 } from "../../packages/indexer/src/test-helpers.js";
 import { registerLocal } from "../../packages/tasks/src/projects.js";
+import { importDocuments } from "../../packages/tasks/src/import.js";
 import { TaskService } from "../../packages/tasks/src/service.js";
 import { ManualService } from "../../packages/tasks/src/manual.js";
+import { hash } from "../../packages/project-fs/src/files.js";
 import type {
   AgentExecution,
   AdapterContext,
@@ -33,12 +39,32 @@ async function freePort() {
   return port;
 }
 
+function largePng(): Buffer {
+  const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=", "base64");
+  // A private ancillary chunk keeps the image valid while putting its bytes over the diff limit.
+  const payload = randomBytes(1100000);
+  const chunk = Buffer.concat([Buffer.from("crFt"), payload]);
+  const length = Buffer.alloc(4), checksum = Buffer.alloc(4);
+  length.writeUInt32BE(payload.length);
+  checksum.writeUInt32BE(crc32(chunk));
+  return Buffer.concat([png.subarray(0, 33), length, chunk, checksum, png.subarray(33)]);
+}
+
 describe("internal MCP and browser agent boundary", () => {
-  it("negotiates with the standard client, binds every call, replays a proposal and revokes credentials on cancellation", async () => {
+  it("binds client calls, preserves a typed character with its references and image, and revokes credentials on cancellation", async () => {
     const fixture = await indexFixture();
     fixtures.push(fixture);
-    const registration = await registerLocal(fixture.app, fixture.root),
-      tasks = new TaskService(fixture.app);
+    const sourcePath = "illustrations/portrait.PNG";
+    const png = largePng();
+    const digest = hash(png);
+    const imagePath = `assets/craft/${digest}.png`;
+    await mkdir(join(fixture.root, "illustrations"));
+    await writeFile(join(fixture.root, sourcePath), png);
+    await commitFixture(fixture.root);
+    const source = await registerLocal(fixture.app, fixture.root);
+    const imported = await importDocuments(fixture.app, source.id, ["README.md"], "Novel fixture", true);
+    const registration = await registerLocal(fixture.app, imported.path);
+    const tasks = new TaskService(fixture.app);
     const run = await tasks.start(registration.id, {
       goal: "HTTP MCP acceptance",
     });
@@ -192,27 +218,57 @@ describe("internal MCP and browser agent boundary", () => {
         name: "context.build",
         arguments: {},
       });
+      const activity = (await app.inject({ url: `/api/agent-executions/${record.id}`, headers })).json<AgentExecution>().events;
+      const builds = activity.filter(event => event.tool === "context.build");
+      expect(builds.filter(event => event.type === "tool.started")).toHaveLength(4);
+      expect(builds.filter(event => event.type === "tool.completed").map(event => event.code ?? null)).toEqual([
+        "REQUEST_INVALID", null, null, null,
+      ]);
       const read = JSON.parse(
         (built.content as { text: string }[])[0]!.text,
       ) as { workingFingerprint: string };
       const args = {
         requestId: randomUUID(),
         expectedSnapshot: read.workingFingerprint,
+        kind: "narrative.character",
         title: "HTTP draft",
         body: "한국어 MCP 초안",
+        extensions: { narrative: { profile: { role: "Protagonist" }, initial_state: { world_tick: 0, values: {} } } },
+        references: [{
+          reference_id: "ref_overview",
+          relation: "related_to",
+          propagation: "none",
+          update_policy: "pinned",
+          target: { entity_id: "ent_overview", revision_id: "rev_overview_a" },
+        }],
+        images: [{ sourcePath, alt: "Portrait" }],
       };
+      const missingMetadata = await client.callTool({
+        name: "changes.propose",
+        arguments: { ...args, extensions: {} },
+      });
+      expect(missingMetadata.isError).toBe(true);
+      expect(JSON.stringify(missingMetadata.content)).toContain("EXTENSION_DATA_REQUIRED");
+      const outside = await client.callTool({
+        name: "changes.propose",
+        arguments: { ...args, images: [...args.images, { sourcePath: "../outside.png", alt: "Outside" }] },
+      });
+      expect(outside.isError).toBe(true);
+      expect((await tasks.project(run.runId)).files.has(imagePath)).toBe(false);
       const proposed = await client.callTool({
         name: "changes.propose",
         arguments: args,
       });
       expect(proposed.isError).not.toBe(true);
+      const savedProposal: unknown = JSON.parse((proposed.content as { text: string }[])[0]!.text);
+      expect(savedProposal).toMatchObject({ imagePaths: [imagePath] });
       const replayed = await client.callTool({
         name: "changes.propose",
         arguments: args,
       });
       expect(
         JSON.parse((replayed.content as { text: string }[])[0]!.text),
-      ).toEqual(JSON.parse((proposed.content as { text: string }[])[0]!.text));
+      ).toEqual(savedProposal);
       const basis = await client.callTool({
         name: "entity.get",
         arguments: {
@@ -233,6 +289,18 @@ describe("internal MCP and browser agent boundary", () => {
       );
       expect(inspection.proposals).toHaveLength(1);
       expect(inspection.reviews).toHaveLength(1); // Existing fixture review only.
+      const snapshot = await tasks.project(run.runId);
+      const characters = [...snapshot.entities.values()].filter(entity => entity.value.kind === "narrative.character");
+      expect(characters).toHaveLength(1);
+      expect(characters[0]?.revisions.values().next().value?.meta).toMatchObject({
+        title: args.title,
+        status: "draft",
+        extensions: args.extensions,
+        references: args.references,
+      });
+      expect(snapshot.files.get(imagePath)?.digest).toBe(digest);
+      expect(snapshot.files.get(`tasks/${run.taskId}/working/ui-draft.md`)?.text)
+        .toContain(`![Portrait](${imagePath})`);
       await app.inject({
         method: "POST",
         url: `/api/agent-executions/${record.id}/cancel`,
@@ -259,6 +327,21 @@ describe("internal MCP and browser agent boundary", () => {
       });
       expect(fork.statusCode, fork.body).toBe(200);
       expect(fork.json().runId).not.toBe(run.runId);
+      const review = await app.inject({
+        method: "POST", url: `/api/runs/${run.runId}/integrations`, headers,
+        payload: { requestId: randomUUID(), proposalIds: inspection.proposals.map(proposal => proposal.id) },
+      });
+      expect(review.statusCode, review.body.slice(0, 200)).toBe(200);
+      const prepared = review.json<{ id: string; token: string; diff: string }>();
+      expect(prepared.diff).toContain(`Binary files /dev/null and b/${imagePath} differ`);
+      expect((await app.inject({
+        method: "POST", url: `/api/integrations/${prepared.id}/apply`, headers,
+        payload: { token: prepared.token },
+      })).statusCode).toBe(200);
+      const image = await app.inject({ url: `/api/projects/${registration.id}/images/${digest}`, headers });
+      expect(image.statusCode).toBe(200);
+      expect(hash(Buffer.from(image.json<{ base64: string }>().base64, "base64"))).toBe(digest);
+      expect(hash(await readFile(join(fixture.root, sourcePath)))).toBe(digest);
     } finally {
       await client.close();
     }

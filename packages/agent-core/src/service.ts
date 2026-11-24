@@ -76,12 +76,12 @@ export interface StartAgent {
 
 const terminal = (record: AgentExecution) =>
   ["completed", "failed", "cancelled", "interrupted"].includes(record.state);
-const errorCode = (error: unknown) =>
+const errorCode = (error: unknown, fallback = "AGENT_PROVIDER_FAILED") =>
   error instanceof ValidationFailure
-    ? (error.diagnostics[0]?.code ?? "AGENT_PROVIDER_FAILED")
+    ? (error.diagnostics[0]?.code ?? fallback)
     : error instanceof AgentError
       ? error.code
-      : "AGENT_PROVIDER_FAILED";
+      : fallback;
 const redact = (value: string) =>
   value
     .replace(/Bearer\s+\S+/gi, "Bearer [redacted]")
@@ -574,7 +574,13 @@ export class AgentService {
     )
       throw new AgentError("REQUEST_INVALID");
     await this.emit(active, { type: "tool.started", tool: name });
-    const result = await active.knowledge.call(name, args);
+    let result: unknown;
+    try {
+      result = await active.knowledge.call(name, args);
+    } catch (error) {
+      await this.emit(active, { type: "tool.completed", tool: name, code: errorCode(error, "REQUEST_FAILED") });
+      throw error;
+    }
     await this.emit(active, { type: "tool.completed", tool: name });
     if (name === "changes.propose")
       await this.emit(active, { type: "artifact.created" });

@@ -120,6 +120,7 @@ describe("native protocol and process boundaries", () => {
         .join(""),
     ).toBe("국경 초안 검토해 주세요.");
     expect(events.some((event) => event.type === "tool.completed")).toBe(false);
+    expect(events.some((event) => event.tool?.startsWith("mcp__craft__"))).toBe(false);
     expect(sessions).toEqual(["fixture_session"]);
     expect(
       events.find((event) => event.type === "usage.updated")?.usage,
@@ -156,6 +157,13 @@ describe("native protocol and process boundaries", () => {
         .join(""),
     ).toBe("국경 초안");
     expect(requests).toEqual(["question", "approval"]);
+    expect(events.filter((event) => event.tool).map(({ type, tool, code }) => [type, tool, code])).toEqual([
+      ["tool.completed", "entity.get", "AGENT_TOOL_FAILED"],
+      ["tool.started", "external_read", undefined],
+      ["tool.completed", "external_read", undefined],
+      ["tool.started", "commandExecution", undefined],
+      ["tool.completed", "commandExecution", undefined],
+    ]);
     expect(
       events.find((event) => event.type === "usage.updated")?.usage,
     ).toEqual({ inputTokens: 10, outputTokens: 3 });

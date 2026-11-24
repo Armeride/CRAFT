@@ -1,4 +1,5 @@
 import Fastify from 'fastify';
+import rateLimit from '@fastify/rate-limit';
 import staticFiles from '@fastify/static';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { mkdir, readdir } from 'node:fs/promises';
@@ -61,7 +62,11 @@ export async function createWebApp(options: WebOptions) {
   app.addHook('onSend', async (_request, reply, payload) => {
     reply.header('X-Content-Type-Options', 'nosniff').header('Referrer-Policy', 'no-referrer').header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"); return payload;
   });
-  app.setErrorHandler((error: Error & { code?: string; validation?: unknown }, request, reply) => {
+  app.setErrorHandler((error: Error & { code?: string; validation?: unknown; statusCode?: number }, request, reply) => {
+    if (error.statusCode === 429) {
+      reply.code(429).send({ code: 'RATE_LIMIT_EXCEEDED', message: 'Too many requests', details: {}, retryable: true, request_id: request.id });
+      return;
+    }
     const diagnostics = error instanceof ValidationFailure ? error.diagnostics : [];
     const code = diagnostics[0]?.code ?? (error.validation ? 'REQUEST_INVALID' : error.code ?? 'REQUEST_FAILED');
     const status = ['CONTEXT_FORBIDDEN'].includes(code) ? 403 : ['BASE_CHANGED', 'FILE_CHANGED_EXTERNALLY', 'WORKTREE_BUSY', 'SOURCE_CHANGED', 'INTEGRATION_CONFLICT', 'INTEGRATION_SEMANTIC_CONFLICT', 'MIGRATION_MERGE_UNSUPPORTED', 'REVIEW_TOKEN_INVALID', 'APPROVAL_BLOCKED', 'CHECKPOINT_REQUIRED', 'PROPOSAL_ALREADY_CONSUMED'].includes(code) ? 409 : 400;
@@ -93,6 +98,7 @@ export async function createWebApp(options: WebOptions) {
   await registerManualRoutes(app, { appData: options.appData, authorize, changed, withProject });
   registerEventRoute(app, events, authorize);
   await registerConflictRoutes(app, { appData: options.appData, authorize, withProject });
+  await app.register(rateLimit, { global: false, hook: 'preHandler' });
   await registerLibraryRoutes(app, { appData: options.appData, authorize, changed, withProject, attach: async id => { await addProject(id); return choices.get(id)!; } });
   await registerAgentRoutes(app, { appData: options.appData, port: options.port, authorize, changed, ...(options.agentAdapters ? { adapters: options.agentAdapters } : {}) });
   if (options.webRoot) { await app.register(staticFiles, { root: options.webRoot, index: ['index.html'], cacheControl: false }); }

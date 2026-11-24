@@ -5,7 +5,7 @@ import { isProjectPath } from '../../domain/src/path.js';
 import { ValidationFailure } from '../../domain/src/model.js';
 import type { ProjectSnapshot, SourceFile } from '../../domain/src/model.js';
 import { checkImmutability } from './changes.js';
-import { captureFiles, fileFailure, fingerprint, hash, isCanonicalPath } from './files.js';
+import { captureFiles, fileFailure, fingerprint, hash, isCanonicalPath, isProjectTextPath } from './files.js';
 import { parseProject } from './project.js';
 
 const exec = promisify(execFile);
@@ -62,7 +62,7 @@ export async function readCommittedFiles(root: string, ref: string, canonicalOnl
     if (portablePaths.has(key)) throw fileFailure('PATH_COLLISION', 'Case/Unicode path collision in Git tree', entry.path);
     portablePaths.add(key);
     let text: string | undefined;
-    if (!entry.path.startsWith('assets/') && /\.(?:yaml|yml|json|md|txt)$/.test(entry.path)) {
+    if (isProjectTextPath(entry.path)) {
       try { text = new TextDecoder('utf-8', { fatal: true }).decode(bytes); }
       catch { throw fileFailure('INVALID_UTF8', 'Canonical Git text is not valid UTF-8', entry.path); }
     }

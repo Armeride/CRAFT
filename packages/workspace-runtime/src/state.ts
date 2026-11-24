@@ -25,17 +25,17 @@ export async function atomicText(root: string, path: string, text: string): Prom
   return atomicBytes(root, path, Buffer.from(text, 'utf8'));
 }
 export async function atomicBytes(root: string, path: string, bytes: Uint8Array): Promise<void> {
-  await assertOwnedPath(root, path);
-  await mkdir(dirname(path), { recursive: true });
-  const temporary = `${path}.${newId('tmp')}`;
+  const owned = await assertOwnedPath(root, path);
+  await mkdir(dirname(owned), { recursive: true });
+  const temporary = `${owned}.${newId('tmp')}`;
   const handle = await open(temporary, 'wx');
   try { await handle.writeFile(bytes); await handle.sync(); } finally { await handle.close(); }
-  await renameWithRetry(temporary, path);
+  await renameWithRetry(temporary, owned);
 }
 export async function readState<T>(root: string, path: string, definition: string): Promise<T> {
-  await assertOwnedPath(root, path);
-  if ((await lstat(path)).size > stateLimits(definition).maxBytes) throw new Error('RUNTIME_STATE_SIZE_LIMIT');
-  const text = await readFile(path, 'utf8');
+  const owned = await assertOwnedPath(root, path);
+  if ((await lstat(owned)).size > stateLimits(definition).maxBytes) throw new Error('RUNTIME_STATE_SIZE_LIMIT');
+  const text = await readFile(owned, 'utf8');
   parseYaml(text, path, stateLimits(definition));
   const value: unknown = JSON.parse(text);
   validateState(definition, value, path);
