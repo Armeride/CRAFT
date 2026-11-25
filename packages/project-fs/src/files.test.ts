@@ -1,4 +1,4 @@
-import { readFile, rename, stat, symlink, utimes, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, readFile, rename, rm, stat, symlink, utimes, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { afterEach, expect, it, vi } from 'vitest';
 import { metricsSnapshot, resetMetrics } from '../../domain/src/instrumentation.js';
@@ -57,4 +57,29 @@ it('rejects a cached file that was replaced by a symlink', async () => {
   const failure = await captureFiles(root).then(() => undefined, (error: unknown) => error);
   expect(failure).toBeInstanceOf(ValidationFailure);
   expect((failure as ValidationFailure).diagnostics.map(issue => issue.code)).toContain('PATH_SYMLINK');
+});
+
+it('returns files in name-sorted depth-first order and fails where the ordered walk fails', async () => {
+  const root = await project(), working = join(root, 'tasks/task_a/working');
+  await Promise.all(['a.b', 'a-b', 'a/b', 'a/a', 'b'].map(async name => {
+    await mkdir(join(working, name, '..'), { recursive: true });
+    await writeFile(join(working, name), name);
+  }));
+  const paths = [...(await captureFiles(root)).keys()].filter(path => path.startsWith('tasks/task_a/working/'));
+  // Depth-first by sorted names: directory a (and its files) precede a-b and a.b. A plain string sort
+  // of full paths would put a-b and a.b first, so this pins the walk order, not just the set of files.
+  expect(paths.map(path => path.slice('tasks/task_a/working/'.length))).toEqual(['a/a', 'a/b', 'a-b', 'a.b', 'b']);
+
+  const deep = join(working, ...Array.from({ length: 66 }, () => 'd'));
+  await mkdir(deep, { recursive: true });
+  await writeFile(join(deep, 'x.md'), 'x');
+  await expect(captureFiles(root)).rejects.toThrow(ValidationFailure);
+  await rm(join(working, 'd'), { recursive: true });
+
+  if (process.platform !== 'win32' && process.getuid?.() !== 0) {
+    const closed = join(working, 'closed');
+    await mkdir(closed); await writeFile(join(closed, 'x.md'), 'x'); await chmod(closed, 0o000);
+    try { await expect(captureFiles(root)).rejects.toMatchObject({ code: 'EACCES' }); }
+    finally { await chmod(closed, 0o755); }
+  }
 });

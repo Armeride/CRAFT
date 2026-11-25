@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { lstat, open, readdir, realpath } from 'node:fs/promises';
-import type { BigIntStats } from 'node:fs';
+import type { BigIntStats, Dirent } from 'node:fs';
 import { join, resolve, sep } from 'node:path';
 import { canonicalJson } from '../../domain/src/canonical.js';
 import { countMetric, measured } from '../../domain/src/instrumentation.js';
@@ -100,8 +100,41 @@ export function captureFiles(root: string, canonicalOnly = true): Promise<Readon
   return measured(canonicalOnly ? 'fs.captureFiles.canonical' : 'fs.captureFiles.all', () => collectFiles(root, canonicalOnly), files => files.size);
 }
 
+const LISTING_CONCURRENCY = 16;
+/** Files read concurrently; the capture's total byte limit is reserved before each read. */
+const FILE_BATCH = 64;
+/**
+ * Reads the directory listings the walk will need, LISTING_CONCURRENCY at a time. It only lists;
+ * every check stays in the ordered walk below, which uses these listings. A directory that fails to
+ * list here is left out, so the walk lists it itself and fails at the same point as before.
+ */
+async function prefetchListings(root: string, canonicalOnly: boolean): Promise<ReadonlyMap<string, Dirent[]>> {
+  const listings = new Map<string, Dirent[]>();
+  let active = 0;
+  const waiting: (() => void)[] = [];
+  const acquire = async (): Promise<void> => {
+    if (active >= LISTING_CONCURRENCY) await new Promise<void>(resolve => { waiting.push(resolve); });
+    active += 1;
+  };
+  const release = (): void => { active -= 1; waiting.shift()?.(); };
+  const visit = async (directory: string, depth: number): Promise<void> => {
+    if (depth > limits.depth) return;
+    await acquire();
+    let entries: Dirent[];
+    try { entries = await readdir(directory, { withFileTypes: true }); }
+    catch { return; }
+    finally { release(); }
+    listings.set(directory, entries);
+    const children = entries.filter(entry => entry.isDirectory() && entry.name.toLowerCase() !== '.git' && !(canonicalOnly && depth === 0 && !roots.has(entry.name)));
+    await Promise.all(children.map(entry => visit(join(directory, entry.name), depth + 1)));
+  };
+  await visit(root, 0);
+  return listings;
+}
+
 async function collectFiles(root: string, canonicalOnly: boolean): Promise<ReadonlyMap<string, SourceFile>> {
   const absoluteRoot = await realpath(root);
+  const listings = await prefetchListings(absoluteRoot, canonicalOnly);
   const result = new Map<string, SourceFile>();
   const portablePaths = new Set<string>();
   const pending: { absolute: string; path: string }[] = [];
@@ -115,7 +148,7 @@ async function collectFiles(root: string, canonicalOnly: boolean): Promise<Reado
   };
   const walk = async (directory: string, prefix: string, depth: number): Promise<void> => {
     if (depth > limits.depth) throw fileFailure('SOURCE_SIZE_LIMIT', 'Directory nesting exceeds limit', directory);
-    const entries = await readdir(directory, { withFileTypes: true });
+    const entries = [...(listings.get(directory) ?? await readdir(directory, { withFileTypes: true }))];
     entries.sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
     for (const entry of entries) {
       if (depth === 0 && entry.name.toLowerCase() === '.git') continue;
@@ -132,7 +165,7 @@ async function collectFiles(root: string, canonicalOnly: boolean): Promise<Reado
       else if (entry.isFile()) {
         if (result.size + pending.length >= limits.files) throw fileFailure('SOURCE_SIZE_LIMIT', 'Project exceeds capture limit', path);
         pending.push({ absolute, path });
-        if (pending.length === 16) await flush();
+        if (pending.length === FILE_BATCH) await flush();
       } else throw fileFailure('SOURCE_NOT_REGULAR', 'Special files are not supported', path);
     }
   };
