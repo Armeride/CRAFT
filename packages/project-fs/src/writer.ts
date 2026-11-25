@@ -1,4 +1,4 @@
-import { mkdir, readFile, readdir, unlink } from 'node:fs/promises';
+import { lstat, mkdir, readFile, readdir, unlink } from 'node:fs/promises';
 import { join } from 'node:path';
 import { canonicalJson } from '../../domain/src/canonical.js';
 import type { SourceFile } from '../../domain/src/model.js';
@@ -30,24 +30,61 @@ export interface WriteOptions {
   allowedPrefixes: readonly string[];
   onPhase?: (phase: 'prepared' | 'written', path: string) => Promise<void>;
 }
-async function transactions(stateRoot: string): Promise<Transaction[]> {
-  let files: string[];
-  try { files = await readdir(join(stateRoot, 'transactions')); }
-  catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') return []; throw error; }
-  const values = await Promise.all(files.filter(path => /^tx_[a-f0-9-]+\.json$/.test(path)).map(path => readState<Transaction>(stateRoot, join(stateRoot, 'transactions', path), 'Transaction')));
-  return values;
+const SAVED_RECORD = /^(?:entities\/[^/]+\/revisions\/|reviews\/|tasks\/[^/]+\/checkpoints\/)/;
+/** What the read checks need from a journal. Only recovery needs the full journal with file bytes. */
+interface JournalSummary { state: Transaction['state']; savedRecords: readonly (readonly [path: string, digest: string])[] }
+/**
+ * Parsed summaries keyed by journal path and stat identity. Every journal write replaces the file
+ * (new inode, size or timestamps), so an unchanged identity means unchanged bytes; any change
+ * re-reads and re-validates the journal. Applied journals are never rewritten, so after the first
+ * read a check costs one lstat per journal instead of parsing every journal again.
+ */
+const summaries = new Map<string, { identity: string; summary: JournalSummary }>();
+async function journalIdentity(path: string): Promise<string | undefined> {
+  const stat = await lstat(path, { bigint: true });
+  return stat.isFile() ? [stat.dev, stat.ino, stat.size, stat.mtimeNs, stat.ctimeNs].join(':') : undefined;
 }
+function summarize(journal: Transaction): JournalSummary {
+  const savedRecords = journal.state === 'applied' ? journal.edits.flatMap(edit => edit.after && SAVED_RECORD.test(edit.path) ? [[edit.path, edit.after.digest] as const] : []) : [];
+  return { state: journal.state, savedRecords };
+}
+async function journalPaths(stateRoot: string): Promise<string[]> {
+  const directory = await assertOwnedPath(stateRoot, join(stateRoot, 'transactions'));
+  let files: string[];
+  try { files = await readdir(directory); }
+  catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') { return []; }
+    throw error;
+  }
+  return files.filter(path => /^tx_[a-f0-9-]+\.json$/.test(path)).map(path => join(directory, path));
+}
+/** Reads and validates the full journal, caching its summary only if the file did not change meanwhile. */
+async function readJournal(stateRoot: string, path: string): Promise<Transaction> {
+  const before = await journalIdentity(path);
+  const journal = await readState<Transaction>(stateRoot, path, 'Transaction');
+  const after = await journalIdentity(path);
+  if (before !== undefined && before === after) summaries.set(path, { identity: before, summary: summarize(journal) });
+  else summaries.delete(path);
+  return journal;
+}
+async function journalEntry(stateRoot: string, path: string): Promise<{ path: string; summary: JournalSummary; journal?: Transaction }> {
+  const identity = await journalIdentity(path), cached = summaries.get(path);
+  if (identity !== undefined && cached?.identity === identity) return { path, summary: cached.summary };
+  const journal = await readJournal(stateRoot, path);
+  return { path, summary: summarize(journal), journal };
+}
+const journalEntries = async (stateRoot: string) => Promise.all((await journalPaths(stateRoot)).map(path => journalEntry(stateRoot, path)));
 export async function pendingTransactions(stateRoot: string): Promise<Transaction[]> {
-  return (await transactions(stateRoot)).filter(value => value.state !== 'applied');
+  const pending = (await journalEntries(stateRoot)).filter(entry => entry.summary.state !== 'applied');
+  return Promise.all(pending.map(entry => entry.journal ? Promise.resolve(entry.journal) : readJournal(stateRoot, entry.path)));
 }
 export async function assertSavedRecords(stateRoot: string, current: ReadonlyMap<string, SourceFile>): Promise<void> {
-  for (const journal of await transactions(stateRoot)) for (const edit of journal.edits) {
-    if (journal.state !== 'applied' || !edit.after || !(/^(?:entities\/[^/]+\/revisions\/|reviews\/|tasks\/[^/]+\/checkpoints\/)/.test(edit.path))) continue;
-    if (current.get(edit.path)?.digest !== edit.after.digest) throw fileFailure('IMMUTABLE_RECORD_CHANGED', 'A saved revision/review/checkpoint was edited externally', edit.path);
+  for (const { summary } of await journalEntries(stateRoot)) for (const [path, digest] of summary.savedRecords) {
+    if (current.get(path)?.digest !== digest) throw fileFailure('IMMUTABLE_RECORD_CHANGED', 'A saved revision/review/checkpoint was edited externally', path);
   }
 }
 export async function assertNoPending(stateRoot: string): Promise<void> {
-  if ((await pendingTransactions(stateRoot)).length) throw fileFailure('RECOVERY_REQUIRED', 'Unfinished write journal blocks reads and further writes', 'project.yaml');
+  if ((await journalEntries(stateRoot)).some(entry => entry.summary.state !== 'applied')) throw fileFailure('RECOVERY_REQUIRED', 'Unfinished write journal blocks reads and further writes', 'project.yaml');
 }
 
 function validateCandidate(before: ReadonlyMap<string, SourceFile>, after: ReadonlyMap<string, SourceFile>, changes: FileChangeSet<string | Uint8Array>): void {

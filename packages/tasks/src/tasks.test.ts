@@ -247,6 +247,22 @@ describe('OS leases and recoverable file transactions', () => {
     expect(await pendingTransactions(state)).toEqual([]);
     expect(await Promise.all(files('둘째').map(file => readFile(join(run.path, file.path), 'utf8')))).toEqual(files('둘째').map(file => file.text));
   }, 90_000);
+  it('checks applied journals without re-reading them and notices a journal changed in place', async () => {
+    const f = await ready(), run = await f.service.start(f.registration.id, { goal: '저널 재사용' });
+    await f.service.saveDraft(run.runId, '첫째.md', '하나\n', null);
+    await f.service.saveDraft(run.runId, '둘째.md', '둘\n', null);
+    await f.service.project(run.runId);
+    resetMetrics();
+    await f.service.project(run.runId);
+    await f.service.project(run.runId);
+    // Applied journals are summarized once; later checks only stat them.
+    expect(metricsSnapshot()['state.read.Transaction']).toBeUndefined();
+    const directory = join(f.app, 'runs', run.runId, 'transactions'), [journal] = await readdir(directory);
+    if (!journal) throw new Error('Expected an applied journal');
+    const path = join(directory, journal), value = JSON.parse(await readFile(path, 'utf8')) as { state: string };
+    await writeFile(path, JSON.stringify({ ...value, state: 'writing' }, null, 2) + '\n');
+    await code(f.service.project(run.runId), 'RECOVERY_REQUIRED');
+  }, 90_000);
 });
 
 describe('explicit non-destructive document import', () => {
