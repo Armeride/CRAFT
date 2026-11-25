@@ -14,6 +14,7 @@ import {
   type IndexFixture,
 } from "../../packages/indexer/src/test-helpers.js";
 import { registerLocal } from "../../packages/tasks/src/projects.js";
+import { SUMMARY_HEADER } from "../../packages/tasks/src/review-diff.js";
 import { importDocuments } from "../../packages/tasks/src/import.js";
 import { TaskService } from "../../packages/tasks/src/service.js";
 import { ManualService } from "../../packages/tasks/src/manual.js";
@@ -334,6 +335,12 @@ describe("internal MCP and browser agent boundary", () => {
       expect(review.statusCode, review.body.slice(0, 200)).toBe(200);
       const prepared = review.json<{ id: string; token: string; diff: string }>();
       expect(prepared.diff).toContain(`Binary files /dev/null and b/${imagePath} differ`);
+      // Checkpoint input manifests grow with the project; they are listed by object, not in full.
+      const summary = prepared.diff.slice(prepared.diff.indexOf(SUMMARY_HEADER + "\n")).split("\n").filter(Boolean);
+      expect(summary[0]).toBe(SUMMARY_HEADER);
+      expect(summary.length).toBeGreaterThan(1);
+      for (const line of summary.slice(1)) expect(line).toMatch(/^A 100644 [a-f0-9]{40} \d+ tasks\/[^/]+\/checkpoints\/[^/]+-inputs\.yaml$/);
+      expect(prepared.diff).not.toContain("semantic_digest");
       expect((await app.inject({
         method: "POST", url: `/api/integrations/${prepared.id}/apply`, headers,
         payload: { token: prepared.token },

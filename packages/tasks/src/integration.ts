@@ -24,6 +24,7 @@ import { integrationChanges } from './integration-changes.js';
 import { analysisOf } from './manual.js';
 import { getRegistration } from './projects.js';
 import { assertIntegrationReady, readIntegrationGuard, writeIntegrationGuard } from './integration-state.js';
+import { reviewDiff } from './review-diff.js';
 import { TaskService } from './service.js';
 
 import type { IntegrationRecord } from './manual-contracts.js';
@@ -33,10 +34,6 @@ const mergeConflicts = new Set(['BASELINE_DEPENDENCY_MISMATCH', 'SCOPE_MISMATCH'
 const mergeWarnings = new Set(['NEW_REVISION', 'NEW_APPROVED_REVISION', 'DIVERGENT_REVISIONS']);
 const diagnosticIdentity = ({ code, path, pointer, params }: ReturnType<typeof analysisOf>['diagnostics'][number]) => canonicalJson([code, path, pointer, params]);
 const schemaIdentity = (snapshot: ProjectSnapshot) => canonicalJson([snapshot.project.extensions, snapshot.documents.get('schemas/lock.json')]);
-async function reviewDiff(root: string, target: string, candidate: string, format: IntegrationRecord['diffFormat']) {
-  const binary = format === 'binary-summary' ? '--full-index' : '--binary';
-  return (await runGit(root, ['diff', '--no-ext-diff', '--no-textconv', binary, target, candidate, '--'])).stdout.toString('utf8');
-}
 
 async function comparisonInputs(basis: ReadonlyMap<string, SourceFile>, target: ReadonlyMap<string, SourceFile>, result: ReadonlyMap<string, SourceFile>) {
   const versions = canonicalJson(inspectVersions(target));
@@ -119,7 +116,7 @@ export class IntegrationService {
       const workspace = await withMetadataLock(registration.root, () => createOwnedWorkspace(registration.root, this.appData, path, branch, target.commit));
       let candidateCommit = '';
       await withWorktreeLock(path, async lease => { await applyTransaction(path, join(this.appData, 'manual-integrations', id), lease, { expectedSnapshot: targetSnapshot.fingerprint, changes }, { scopeId: id, allowedPrefixes: ['entities/', 'baselines/', 'reviews/', 'assets/craft/', `tasks/${run.taskId}/`] }); candidateCommit = await withMetadataLock(registration.root, () => preserveWorkspace(workspace, target.commit, files.map(file => ({ path: file.path, file })), 'manual: integrate reviewed proposals')); });
-      const diffFormat = 'binary-summary';
+      const diffFormat = 'task-record-summary';
       const diff = await reviewDiff(registration.root, target.commit, candidateCommit, diffFormat);
       if (Buffer.byteLength(diff) > 1024 * 1024) throw fileFailure('DIFF_REVIEW_LIMIT', 'Review diff exceeds the supported display limit', 'project.yaml');
       await assertSourceUnchanged(target);
