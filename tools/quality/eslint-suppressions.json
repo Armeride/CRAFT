@@ -1598,7 +1598,7 @@
       "count": 4
     },
     "no-await-in-loop": {
-      "count": 8
+      "count": 7
     },
     "sonarjs/cognitive-complexity": {
       "count": 2

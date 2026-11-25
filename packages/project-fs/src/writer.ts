@@ -12,11 +12,19 @@ import { atomicBytes, readState, writeState } from '../../workspace-runtime/src/
 import type { Transaction } from '../../workspace-runtime/src/generated.js';
 import { sourceFromChange, prepareChanges } from './changes.js';
 import type { FileChangeSet } from './changes.js';
-import { captureFiles, FILE_LIMITS, fileFailure, fingerprint, hash, isCanonicalPath, newId } from './files.js';
+import { captureFiles, FILE_LIMITS, fileFailure, fingerprint, hash, isCanonicalPath, newId, readSource } from './files.js';
 import { parseProject } from './project.js';
 
 const projectFiles = (files: ReadonlyMap<string, SourceFile>): ReadonlyMap<string, SourceFile> => new Map([...files].filter(([path]) => isCanonicalPath(path)));
 const matches = (a: SourceFile | undefined, b: SourceFile | null): boolean => (a?.digest ?? null) === (b?.digest ?? null);
+/** One file's current bytes, or undefined when it is absent. Never follows project symlinks. */
+async function currentSource(root: string, path: string): Promise<SourceFile | undefined> {
+  try { return await readSource(root, path); }
+  catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') { return undefined; }
+    throw error;
+  }
+}
 export interface WriteOptions {
   scopeId: string;
   allowedPrefixes: readonly string[];
@@ -95,7 +103,7 @@ async function finish(root: string, stateRoot: string, lease: Lease, transaction
   lease.assert(scope);
   const journalPath = join(stateRoot, 'transactions', transaction.id + '.json');
   if (transaction.root !== root || transaction.scopeId !== options.scopeId || transaction.branch !== await gitText(root, ['symbolic-ref', '--short', 'HEAD'])) throw fileFailure('JOURNAL_SCOPE_MISMATCH', 'Journal belongs to a different run/branch', 'project.yaml');
-  let current = await captureFiles(root, false);
+  const current = await captureFiles(root, false);
   const reconstructed = new Map(current);
   const changes: FileChangeSet<string | Uint8Array>['changes'][number][] = [];
   const seen = new Set<string>();
@@ -123,18 +131,19 @@ async function finish(root: string, stateRoot: string, lease: Lease, transaction
   validateCandidate(reconstructed, desired, { expectedSnapshot: fingerprint(projectFiles(reconstructed)), changes });
   transaction.state = 'writing';
   await writeState(stateRoot, journalPath, 'Transaction', transaction);
+  // Recovery decides per file from its digest (before or after), so the journal is persisted at
+  // phase changes only. Re-reading one file here keeps the external-edit check without a full capture.
   for (const edit of transaction.edits) {
     lease.assert(scope);
-    current = await captureFiles(root, false);
-    if (!matches(current.get(edit.path), edit.before) && !matches(current.get(edit.path), edit.after)) throw fileFailure('FILE_CHANGED_EXTERNALLY', 'File changed just before replacement', edit.path);
+    const existing = await currentSource(root, edit.path);
+    if (!matches(existing, edit.before) && !matches(existing, edit.after)) throw fileFailure('FILE_CHANGED_EXTERNALLY', 'File changed just before replacement', edit.path);
     const target = join(root, ...edit.path.split('/'));
     await assertOwnedPath(root, target);
-    if (!matches(current.get(edit.path), edit.after)) {
+    if (!matches(existing, edit.after)) {
       if (edit.after) await atomicBytes(root, target, Buffer.from(edit.after.contentBase64, 'base64'));
       else await unlink(target);
     }
     if (!transaction.completed.includes(edit.path)) transaction.completed.push(edit.path);
-    await writeState(stateRoot, journalPath, 'Transaction', transaction);
     await options.onPhase?.('written', edit.path);
   }
   if (fingerprint(await captureFiles(root, false)) !== transaction.afterFingerprint) throw fileFailure('FILE_CHANGED_EXTERNALLY', 'Source changed before transaction completion', 'project.yaml');
