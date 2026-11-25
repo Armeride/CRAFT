@@ -137,6 +137,11 @@ export class ProjectIndex {
       return { ...state, currentSourceFingerprint: null, freshness: this.rebuilding || error instanceof ValidationFailure && error.diagnostics.some(d => d.code === 'WORKTREE_BUSY') ? 'rebuilding' : 'invalid_source', failure: { sourceFingerprint: null, code: error instanceof IndexError ? error.code : 'SOURCE_INVALID', diagnostics: error instanceof ValidationFailure ? error.diagnostics : [] } };
     }
   }
+  /** The published manifest only. Unlike status(), this does not capture the current source. */
+  async manifest(scopeToken: string): Promise<IndexManifest | null> {
+    this.authorize(scopeToken);
+    return (await this.rpc<{ manifest: IndexManifest | null }>('manifest')).manifest;
+  }
   async rebuild(scopeToken: string, options: RebuildOptions = {}): Promise<IndexManifest> {
     this.authorize(scopeToken);
     if (this.rebuilding) throw new IndexError('WORKTREE_BUSY');
@@ -171,13 +176,15 @@ export class ProjectIndex {
     if (perspective && options.scope && canonicalJson(options.scope) !== canonicalJson(perspective.scope ?? {})) throw new IndexError('CONTEXT_FORBIDDEN');
     if (perspective && options.allowStale) throw new IndexError('INDEX_STALE');
     if (operation === 'analyze' && options.allowStale) throw new IndexError('INDEX_STALE');
-    let state: IndexStatus;
+    // rebuild() ends by checking, under the source lock, that the current source equals the manifest it
+    // published (SOURCE_CHANGED otherwise). A status() capture right after it would repeat that check;
+    // the status() after the query still brackets the query itself.
+    let state: IndexStatus | undefined;
     try { state = await this.status(options.scopeToken); }
-    catch (error) { if (!(error instanceof IndexError) || error.code !== 'INDEX_CORRUPT' || options.autoRebuild === false) throw error; await this.rebuild(options.scopeToken); state = await this.status(options.scopeToken); }
-    if (state.freshness !== 'fresh' && (!options.allowStale || !state.manifest)) {
+    catch (error) { if (!(error instanceof IndexError) || error.code !== 'INDEX_CORRUPT' || options.autoRebuild === false) throw error; await this.rebuild(options.scopeToken); }
+    if (state && state.freshness !== 'fresh' && (!options.allowStale || !state.manifest)) {
       if (options.autoRebuild === false) throw new IndexError('INDEX_STALE');
-      await this.rebuild(options.scopeToken); state = await this.status(options.scopeToken);
-      if (state.freshness !== 'fresh') throw new IndexError(state.freshness === 'rebuilding' ? 'WORKTREE_BUSY' : 'SOURCE_CHANGED');
+      await this.rebuild(options.scopeToken);
     }
     const result = await this.rpc<{ data: T; baselineFingerprint: string; baselineId: string; manifest: IndexManifest }>('query', { operation, args, ...(options.baselineId ? { baselineId: options.baselineId } : {}), ...(options.scope ? { scope: options.scope } : {}), perspective: perspective ?? 'author' });
     const snapshotToken = hash(canonicalJson({ scopeKey: this.scopeKey, generationId: result.manifest.generationId, sourceFingerprint: result.manifest.sourceFingerprint, baselineId: result.baselineId, baselineFingerprint: result.baselineFingerprint, ...(perspective ? { perspective } : {}), ...(options.scope ? { queryScope: options.scope } : {}) }));
