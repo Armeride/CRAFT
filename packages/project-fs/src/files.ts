@@ -1,8 +1,9 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { lstat, open, readdir, realpath } from 'node:fs/promises';
+import type { BigIntStats } from 'node:fs';
 import { join, resolve, sep } from 'node:path';
 import { canonicalJson } from '../../domain/src/canonical.js';
-import { measured } from '../../domain/src/instrumentation.js';
+import { countMetric, measured } from '../../domain/src/instrumentation.js';
 import { isProjectPath } from '../../domain/src/path.js';
 import { ValidationFailure } from '../../domain/src/model.js';
 import type { SourceFile } from '../../domain/src/model.js';
@@ -37,25 +38,58 @@ export async function readSource(root: string, path: string): Promise<SourceFile
   return readRegularSource(absolute, path);
 }
 
+/**
+ * Digests of files read before, keyed by absolute path and reused while the file's stat identity
+ * (dev, ino, size, mtime, ctime) is unchanged. Writes replace or modify the file and change that
+ * identity; ctime cannot be restored by tools, so restored mtimes are still noticed. As in Git's
+ * racy-clean rule, a file whose mtime or ctime is within RACY_MS of the read is not cached, since a
+ * second change inside the same timestamp would leave its identity unchanged.
+ */
+const SOURCE_CACHE_BYTES = 256 * 1024 * 1024;
+const RACY_MS = 2000;
+interface CachedSource { identity: string; file: SourceFile; bytes: number }
+const sourceCache = new Map<string, CachedSource>();
+let sourceCacheBytes = 0;
+const identityOf = (stat: BigIntStats): string => [stat.dev, stat.ino, stat.size, stat.mtimeNs, stat.ctimeNs].join(':');
+function remember(absolute: string, identity: string, file: SourceFile): void {
+  const previous = sourceCache.get(absolute);
+  if (previous) { sourceCache.delete(absolute); sourceCacheBytes -= previous.bytes; }
+  const bytes = file.contentBase64.length + 2 * (file.text?.length ?? 0);
+  if (bytes > SOURCE_CACHE_BYTES / 16) return;
+  sourceCache.set(absolute, { identity, file, bytes });
+  sourceCacheBytes += bytes;
+  for (const [key, entry] of sourceCache) {
+    if (sourceCacheBytes <= SOURCE_CACHE_BYTES) break;
+    sourceCache.delete(key); sourceCacheBytes -= entry.bytes;
+  }
+}
+
 async function readRegularSource(absolute: string, path: string, reserve?: (bytes: number) => void): Promise<SourceFile> {
-  const before = await lstat(absolute);
+  const started = Date.now();
+  const before = await lstat(absolute, { bigint: true });
   if (before.isSymbolicLink() || await realpath(absolute) !== absolute) throw fileFailure('PATH_SYMLINK', 'Project symlinks/junctions are not supported', path);
-  if (!before.isFile() || before.size > limits.fileBytes) throw fileFailure('SOURCE_SIZE_LIMIT', 'Not a regular file or exceeds byte limit', path);
-  reserve?.(before.size);
+  if (!before.isFile() || before.size > BigInt(limits.fileBytes)) throw fileFailure('SOURCE_SIZE_LIMIT', 'Not a regular file or exceeds byte limit', path);
+  reserve?.(Number(before.size));
+  const cached = sourceCache.get(absolute);
+  if (cached && cached.file.path === path && cached.identity === identityOf(before)) { countMetric('fs.sourceCache.hit'); return cached.file; }
+  countMetric('fs.sourceCache.miss');
   const handle = await open(absolute, 'r');
   try {
-    const opened = await handle.stat();
+    const opened = await handle.stat({ bigint: true });
     if (opened.ino !== before.ino || opened.dev !== before.dev || opened.size !== before.size) throw fileFailure('SOURCE_CHANGED', 'Source identity changed during open', path);
     const bytes = await handle.readFile();
-    const after = await handle.stat();
-    const pathAfter = await lstat(absolute);
-    if (bytes.byteLength !== opened.size || opened.size !== after.size || opened.mtimeMs !== after.mtimeMs || opened.ctimeMs !== after.ctimeMs || pathAfter.isSymbolicLink() || pathAfter.ino !== opened.ino || pathAfter.dev !== opened.dev || await realpath(absolute) !== absolute) throw fileFailure('SOURCE_CHANGED', 'Source changed while reading', path);
+    const after = await handle.stat({ bigint: true });
+    const pathAfter = await lstat(absolute, { bigint: true });
+    if (BigInt(bytes.byteLength) !== opened.size || opened.size !== after.size || opened.mtimeNs !== after.mtimeNs || opened.ctimeNs !== after.ctimeNs || pathAfter.isSymbolicLink() || pathAfter.ino !== opened.ino || pathAfter.dev !== opened.dev || await realpath(absolute) !== absolute) throw fileFailure('SOURCE_CHANGED', 'Source changed while reading', path);
     let text: string | undefined;
     if (isProjectTextPath(path)) {
       try { text = new TextDecoder('utf-8', { fatal: true }).decode(bytes); }
       catch { throw fileFailure('INVALID_UTF8', 'Canonical text is not valid UTF-8', path); }
     }
-    return { path, contentBase64: bytes.toString('base64'), digest: hash(bytes), ...(text !== undefined ? { text } : {}) };
+    const file: SourceFile = { path, contentBase64: bytes.toString('base64'), digest: hash(bytes), ...(text !== undefined ? { text } : {}) };
+    const settled = BigInt(started - RACY_MS) * 1_000_000n;
+    if (after.mtimeNs < settled && after.ctimeNs < settled) remember(absolute, identityOf(after), file);
+    return file;
   } finally {
     await handle.close();
   }
