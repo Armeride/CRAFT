@@ -1,4 +1,5 @@
 import { canonicalJson, deepFreeze } from '../../domain/src/canonical.js';
+import { countMetric, measuredSync } from '../../domain/src/instrumentation.js';
 import { isProjectPath, resolveBodyPath } from '../../domain/src/path.js';
 import { imageReferences, managedAssetPattern, validateManagedImage } from './images.js';
 import { validateGraph } from '../../domain/src/validate.js';
@@ -31,8 +32,54 @@ interface ExtensionSupport {
 }
 
 /** All validation works on captured bytes. This function never reads/writes project files. */
-export function parseProject(files: ReadonlyMap<string, SourceFile>): ProjectSnapshot {
+/**
+ * A snapshot depends only on the files' paths and SHA-256 digests, so recent snapshots are reused by
+ * fingerprint. They are read-only (ReadonlyMap fields, frozen records) and hold their own copy of the
+ * files map, so a caller changing its input map afterwards cannot alter a shared snapshot.
+ */
+const SNAPSHOT_MEMO = 4;
+const snapshots = new Map<string, ProjectSnapshot>();
+/** The bundled schemas compile once. A project with custom extension schemas gets a validator per schema set. */
+const coreValidator = new SchemaValidator();
+const customValidators = new Map<string, SchemaValidator>();
+function validatorWith(customs: readonly object[]): SchemaValidator {
+  if (!customs.length) return coreValidator;
+  const key = hash(canonicalJson(customs));
+  const cached = customValidators.get(key);
+  if (cached) return cached;
   const validator = new SchemaValidator();
+  for (const custom of customs) validator.addCustom(custom);
+  customValidators.set(key, validator);
+  if (customValidators.size > 16) customValidators.delete(customValidators.keys().next().value ?? key);
+  return validator;
+}
+
+/** Parses and validates a full snapshot. Counted as `project.parse` (units: files); reuse as `project.parse.reused`. */
+export function parseProject(files: ReadonlyMap<string, SourceFile>): ProjectSnapshot {
+  const key = fingerprint(files), cached = snapshots.get(key);
+  if (cached) {
+    snapshots.delete(key); snapshots.set(key, cached);
+    countMetric('project.parse.reused');
+    return cached;
+  }
+  const snapshot = measuredSync('project.parse', () => parseSnapshot(new Map(files), key), () => files.size);
+  snapshots.set(key, snapshot);
+  if (snapshots.size > SNAPSHOT_MEMO) snapshots.delete(snapshots.keys().next().value ?? key);
+  return snapshot;
+}
+
+function parseSnapshot(files: ReadonlyMap<string, SourceFile>, filesFingerprint: string): ProjectSnapshot {
+  let validator = coreValidator;
+  const customs: object[] = [];
+  // Checkpoint files are read once to find manifest paths and again as records; parse each text once.
+  const parsedTexts = new Map<string, ParsedSource>();
+  const yamlOf = (text: string, path: string): ParsedSource => {
+    const cached = parsedTexts.get(path);
+    if (cached) return cached;
+    const parsed = measuredSync('project.parse.yaml', () => parseYaml(text, path), () => Buffer.byteLength(text));
+    parsedTexts.set(path, parsed);
+    return parsed;
+  };
   const sources = new Map<string, ParsedSource>();
   const documents = new Map<string, unknown>();
   const diagnostics: Diagnostic[] = [];
@@ -45,12 +92,12 @@ export function parseProject(files: ReadonlyMap<string, SourceFile>): ProjectSna
   const get = <T>(path: string, definition: string): T => {
     const file = files.get(path);
     if (!file || file.text === undefined) throw fileFailure('FILE_MISSING', 'Required UTF-8 record is missing', path);
-    const source = parseYaml(file.text, path);
+    const source = yamlOf(file.text, path);
     sources.set(path, source);
     if (path.endsWith('.json')) {
       try { JSON.parse(file.text); } catch { throw fileFailure('JSON_PARSE', 'JSON files must use JSON syntax', path); }
     }
-    const invalid = validator.validate(definition, source.value, path);
+    const invalid = measuredSync('project.parse.validate', () => validator.validate(definition, source.value, path));
     if (invalid.length) throw new ValidationFailure(locateDiagnostics(invalid, sources));
     documents.set(path, source.value);
     return source.value as T;
@@ -104,7 +151,8 @@ export function parseProject(files: ReadonlyMap<string, SourceFile>): ProjectSna
               }
             };
             inspect(custom);
-            validator.addCustom(custom);
+            validator = validatorWith([...customs, custom]);
+            customs.push(custom);
             // Validate declarations even when no revision currently uses this extension.
             extractReferences({}, entry.reference_paths ?? [], entry.path);
             support = { supported: true, custom: { schemaId: entry.schema_id, references: entry.reference_paths ?? [], kinds: entry.kinds ?? [] } };
@@ -126,7 +174,7 @@ export function parseProject(files: ReadonlyMap<string, SourceFile>): ProjectSna
   const contextPaths = new Set<string>();
   for (const [path, file] of files) {
     if (/^tasks\/[^/]+\/checkpoints\/[^/]+\.yaml$/.test(path) && file.text !== undefined) {
-      const value = parseYaml(file.text, path).value;
+      const value = yamlOf(file.text, path).value;
       if (value && typeof value === 'object' && !Array.isArray(value) && typeof value['input_manifest_path'] === 'string') contextPaths.add(value['input_manifest_path']);
     }
   }
@@ -250,7 +298,7 @@ export function parseProject(files: ReadonlyMap<string, SourceFile>): ProjectSna
     if (file.text !== undefined && /\.ya?ml$/.test(path) && !sources.has(path) && !path.includes('/working/') && !path.startsWith('assets/')) report('UNRECOGNIZED_RECORD', 'YAML is outside the v1 canonical record layout', path);
   }
 
-  const snapshot: ProjectSnapshot = { project, files, entities, baselines, documents, diagnostics, fingerprint: fingerprint(files), writable };
+  const snapshot: ProjectSnapshot = { project, files, entities, baselines, documents, diagnostics, fingerprint: filesFingerprint, writable };
   for (const [path, value] of documents) {
     const document = value as Record<string, unknown>;
     if (path.startsWith('narrative/sequences/')) {

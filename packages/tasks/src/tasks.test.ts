@@ -14,6 +14,7 @@ import { loadProject } from '../../project-fs/src/project.js';
 import { readCommittedFiles, loadCommittedProject } from '../../project-fs/src/git-baseline.js';
 import { rawObject, objectFile } from '../../project-fs/src/content.js';
 import { applyTransaction, pendingTransactions } from '../../project-fs/src/writer.js';
+import { metricsSnapshot, resetMetrics } from '../../domain/src/instrumentation.js';
 import { TaskService } from './service.js';
 import { cloneProject, registerLocal, relocateRegistration, validateCloneUrl } from './projects.js';
 import { discoverTasks } from './discovery.js';
@@ -217,6 +218,50 @@ describe('OS leases and recoverable file transactions', () => {
       await code(applyTransaction(other.path, state, lease, { expectedSnapshot: snapshot.fingerprint, changes: ['A.md', 'a.md'].map(name => ({ path: `tasks/${other.taskId}/working/${name}`, expectedDigest: null, content: 'collision' })) }, { scopeId: other.runId, allowedPrefixes: [`tasks/${other.taskId}/`] }), 'PATH_COLLISION');
       await code(applyTransaction(other.path, state, lease, { expectedSnapshot: snapshot.fingerprint, changes: [{ path: `tasks/${other.taskId}/working/${'a/'.repeat(65)}deep.md`, expectedDigest: null, content: 'too deep' }] }, { scopeId: other.runId, allowedPrefixes: [`tasks/${other.taskId}/`] }), 'SOURCE_SIZE_LIMIT');
     });
+  }, 90_000);
+
+  it('writes many files with a constant number of full captures and recovers an interrupted multi-file write', async () => {
+    const f = await ready(), run = await f.service.start(f.registration.id, { goal: '다중 파일 쓰기' });
+    const state = join(f.app, 'runs', run.runId), options = { scopeId: run.runId, allowedPrefixes: [`tasks/${run.taskId}/`] };
+    const files = (round: string) => Array.from({ length: 20 }, (_, n) => ({ path: `tasks/${run.taskId}/working/note-${String(n)}.md`, text: `${round} ${String(n)}\n` }));
+    const write = async (round: string, onPhase?: Parameters<typeof applyTransaction>[4]['onPhase']) => {
+      const snapshot = await f.service.project(run.runId);
+      return withWorktreeLock(run.path, lease => applyTransaction(run.path, state, lease, { expectedSnapshot: snapshot.fingerprint, changes: files(round).map(file => ({ path: file.path, expectedDigest: snapshot.files.get(file.path)?.digest ?? null, content: file.text })) }, { ...options, ...(onPhase ? { onPhase } : {}) }));
+    };
+    resetMetrics();
+    await write('첫째');
+    const counted = metricsSnapshot();
+    // Before this change both grew with the number of edits (one full capture and one journal rewrite per file).
+    expect(counted['fs.captureFiles.all']?.calls).toBeLessThanOrEqual(3);
+    expect(counted['state.write.Transaction']?.calls).toBeLessThanOrEqual(3);
+    let written = 0;
+    const crashAfterFifth = (phase: string) => {
+      if (phase === 'written') { written += 1; }
+      return written === 5 ? Promise.reject(new Error('CRASH')) : Promise.resolve();
+    };
+    await expect(write('둘째', crashAfterFifth)).rejects.toThrow('CRASH');
+    const note = (n: number) => readFile(join(run.path, 'tasks', run.taskId, 'working', `note-${String(n)}.md`), 'utf8');
+    expect(await note(4)).toBe('둘째 4\n');
+    expect(await note(5)).toBe('첫째 5\n');
+    await f.service.recover(run.runId);
+    expect(await pendingTransactions(state)).toEqual([]);
+    expect(await Promise.all(files('둘째').map(file => readFile(join(run.path, file.path), 'utf8')))).toEqual(files('둘째').map(file => file.text));
+  }, 90_000);
+  it('checks applied journals without re-reading them and notices a journal changed in place', async () => {
+    const f = await ready(), run = await f.service.start(f.registration.id, { goal: '저널 재사용' });
+    await f.service.saveDraft(run.runId, '첫째.md', '하나\n', null);
+    await f.service.saveDraft(run.runId, '둘째.md', '둘\n', null);
+    await f.service.project(run.runId);
+    resetMetrics();
+    await f.service.project(run.runId);
+    await f.service.project(run.runId);
+    // Applied journals are summarized once; later checks only stat them.
+    expect(metricsSnapshot()['state.read.Transaction']).toBeUndefined();
+    const directory = join(f.app, 'runs', run.runId, 'transactions'), [journal] = await readdir(directory);
+    if (!journal) throw new Error('Expected an applied journal');
+    const path = join(directory, journal), value = JSON.parse(await readFile(path, 'utf8')) as { state: string };
+    await writeFile(path, JSON.stringify({ ...value, state: 'writing' }, null, 2) + '\n');
+    await code(f.service.project(run.runId), 'RECOVERY_REQUIRED');
   }, 90_000);
 });
 

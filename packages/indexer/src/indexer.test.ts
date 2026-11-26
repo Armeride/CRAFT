@@ -13,6 +13,7 @@ import { TaskService } from '../../tasks/src/service.js';
 import { ValidationFailure } from '../../domain/src/model.js';
 import type { BaselineAnalysis } from '../../domain/src/analysis.js';
 import { ProjectIndex, IndexError } from './service.js';
+import { metricsSnapshot, resetMetrics } from '../../domain/src/instrumentation.js';
 import type { IndexFixture } from './test-helpers.js';
 import { indexFixture, commitFixture, removeIndexFixture } from './test-helpers.js';
 
@@ -34,6 +35,25 @@ async function code(action: Promise<unknown>, expected: string) {
 type Search = { hits: { type: string; entityId?: string; revisionId?: string; snippet: string; path?: string; match: string }[]; strategy: string };
 
 describe('rebuildable scoped SQLite index', () => {
+  it('brackets each query with source captures without repeating the check a rebuild just made', async () => {
+    const f = await registered();
+    const captures = () => metricsSnapshot()['fs.captureFiles.canonical']?.calls ?? 0;
+    resetMetrics();
+    await f.index.query('catalog', {}, { scopeToken: f.index.scopeToken });
+    // Status before (stale), rebuild (capture, before and after publish), status after the query.
+    expect(captures()).toBe(5);
+    resetMetrics();
+    const fresh = await f.index.query('catalog', {}, { scopeToken: f.index.scopeToken });
+    expect(captures()).toBe(2);
+    expect(fresh.freshness).toBe('fresh');
+    resetMetrics();
+    expect((await f.index.manifest(f.index.scopeToken))?.sourceFingerprint).toBe(fresh.sourceFingerprint);
+    expect(captures()).toBe(0);
+    await writeFile(join(f.root, 'README.md'), '변경된 안내\n');
+    const rebuilt = await f.index.query('catalog', {}, { scopeToken: f.index.scopeToken });
+    expect(rebuilt.sourceFingerprint).not.toBe(fresh.sourceFingerprint);
+    expect(rebuilt.freshness).toBe('fresh');
+  }, 60_000);
   it('makes the actual stage-3 reader refuse writes to the new required state contract', async () => {
     const f = await fixture('state-model'), legacy = join(f.home, 'legacy-reader');
     await mkdir(legacy);

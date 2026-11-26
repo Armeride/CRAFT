@@ -310,8 +310,9 @@ export class RunKnowledge {
       selectedView === "working"
         ? await this.tasks.project(run.runId)
         : await loadCommittedProject(registration.root, run.basisCommit);
-    const status = await index.status(index.scopeToken);
-    if (status.manifest?.source.fileFingerprint !== files.fingerprint)
+    // Only the published manifest is compared here; index.query() already bracketed the read with source captures.
+    const manifest = await index.manifest(index.scopeToken);
+    if (manifest?.source.fileFingerprint !== files.fingerprint)
       throw fileFailure(
         "SOURCE_CHANGED",
         "Context inputs changed",
@@ -348,7 +349,7 @@ export class RunKnowledge {
       resultDigest: hash(canonicalJson(result.data)),
       ...(this.execution.perspective ? { perspective: this.execution.perspective } : {}),
       basisCommit: run.basisCommit,
-      sourceCommit: status.manifest.source.headCommit,
+      sourceCommit: manifest.source.headCommit,
       targets,
     };
     const path = join(

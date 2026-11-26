@@ -1,5 +1,6 @@
 import { spawn } from 'node:child_process';
 import { realpath } from 'node:fs/promises';
+import { countMetric, measured } from '../../domain/src/instrumentation.js';
 import { fileFailure } from '../../project-fs/src/files.js';
 
 export interface GitOutput { stdout: Buffer; stderr: string }
@@ -10,7 +11,12 @@ const gitEnvironment = (): NodeJS.ProcessEnv => {
   return env;
 };
 
-async function invoke(root: string, args: readonly string[], input?: Uint8Array, extraEnv?: NodeJS.ProcessEnv, allowNoMatch = false): Promise<GitOutput> {
+function invoke(root: string, args: readonly string[], input?: Uint8Array, extraEnv?: NodeJS.ProcessEnv, allowNoMatch = false): Promise<GitOutput> {
+  countMetric('git.process');
+  return measured(`git.${args.find(arg => !arg.startsWith('-') && !arg.includes('=')) ?? 'unknown'}`, () => spawnGit(root, args, input, extraEnv, allowNoMatch));
+}
+
+function spawnGit(root: string, args: readonly string[], input: Uint8Array | undefined, extraEnv: NodeJS.ProcessEnv | undefined, allowNoMatch: boolean): Promise<GitOutput> {
   return new Promise((resolve, reject) => {
     const child = spawn('git', ['-C', root, '-c', `safe.directory=${root}`, ...args], { shell: false, windowsHide: true, env: { ...gitEnvironment(), ...extraEnv }, stdio: ['pipe', 'pipe', 'pipe'] });
     const chunks: Buffer[] = [];

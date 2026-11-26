@@ -1,6 +1,7 @@
 import { execFile, spawn } from 'node:child_process';
 import { realpath } from 'node:fs/promises';
 import { promisify } from 'node:util';
+import { countMetric, measured } from '../../domain/src/instrumentation.js';
 import { isProjectPath } from '../../domain/src/path.js';
 import { ValidationFailure } from '../../domain/src/model.js';
 import type { ProjectSnapshot, SourceFile } from '../../domain/src/model.js';
@@ -11,7 +12,13 @@ import { parseProject } from './project.js';
 const exec = promisify(execFile);
 
 /** Read-only Git adapter for immutable-record validation. No worktree/ref mutations. */
-export async function readCommittedFiles(root: string, ref: string, canonicalOnly = true): Promise<ReadonlyMap<string, SourceFile>> {
+/** Reads a whole committed tree. Counted as `git.readCommittedFiles` (units: files); it starts three Git processes. */
+export function readCommittedFiles(root: string, ref: string, canonicalOnly = true): Promise<ReadonlyMap<string, SourceFile>> {
+  countMetric('git.process', 3);
+  return measured(canonicalOnly ? 'git.readCommittedFiles.canonical' : 'git.readCommittedFiles.all', () => readCommittedTree(root, ref, canonicalOnly), files => files.size);
+}
+
+async function readCommittedTree(root: string, ref: string, canonicalOnly: boolean): Promise<ReadonlyMap<string, SourceFile>> {
   const absolute = await realpath(root);
   const env = { ...process.env };
   for (const key of Object.keys(env)) if (key.toUpperCase().startsWith('GIT_')) delete env[key];

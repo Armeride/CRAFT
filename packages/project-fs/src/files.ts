@@ -1,7 +1,9 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { lstat, open, readdir, realpath } from 'node:fs/promises';
+import type { BigIntStats, Dirent } from 'node:fs';
 import { join, resolve, sep } from 'node:path';
 import { canonicalJson } from '../../domain/src/canonical.js';
+import { countMetric, measured } from '../../domain/src/instrumentation.js';
 import { isProjectPath } from '../../domain/src/path.js';
 import { ValidationFailure } from '../../domain/src/model.js';
 import type { SourceFile } from '../../domain/src/model.js';
@@ -36,32 +38,103 @@ export async function readSource(root: string, path: string): Promise<SourceFile
   return readRegularSource(absolute, path);
 }
 
+/**
+ * Digests of files read before, keyed by absolute path and reused while the file's stat identity
+ * (dev, ino, size, mtime, ctime) is unchanged. Writes replace or modify the file and change that
+ * identity; ctime cannot be restored by tools, so restored mtimes are still noticed. As in Git's
+ * racy-clean rule, a file whose mtime or ctime is within RACY_MS of the read is not cached, since a
+ * second change inside the same timestamp would leave its identity unchanged.
+ */
+const SOURCE_CACHE_BYTES = 256 * 1024 * 1024;
+const RACY_MS = 2000;
+interface CachedSource { identity: string; file: SourceFile; bytes: number }
+const sourceCache = new Map<string, CachedSource>();
+let sourceCacheBytes = 0;
+const identityOf = (stat: BigIntStats): string => [stat.dev, stat.ino, stat.size, stat.mtimeNs, stat.ctimeNs].join(':');
+function remember(absolute: string, identity: string, file: SourceFile): void {
+  const previous = sourceCache.get(absolute);
+  if (previous) { sourceCache.delete(absolute); sourceCacheBytes -= previous.bytes; }
+  const bytes = file.contentBase64.length + 2 * (file.text?.length ?? 0);
+  if (bytes > SOURCE_CACHE_BYTES / 16) return;
+  sourceCache.set(absolute, { identity, file, bytes });
+  sourceCacheBytes += bytes;
+  for (const [key, entry] of sourceCache) {
+    if (sourceCacheBytes <= SOURCE_CACHE_BYTES) break;
+    sourceCache.delete(key); sourceCacheBytes -= entry.bytes;
+  }
+}
+
 async function readRegularSource(absolute: string, path: string, reserve?: (bytes: number) => void): Promise<SourceFile> {
-  const before = await lstat(absolute);
+  const started = Date.now();
+  const before = await lstat(absolute, { bigint: true });
   if (before.isSymbolicLink() || await realpath(absolute) !== absolute) throw fileFailure('PATH_SYMLINK', 'Project symlinks/junctions are not supported', path);
-  if (!before.isFile() || before.size > limits.fileBytes) throw fileFailure('SOURCE_SIZE_LIMIT', 'Not a regular file or exceeds byte limit', path);
-  reserve?.(before.size);
+  if (!before.isFile() || before.size > BigInt(limits.fileBytes)) throw fileFailure('SOURCE_SIZE_LIMIT', 'Not a regular file or exceeds byte limit', path);
+  reserve?.(Number(before.size));
+  const cached = sourceCache.get(absolute);
+  if (cached && cached.file.path === path && cached.identity === identityOf(before)) { countMetric('fs.sourceCache.hit'); return cached.file; }
+  countMetric('fs.sourceCache.miss');
   const handle = await open(absolute, 'r');
   try {
-    const opened = await handle.stat();
+    const opened = await handle.stat({ bigint: true });
     if (opened.ino !== before.ino || opened.dev !== before.dev || opened.size !== before.size) throw fileFailure('SOURCE_CHANGED', 'Source identity changed during open', path);
     const bytes = await handle.readFile();
-    const after = await handle.stat();
-    const pathAfter = await lstat(absolute);
-    if (bytes.byteLength !== opened.size || opened.size !== after.size || opened.mtimeMs !== after.mtimeMs || opened.ctimeMs !== after.ctimeMs || pathAfter.isSymbolicLink() || pathAfter.ino !== opened.ino || pathAfter.dev !== opened.dev || await realpath(absolute) !== absolute) throw fileFailure('SOURCE_CHANGED', 'Source changed while reading', path);
+    const after = await handle.stat({ bigint: true });
+    const pathAfter = await lstat(absolute, { bigint: true });
+    if (BigInt(bytes.byteLength) !== opened.size || opened.size !== after.size || opened.mtimeNs !== after.mtimeNs || opened.ctimeNs !== after.ctimeNs || pathAfter.isSymbolicLink() || pathAfter.ino !== opened.ino || pathAfter.dev !== opened.dev || await realpath(absolute) !== absolute) throw fileFailure('SOURCE_CHANGED', 'Source changed while reading', path);
     let text: string | undefined;
     if (isProjectTextPath(path)) {
       try { text = new TextDecoder('utf-8', { fatal: true }).decode(bytes); }
       catch { throw fileFailure('INVALID_UTF8', 'Canonical text is not valid UTF-8', path); }
     }
-    return { path, contentBase64: bytes.toString('base64'), digest: hash(bytes), ...(text !== undefined ? { text } : {}) };
+    const file: SourceFile = { path, contentBase64: bytes.toString('base64'), digest: hash(bytes), ...(text !== undefined ? { text } : {}) };
+    const settled = BigInt(started - RACY_MS) * 1_000_000n;
+    if (after.mtimeNs < settled && after.ctimeNs < settled) remember(absolute, identityOf(after), file);
+    return file;
   } finally {
     await handle.close();
   }
 }
 
-export async function captureFiles(root: string, canonicalOnly = true): Promise<ReadonlyMap<string, SourceFile>> {
+/** Walks and reads every project file. Each call is counted as `fs.captureFiles` (units: files). */
+export function captureFiles(root: string, canonicalOnly = true): Promise<ReadonlyMap<string, SourceFile>> {
+  return measured(canonicalOnly ? 'fs.captureFiles.canonical' : 'fs.captureFiles.all', () => collectFiles(root, canonicalOnly), files => files.size);
+}
+
+const LISTING_CONCURRENCY = 16;
+/** Files read concurrently; the capture's total byte limit is reserved before each read. */
+const FILE_BATCH = 64;
+/**
+ * Reads the directory listings the walk will need, LISTING_CONCURRENCY at a time. It only lists;
+ * every check stays in the ordered walk below, which uses these listings. A directory that fails to
+ * list here is left out, so the walk lists it itself and fails at the same point as before.
+ */
+async function prefetchListings(root: string, canonicalOnly: boolean): Promise<ReadonlyMap<string, Dirent[]>> {
+  const listings = new Map<string, Dirent[]>();
+  let active = 0;
+  const waiting: (() => void)[] = [];
+  const acquire = async (): Promise<void> => {
+    if (active >= LISTING_CONCURRENCY) await new Promise<void>(resolve => { waiting.push(resolve); });
+    active += 1;
+  };
+  const release = (): void => { active -= 1; waiting.shift()?.(); };
+  const visit = async (directory: string, depth: number): Promise<void> => {
+    if (depth > limits.depth) return;
+    await acquire();
+    let entries: Dirent[];
+    try { entries = await readdir(directory, { withFileTypes: true }); }
+    catch { return; }
+    finally { release(); }
+    listings.set(directory, entries);
+    const children = entries.filter(entry => entry.isDirectory() && entry.name.toLowerCase() !== '.git' && !(canonicalOnly && depth === 0 && !roots.has(entry.name)));
+    await Promise.all(children.map(entry => visit(join(directory, entry.name), depth + 1)));
+  };
+  await visit(root, 0);
+  return listings;
+}
+
+async function collectFiles(root: string, canonicalOnly: boolean): Promise<ReadonlyMap<string, SourceFile>> {
   const absoluteRoot = await realpath(root);
+  const listings = await prefetchListings(absoluteRoot, canonicalOnly);
   const result = new Map<string, SourceFile>();
   const portablePaths = new Set<string>();
   const pending: { absolute: string; path: string }[] = [];
@@ -75,7 +148,7 @@ export async function captureFiles(root: string, canonicalOnly = true): Promise<
   };
   const walk = async (directory: string, prefix: string, depth: number): Promise<void> => {
     if (depth > limits.depth) throw fileFailure('SOURCE_SIZE_LIMIT', 'Directory nesting exceeds limit', directory);
-    const entries = await readdir(directory, { withFileTypes: true });
+    const entries = [...(listings.get(directory) ?? await readdir(directory, { withFileTypes: true }))];
     entries.sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
     for (const entry of entries) {
       if (depth === 0 && entry.name.toLowerCase() === '.git') continue;
@@ -92,7 +165,7 @@ export async function captureFiles(root: string, canonicalOnly = true): Promise<
       else if (entry.isFile()) {
         if (result.size + pending.length >= limits.files) throw fileFailure('SOURCE_SIZE_LIMIT', 'Project exceeds capture limit', path);
         pending.push({ absolute, path });
-        if (pending.length === 16) await flush();
+        if (pending.length === FILE_BATCH) await flush();
       } else throw fileFailure('SOURCE_NOT_REGULAR', 'Special files are not supported', path);
     }
   };

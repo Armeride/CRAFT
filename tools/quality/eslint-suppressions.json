@@ -1598,13 +1598,10 @@
       "count": 4
     },
     "no-await-in-loop": {
-      "count": 8
+      "count": 7
     },
     "sonarjs/cognitive-complexity": {
       "count": 2
-    },
-    "sonarjs/no-unenclosed-multiline-block": {
-      "count": 1
     },
     "sonarjs/unused-import": {
       "count": 4
