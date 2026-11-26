@@ -42,6 +42,9 @@ it('reuses unchanged files and reads every changed one again', async () => {
 
 it('does not cache files changed within the racy-clean window', async () => {
   const root = await project();
+  // A copy may keep the source timestamps (Windows CopyFile does), so rewrite every file to make it fresh.
+  const paths = [...(await captureFiles(root)).keys()];
+  await Promise.all(paths.map(async path => { const file = join(root, path); await writeFile(file, await readFile(file)); }));
   await captureFiles(root);
   resetMetrics();
   const again = await captureFiles(root);
